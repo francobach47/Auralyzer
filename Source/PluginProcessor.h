@@ -1,14 +1,7 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include <JuceHeader.h>
+#include "DSP/FFTProcessor.h"
 
 //==============================================================================
 /**
@@ -54,6 +47,10 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
+    FFTProcessor fft[2]; // 2 Channels to process. FFTProcessor Class is mono.
+
+
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessor)
 };
