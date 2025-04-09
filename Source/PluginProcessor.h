@@ -1,7 +1,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "DSP/FFTProcessor.h"
 
 //==============================================================================
 /**
@@ -47,7 +46,6 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
-    FFTProcessor fft[2]; // 2 Channels to process. FFTProcessor Class is mono.
 
 
 

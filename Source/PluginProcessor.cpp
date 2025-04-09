@@ -87,13 +87,6 @@ void OscilloscopeAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-
-    // Set latency FFTProcess. FFT Frame = 1024 frames.
-    setLatencySamples(fft[0].getLatencyInSamples());
-
-    fft[0].reset();
-    fft[1].reset();
-
 }
 
 void OscilloscopeAudioProcessor::releaseResources()
@@ -126,16 +119,16 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     float* channelL = buffer.getWritePointer(0);
     float* channelR = buffer.getWritePointer(1);
 
-    for (int sample = 0; sample < numSamples; sample++) {
-        float sampleL = channelL[sample];
-        float sampleR = channelR[sample];
+    //for (int sample = 0; sample < numSamples; sample++) {
+    //    float sampleL = channelL[sample];
+    //    float sampleR = channelR[sample];
 
-        sampleL = fft[0].processSample(sampleL, bypassed);
-        sampleR = fft[1].processSample(sampleR, bypassed);
+    //    sampleL = fft[0].processSample(sampleL, bypassed);
+    //    sampleR = fft[1].processSample(sampleR, bypassed);
 
-        channelL[sample] = sampleL;
-        channelR[sample] = sampleR;
-    }
+    //    channelL[sample] = sampleL;
+    //    channelR[sample] = sampleR;
+    //}
     
     /*
     // Processing the entire block at once:
