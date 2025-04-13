@@ -9,16 +9,15 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor (Oscilloscope
 {
     tooltipWindow->setMillisecondsBeforeTipAppears(1000);
 
-    slider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
-    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 16);
-    slider.setBounds(0, 0, 70, 86);
-    addAndMakeVisible(slider);
+    horizontalGroup.setText("Horizontal");
+    horizontalGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
+    horizontalGroup.addAndMakeVisible(horizontalScaleKnob);
+    horizontalGroup.addAndMakeVisible(horizontalPositionKnob);
+    addAndMakeVisible(horizontalGroup);
 
-    label.setText("Label", juce::NotificationType::dontSendNotification);
-    label.setJustificationType(juce::Justification::horizontallyCentred);
-    label.setBorderSize(juce::BorderSize<int>{0, 0, 2, 0});
-    label.attachToComponent(&slider, false);
-    addAndMakeVisible(label);
+    verticalGroup.setText("Vertical");
+    verticalGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
+    addAndMakeVisible(verticalGroup);
 
     auto size = audioProcessor.getSavedSize();
     setResizable(false, false);
@@ -90,9 +89,19 @@ void OscilloscopeAudioProcessorEditor::resized()
 {
     //audioProcessor.setSavedSize({ getWidth(), getHeight() });
     //plotFrame = getLocalBounds().reduced(3, 3);
+    
+    auto bounds = getLocalBounds();
 
-    slider.setTopLeftPosition(215, 120); // (x, y) coordinate
+    int y = 10;
+    int height = bounds.getHeight() - 20;
 
+    // Position the groups
+    horizontalGroup.setBounds(10, y, 110, height);
+    verticalGroup.setBounds(bounds.getWidth() - 160, y, 150, height);
+
+    // Position the knobs inside the groups
+    horizontalScaleKnob.setTopLeftPosition(20, 20);
+    horizontalPositionKnob.setTopLeftPosition(horizontalScaleKnob.getX(), horizontalScaleKnob.getBottom() + 10);
 }
 
 void OscilloscopeAudioProcessorEditor::timerCallback()

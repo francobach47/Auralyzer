@@ -2,6 +2,8 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "DSP/Parameters.h"
+#include "UI/RotaryKnob.h"
 
 //==============================================================================
 class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
@@ -22,8 +24,14 @@ private:
 
     OscilloscopeAudioProcessor& audioProcessor;
 
-    juce::Slider slider;
-    juce::Label label;
+    juce::GroupComponent verticalGroup, horizontalGroup;
+
+    RotaryKnob horizontalScaleKnob{ "Scale"}; // add 2 parameters
+    RotaryKnob horizontalPositionKnob{ "Position" }; // add 2 parameters
+    RotaryKnob verticalScaleKnob{ "Scale" }; // add 2 parameters
+    RotaryKnob verticalPositionKnob{ "Position" }; // add 2 parameters
+    RotaryKnob modeKnob{ "Mode" }; // add 2 parameters
+    RotaryKnob rangeKnob{ "Range" }; // add 2 parameters
 
     juce::Rectangle<int> plotFrame;
 
