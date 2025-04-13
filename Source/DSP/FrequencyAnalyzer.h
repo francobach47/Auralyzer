@@ -38,7 +38,7 @@ public:
 		audioFifo.setSize(1, audioFifoSize);
 		abstractFifo.setTotalSize(audioFifoSize);
 
-		startThread(5);
+		startThread(juce::Thread::Priority::normal);
 	}
 
 	void run() override
@@ -72,14 +72,14 @@ public:
 		}
 	}
 
-	void createPath(juce::Path& p, const juce::Rectangle<float>)
+	void createPath(juce::Path& p, const juce::Rectangle<float> bounds, float minFreq)
 	{
 		p.clear();
 		p.preallocateSpace(8 + averager.getNumSamples() * 3);
 
 		juce::ScopedLock lockedForReading(pathCreationLock);
 		const auto* fftData = averager.getReadPointer(0);
-		const auto factor = bounds.getWidth() / 10.0f;
+		const auto  factor = bounds.getWidth() / 10.0f;
 
 		p.startNewSubPath(bounds.getX() + factor * indexToX(0, minFreq), binToY(fftData[0], bounds));
 		for (int i = 0; i < averager.getNumSamples(); ++i)
@@ -90,7 +90,7 @@ public:
 	{
 		auto available = newDataAvailable.load();
 		newDataAvailable.store(false);
-		return availabe;
+		return available;
 	}
 
 private:
@@ -114,7 +114,7 @@ private:
 	Type sampleRate {};
 
 	juce::dsp::FFT fft{ 12 };
-	juce::dsp::WindowingFunction windowing{ size_t(fft.getSize()), juce::dsp::WindowingFunction<Type>::hann, true }; // TODO: Test with false
+	juce::dsp::WindowingFunction<float> windowing{ size_t(fft.getSize()), juce::dsp::WindowingFunction<Type>::hann, true }; // TODO: Test with false
 	juce::AudioBuffer<float> fftBuffer{ 1, fft.getSize() * 2 };
 
 	juce::AudioBuffer<float> averager{ 5, fft.getSize() / 2 };

@@ -1,10 +1,8 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "DSP/FrequencyAnalyzer.h"
 
-//==============================================================================
-/**
-*/
 class OscilloscopeAudioProcessor  : public juce::AudioProcessor
 {
 public:
@@ -44,10 +42,19 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+    juce::Point<int> getSavedSize() const;
+    void setSavedSize(const juce::Point<int>& size);
+
+    void createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float minFreq);
+
+    bool checkForNewAnalyserData();
 
 private:
+    double sampleRate = 0;
 
+    FrequencyAnalyzer<float> outputAnalyzer;
 
+    juce::Point<int> editorSize = { 900, 500 };
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessor)

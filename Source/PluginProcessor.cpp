@@ -3,21 +3,16 @@
 
 //==============================================================================
 OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
-#ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
                        )
-#endif
 {
 }
 
 OscilloscopeAudioProcessor::~OscilloscopeAudioProcessor()
 {
+    outputAnalyzer.stopThread(1000);
 }
 
 //==============================================================================
@@ -83,16 +78,21 @@ void OscilloscopeAudioProcessor::changeProgramName (int index, const juce::Strin
 }
 
 //==============================================================================
-void OscilloscopeAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void OscilloscopeAudioProcessor::prepareToPlay (double newSampleRate, int newSamplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    sampleRate = newSampleRate;
+
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate = newSampleRate;
+    spec.maximumBlockSize = juce::uint32(newSamplesPerBlock);
+    spec.numChannels = juce::uint32(getTotalNumOutputChannels());
+
+    outputAnalyzer.setUpFrequencyAnalyzer(int(sampleRate), float(sampleRate));
 }
 
 void OscilloscopeAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
+    outputAnalyzer.stopThread(1000);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -105,38 +105,15 @@ bool OscilloscopeAudioProcessor::isBusesLayoutSupported (const BusesLayout& layo
 void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    auto numInputChannels  = getTotalNumInputChannels();
+    juce::ignoreUnused(midiMessages);
+
+    //auto numSamples = buffer.getNumSamples();
+    //auto numInputChannels  = getTotalNumInputChannels();
     auto numOutputChannels = getTotalNumOutputChannels();
-    auto numSamples = buffer.getNumSamples();
 
-    for (auto i = numInputChannels; i < numOutputChannels; ++i) {
-        buffer.clear(i, 0, numSamples);
+    if (getActiveEditor() != nullptr) {
+        outputAnalyzer.addAudioData(buffer, 0, numOutputChannels);
     }
-
-    //bool bypassed = apvts.getRawParameterValue("ByPass")->load();
-    bool bypassed = false;
-
-    float* channelL = buffer.getWritePointer(0);
-    float* channelR = buffer.getWritePointer(1);
-
-    //for (int sample = 0; sample < numSamples; sample++) {
-    //    float sampleL = channelL[sample];
-    //    float sampleR = channelR[sample];
-
-    //    sampleL = fft[0].processSample(sampleL, bypassed);
-    //    sampleR = fft[1].processSample(sampleR, bypassed);
-
-    //    channelL[sample] = sampleL;
-    //    channelR[sample] = sampleR;
-    //}
-    
-    /*
-    // Processing the entire block at once:
-    for (int channel = 0; channel < numInputChannels; ++channel) {
-        auto* channelData = buffer.getWritePointer(channel);
-        fft[channel].processBlock(channelData, numSamples, bypassed);
-    }
-    */
 }
 
 //==============================================================================
@@ -162,6 +139,27 @@ void OscilloscopeAudioProcessor::setStateInformation (const void* data, int size
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+}
+
+juce::Point<int> OscilloscopeAudioProcessor::getSavedSize() const
+{
+    return editorSize;
+}
+
+void OscilloscopeAudioProcessor::setSavedSize(const juce::Point<int>& size)
+{
+    editorSize = size;
+}
+
+void OscilloscopeAudioProcessor::createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float minFreq)
+{
+    outputAnalyzer.createPath(p, bounds.toFloat(), minFreq);
+}
+
+
+bool OscilloscopeAudioProcessor::checkForNewAnalyserData()
+{
+    return outputAnalyzer.checkForNewData();
 }
 
 //==============================================================================
