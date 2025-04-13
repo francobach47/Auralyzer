@@ -5,7 +5,7 @@
 OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
      : AudioProcessor (BusesProperties()
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                       //.withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                        ),
     params(apvts)
 {
@@ -169,18 +169,3 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new OscilloscopeAudioProcessor();
 }
-
-//juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterLayout()
-//{
-//    juce::AudioProcessorValueTreeState::ParameterLayout layout;
-//
-//    // Ejemplo de agregar un partro
-//    //
-//    //layout.add(std::make_unique<juce::AudioParameterFloat>(
-//    //    juce::ParameterID{ "gain", 1 },
-//    //    "Output Gain",
-//    //    juce::NormalisableRange<float> { -12.0f, 12.0f },
-//    //    0.0f));
-//
-//    return layout;
-//}

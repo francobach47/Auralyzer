@@ -22,6 +22,9 @@ private:
 
     OscilloscopeAudioProcessor& audioProcessor;
 
+    juce::Slider slider;
+    juce::Label label;
+
     juce::Rectangle<int> plotFrame;
 
     juce::Path frequencyResponse;
