@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "DSP/FrequencyAnalyzer.h"
+#include "DSP/Parameters.h"
 
 class OscilloscopeAudioProcessor  : public juce::AudioProcessor
 {
@@ -50,6 +51,12 @@ public:
     bool checkForNewAnalyserData();
 
 private:
+    juce::AudioProcessorValueTreeState apvts{
+        *this, nullptr, "Parameters", Parameters::createParameterLayout()
+    };
+
+    Parameters params;
+
     double sampleRate = 0;
 
     FrequencyAnalyzer<float> outputAnalyzer;

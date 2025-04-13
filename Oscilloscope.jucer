@@ -7,6 +7,8 @@
       <GROUP id="{6647A5F1-9E97-4DF6-3439-BFC6A4AB94D2}" name="DSP">
         <FILE id="wcnREb" name="FrequencyAnalyzer.h" compile="0" resource="0"
               file="Source/DSP/FrequencyAnalyzer.h"/>
+        <FILE id="Sg9OMU" name="Parameters.cpp" compile="1" resource="0" file="Source/DSP/Parameters.cpp"/>
+        <FILE id="KSziEl" name="Parameters.h" compile="0" resource="0" file="Source/DSP/Parameters.h"/>
       </GROUP>
       <FILE id="PTIuGg" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>

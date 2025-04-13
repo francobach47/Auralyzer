@@ -15,7 +15,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    void timerCallback() override; // Timer virtual void
+    void timerCallback() override; // juce::Timer virtual void
 
 private:
     float getFrequencyForPosition(float pos);

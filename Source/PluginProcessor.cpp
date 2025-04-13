@@ -5,8 +5,9 @@
 OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
      : AudioProcessor (BusesProperties()
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                       )
+                       //.withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+                       ),
+    params(apvts)
 {
 }
 
@@ -102,13 +103,12 @@ bool OscilloscopeAudioProcessor::isBusesLayoutSupported (const BusesLayout& layo
 }
 #endif
 
-void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
+                              [[maybe_unused]] juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     juce::ignoreUnused(midiMessages);
 
-    //auto numSamples = buffer.getNumSamples();
-    //auto numInputChannels  = getTotalNumInputChannels();
     auto numOutputChannels = getTotalNumOutputChannels();
 
     if (getActiveEditor() != nullptr) {
@@ -130,15 +130,16 @@ juce::AudioProcessorEditor* OscilloscopeAudioProcessor::createEditor()
 //==============================================================================
 void OscilloscopeAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    copyXmlToBinary(*apvts.copyState().createXml(), destData);
+    //DBG(apvts.copyState().toXmlString());
 }
 
 void OscilloscopeAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    std::unique_ptr<juce::XmlElement> xml(getXmlFromBinary(data, sizeInBytes));
+    if (xml.get() != nullptr && xml->hasTagName(apvts.state.getType())) {
+        apvts.replaceState(juce::ValueTree::fromXml(*xml));
+    }
 }
 
 juce::Point<int> OscilloscopeAudioProcessor::getSavedSize() const
@@ -168,3 +169,18 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new OscilloscopeAudioProcessor();
 }
+
+//juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterLayout()
+//{
+//    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+//
+//    // Ejemplo de agregar un partro
+//    //
+//    //layout.add(std::make_unique<juce::AudioParameterFloat>(
+//    //    juce::ParameterID{ "gain", 1 },
+//    //    "Output Gain",
+//    //    juce::NormalisableRange<float> { -12.0f, 12.0f },
+//    //    0.0f));
+//
+//    return layout;
+//}

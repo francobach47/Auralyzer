@@ -69,7 +69,7 @@ void OscilloscopeAudioProcessorEditor::paint (juce::Graphics& g)
     g.setFont(16.0f);
     audioProcessor.createAnalyserPlot(analyzerPath, plotFrame, 20.0f);
     g.setColour(frequencyResponseColor);
-    g.drawFittedText("Output", plotFrame.reduced(8, 28), juce::Justification::topRight, 1);
+    //g.drawFittedText("Output", plotFrame.reduced(8, 28), juce::Justification::topRight, 1);
     g.strokePath(analyzerPath, juce::PathStrokeType(1.0f));
 
     //g.setColour(juce::Colours::silver);
