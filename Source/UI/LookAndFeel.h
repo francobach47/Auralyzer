@@ -58,10 +58,10 @@ public:
 
 	juce::Font getLabelFont(juce::Label&) override;
 
-	//juce::Label* createSliderTextBox(juce::Slider&) override;
+	juce::Label* createSliderTextBox(juce::Slider&) override;
 
-	//void drawTextEditorOutline(juce::Graphics&, int, int, juce::TextEditor&) override { }
-	//void fillTextEditorBackground(juce::Graphics&, int width, int height, juce::TextEditor&) override;
+	void drawTextEditorOutline(juce::Graphics&, int, int, juce::TextEditor&) override { }
+	void fillTextEditorBackground(juce::Graphics&, int width, int height, juce::TextEditor&) override;
 
 private:
 	juce::DropShadow dropShadow{ Colors::Knob::dropShadow, 6, { 0, 3} };
