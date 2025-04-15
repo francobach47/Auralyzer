@@ -3,6 +3,9 @@
 <JUCERPROJECT id="nKRiCD" name="Oscilloscope" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" pluginVST3Category="Fx">
   <MAINGROUP id="zXWZOS" name="Oscilloscope">
+    <GROUP id="{0E3EC17F-5116-7268-C364-3EFB29BA1A42}" name="Assets">
+      <FILE id="RQa0Fx" name="Lato-Medium.ttf" compile="0" resource="1" file="Assets/Lato-Medium.ttf"/>
+    </GROUP>
     <GROUP id="{08E07DE2-9525-588F-4737-5655EBEAD69F}" name="Source">
       <GROUP id="{3BEDD452-2DA3-5752-2854-4E24FDC09C28}" name="UI">
         <FILE id="bQxfLT" name="LookAndFeel.cpp" compile="1" resource="0" file="Source/UI/LookAndFeel.cpp"/>

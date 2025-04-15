@@ -36,6 +36,8 @@ private:
     //RotaryKnob modeKnob{ "Mode" }; // add 2 parameters
     //RotaryKnob rangeKnob{ "Range" }; // add 2 parameters
 
+    MainLookAndFeel mainLF;
+
     juce::Rectangle<int> plotFrame;
 
     juce::Path frequencyResponse;

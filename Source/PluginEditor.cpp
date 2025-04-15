@@ -19,6 +19,8 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor (Oscilloscope
     verticalGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
     addAndMakeVisible(verticalGroup);
 
+    setLookAndFeel(&mainLF);
+
     auto size = audioProcessor.getSavedSize();
     setResizable(false, false);
     setSize(size.x, size.y);
@@ -32,6 +34,8 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor (Oscilloscope
 
 OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
 {
+    setLookAndFeel(nullptr);
+
 #ifdef JUCE_OPENGL
     openGLContext.detach();
 #endif
