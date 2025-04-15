@@ -44,7 +44,7 @@ void OscilloscopeAudioProcessorEditor::paint (juce::Graphics& g)
     //
     //juce::Graphics::ScopedSaveState state(g);
 
-    //g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    g.fillAll (Colors::background);
 
     //g.setFont(12.0f);
     //g.setColour(juce::Colours::silver);

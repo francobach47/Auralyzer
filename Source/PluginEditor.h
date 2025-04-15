@@ -4,6 +4,7 @@
 #include "PluginProcessor.h"
 #include "DSP/Parameters.h"
 #include "UI/RotaryKnob.h"
+#include "UI/LookAndFeel.h"
 
 //==============================================================================
 class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
@@ -26,12 +27,14 @@ private:
 
     juce::GroupComponent verticalGroup, horizontalGroup;
 
-    RotaryKnob horizontalScaleKnob{ "Scale"}; // add 2 parameters
-    RotaryKnob horizontalPositionKnob{ "Position" }; // add 2 parameters
-    RotaryKnob verticalScaleKnob{ "Scale" }; // add 2 parameters
-    RotaryKnob verticalPositionKnob{ "Position" }; // add 2 parameters
-    RotaryKnob modeKnob{ "Mode" }; // add 2 parameters
-    RotaryKnob rangeKnob{ "Range" }; // add 2 parameters
+    //RotaryKnob gainKnob{ "Gain", audioProcessor.apvts, gainParamID, true };
+
+    RotaryKnob horizontalScaleKnob{ "Scale", false}; // add 2 parameters
+    RotaryKnob horizontalPositionKnob{ "Position", true }; // add 2 parameters
+    //RotaryKnob verticalScaleKnob{ "Scale" }; // add 2 parameters
+    //RotaryKnob verticalPositionKnob{ "Position" }; // add 2 parameters
+    //RotaryKnob modeKnob{ "Mode" }; // add 2 parameters
+    //RotaryKnob rangeKnob{ "Range" }; // add 2 parameters
 
     juce::Rectangle<int> plotFrame;
 
