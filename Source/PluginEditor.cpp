@@ -17,13 +17,13 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor (Oscilloscope
 
     verticalGroup.setText("Vertical");
     verticalGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
+    verticalGroup.addAndMakeVisible(verticalScaleKnob);
+    verticalGroup.addAndMakeVisible(verticalPositionKnob);
     addAndMakeVisible(verticalGroup);
 
     setLookAndFeel(&mainLF);
 
-    auto size = audioProcessor.getSavedSize();
-    setResizable(false, false);
-    setSize(size.x, size.y);
+    setSize(1200, 600);
 
 #ifdef JUCE_OPENGL
         openGLContext.attachTo(*getTopLevelComponent());
@@ -96,12 +96,13 @@ void OscilloscopeAudioProcessorEditor::resized()
     
     auto bounds = getLocalBounds();
 
-    int y = 10;
+    int y = 20;
     int height = bounds.getHeight() - 20;
 
     // Position the groups
     horizontalGroup.setBounds(10, y, 110, height);
-    verticalGroup.setBounds(bounds.getWidth() - 160, y, 150, height);
+    //verticalGroup.setBounds(bounds.getWidth() - 160, y, 150, height);
+    verticalGroup.setBounds(horizontalGroup.getX() + 20, y, 110, height);
 
     // Position the knobs inside the groups
     horizontalScaleKnob.setTopLeftPosition(20, 20);
@@ -110,13 +111,13 @@ void OscilloscopeAudioProcessorEditor::resized()
 
 void OscilloscopeAudioProcessorEditor::timerCallback()
 {
-    if (audioProcessor.checkForNewAnalyserData())
-    {
-        repaint(plotFrame);
-    }
+    //if (audioProcessor.checkForNewAnalyserData())
+    //{
+    //    repaint(plotFrame);
+    //}
 }
 
-float OscilloscopeAudioProcessorEditor::getFrequencyForPosition(float pos)
-{
-    return 20.0f * std::pow(2.0f, pos * 10.0f);
-}
+//float OscilloscopeAudioProcessorEditor::getFrequencyForPosition(float pos)
+//{
+//    return 20.0f * std::pow(2.0f, pos * 10.0f);
+//}

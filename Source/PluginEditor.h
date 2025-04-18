@@ -27,14 +27,12 @@ private:
 
     juce::GroupComponent verticalGroup, horizontalGroup;
 
-    //RotaryKnob gainKnob{ "Gain", audioProcessor.apvts, gainParamID, true };
-
-    RotaryKnob horizontalScaleKnob{ "Scale", false}; // add 2 parameters
-    RotaryKnob horizontalPositionKnob{ "Position", true }; // add 2 parameters
-    //RotaryKnob verticalScaleKnob{ "Scale" }; // add 2 parameters
-    //RotaryKnob verticalPositionKnob{ "Position" }; // add 2 parameters
-    //RotaryKnob modeKnob{ "Mode" }; // add 2 parameters
-    //RotaryKnob rangeKnob{ "Range" }; // add 2 parameters
+    RotaryKnob horizontalScaleKnob{ "Scale", audioProcessor.apvts, horizontalScaleParamID, false };
+    RotaryKnob horizontalPositionKnob{ "Position", audioProcessor.apvts, horizontalPositionParamID, true };
+    RotaryKnob verticalScaleKnob{ "Scale", audioProcessor.apvts, verticalScaleParamID, false };
+    RotaryKnob verticalPositionKnob{ "Position", audioProcessor.apvts, verticalPositionParamID, true };
+    RotaryKnob modeKnob{ "Mode", audioProcessor.apvts, modeParamID, false };
+    RotaryKnob rangeKnob{ "Range", audioProcessor.apvts, rangeParamID, false };
 
     MainLookAndFeel mainLF;
 

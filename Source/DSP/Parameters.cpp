@@ -10,49 +10,42 @@ static void castParameter(juce::AudioProcessorValueTreeState& apvts,
 
 Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
 {
+	castParameter(apvts, horizontalPositionParamID, horizontalPositionParam);
 	castParameter(apvts, horizontalScaleParamID, horizontalScaleParam);
-	castParameter(apvts, horizontalPositionParamID, horizontalScaleParam);
-	castParameter(apvts, verticalScaleParamID, verticalScaleParam);
 	castParameter(apvts, verticalPositionParamID, verticalPositionParam);
+	castParameter(apvts, verticalScaleParamID, verticalScaleParam);
 	castParameter(apvts, rangeParamID, rangeParam);
 	castParameter(apvts, modeParamID, modeParam);
 	castParameter(apvts, timeFreqParamID, timeFreqParam);
 }
 
-
 juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterLayout()
 {
 	juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-	layout.add(std::make_unique<juce::AudioParameterInt>(
-		horizontalScaleParamID,
-		"Horizontal Scale",
-		-5, 5, 0));
 	layout.add(std::make_unique<juce::AudioParameterFloat>(
 		horizontalPositionParamID,
-		"Horizontal Position",
-		juce::NormalisableRange<float> {-5.0f, 5.0f},
+		"Hor Position",
+		juce::NormalisableRange<float> {-5.0f, 5.0f },
 		0.0f
 	));
-
 	layout.add(std::make_unique<juce::AudioParameterInt>(
-		verticalScaleParamID,
-		"Vertical Scale",
-		-5, 5, 0));
+		horizontalScaleParamID,
+		"Hor Scale",
+		-5.0f, 5.0f, 0.0f
+	));
+
 	layout.add(std::make_unique<juce::AudioParameterFloat>(
 		verticalPositionParamID,
-		"Vertical Position",
-		juce::NormalisableRange<float> {-5.0f, 5.0f, 0.5f},
+		"Ver Position",
+		juce::NormalisableRange<float> {-5.0f, 5.0f },
 		0.0f
 	));
-
-	juce::StringArray modeOptions = {
-		"AC",
-		"DC",
-		"Calibration"
-	};
-	layout.add(std::make_unique<juce::AudioParameterChoice>(
-		modeParamID, "Mode", modeOptions, 0));
+	layout.add(std::make_unique<juce::AudioParameterInt>(
+		verticalScaleParamID,
+		"Ver Scale",
+		-5.0f, 5.0f, 0.0f
+	));
 
 	juce::StringArray rangeOptions = {
 		"10 mV - 100 mV",
@@ -63,12 +56,19 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 	layout.add(std::make_unique<juce::AudioParameterChoice>(
 		rangeParamID, "Range", rangeOptions, 0));
 
+	juce::StringArray modeOptions = {
+		"AC",
+		"DC",
+		"Calibration"
+	};
+	layout.add(std::make_unique<juce::AudioParameterChoice>(
+		modeParamID, "Mode", modeOptions, 0));
+
 	layout.add(std::make_unique<juce::AudioParameterBool>(
 		timeFreqParamID, "Frequency / Time", false));
 
 	return layout;
 }
-
 void Parameters::update() noexcept
 {
 	horizontalScale = horizontalScaleParam->get();
@@ -80,5 +80,5 @@ void Parameters::update() noexcept
 	modeValue = modeParam->getIndex();
 	rangeValue = rangeParam->getIndex();
 
-	freqTyme = timeFreqParam->get();
+	timeFreq = timeFreqParam->get();
 }

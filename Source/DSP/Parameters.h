@@ -2,16 +2,14 @@
 
 #include <JuceHeader.h>
 
-const juce::ParameterID horizontalScaleParamID{ "horizontalScale", 1 };
+// Paramters ID
 const juce::ParameterID horizontalPositionParamID{ "horizontalPosition", 1 };
-const juce::ParameterID verticalScaleParamID{ "verticalScale", 1 };
+const juce::ParameterID horizontalScaleParamID{ "horizontalScale", 1 };
 const juce::ParameterID verticalPositionParamID{ "verticalPosition", 1 };
-
+const juce::ParameterID verticalScaleParamID{ "verticalScale", 1 };
 const juce::ParameterID rangeParamID{ "range", 1 };
 const juce::ParameterID modeParamID{ "mode", 1 };
-
 const juce::ParameterID timeFreqParamID{ "timeFreq", 1 };
-
 const juce::ParameterID bypassParamID{ "bypass", 1 };
 
 class Parameters
@@ -23,22 +21,23 @@ public:
 
 	void update() noexcept;
 
-	float horizontalPosition, verticalPosition;
-	int horizontalScale, verticalScale = 0;
-	
-	int modeValue, rangeValue = 0;
-
-	bool freqTyme = false;
+	// Parameters initial Values
+	float horizontalPosition = 0.0f;
+	int   horizontalScale    = 0;
+	float verticalPosition   = 0.0f;
+	int   verticalScale      = 0;
+	int   rangeValue         = 0;
+	int   modeValue          = 0;
+	bool  timeFreq           = false;
 
 private:
-	juce::AudioParameterInt* horizontalScaleParam;
-	juce::AudioParameterFloat* horizontalPositionParam;
 
-	juce::AudioParameterInt* verticalScaleParam;
-	juce::AudioParameterFloat* verticalPositionParam;
-
+	// Parameters definition
+	juce::AudioParameterFloat*  horizontalPositionParam;
+	juce::AudioParameterInt*    horizontalScaleParam;
+	juce::AudioParameterFloat*  verticalPositionParam;
+	juce::AudioParameterInt*    verticalScaleParam;
 	juce::AudioParameterChoice* rangeParam;
 	juce::AudioParameterChoice* modeParam;
-	
-	juce::AudioParameterBool* timeFreqParam;
+	juce::AudioParameterBool*   timeFreqParam;
 };

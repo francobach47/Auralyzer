@@ -4,12 +4,11 @@
 
 RotaryKnob::RotaryKnob(
     const juce::String& text,
-    //juce::AudioProcessorValueTreeState& apvts,
-    //const juce::ParameterID& parameterID,
+    juce::AudioProcessorValueTreeState& apvts,
+    const juce::ParameterID& parameterID,
     bool drawFromMiddle
-//) : attachment(apvts, parameterID.getParamID(), slider)
-)
-    {
+) : attachment(apvts, parameterID.getParamID(), slider)
+{
     slider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
     slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 16);
     slider.setBounds(0, 0, 70, 86);

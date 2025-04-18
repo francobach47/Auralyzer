@@ -5,7 +5,7 @@
 OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
      : AudioProcessor (BusesProperties()
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+                       .withOutput ("Output", juce::AudioChannelSet::stereo(), false)
                        ),
     params(apvts)
 {
@@ -13,7 +13,7 @@ OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
 
 OscilloscopeAudioProcessor::~OscilloscopeAudioProcessor()
 {
-    outputAnalyzer.stopThread(1000);
+    //outputAnalyzer.stopThread(1000);
 }
 
 //==============================================================================
@@ -79,27 +79,29 @@ void OscilloscopeAudioProcessor::changeProgramName (int index, const juce::Strin
 }
 
 //==============================================================================
-void OscilloscopeAudioProcessor::prepareToPlay (double newSampleRate, int newSamplesPerBlock)
+void OscilloscopeAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    sampleRate = newSampleRate;
+    //sampleRate = newSampleRate;
 
     juce::dsp::ProcessSpec spec;
-    spec.sampleRate = newSampleRate;
-    spec.maximumBlockSize = juce::uint32(newSamplesPerBlock);
-    spec.numChannels = juce::uint32(getTotalNumOutputChannels());
+    spec.sampleRate = sampleRate;
 
-    outputAnalyzer.setUpFrequencyAnalyzer(int(sampleRate), float(sampleRate));
+
+    //spec.maximumBlockSize = juce::uint32(newSamplesPerBlock);
+    //spec.numChannels = juce::uint32(getTotalNumOutputChannels());
+
+    //outputAnalyzer.setUpFrequencyAnalyzer(int(sampleRate), float(sampleRate));
 }
 
 void OscilloscopeAudioProcessor::releaseResources()
 {
-    outputAnalyzer.stopThread(1000);
+    //outputAnalyzer.stopThread(1000);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool OscilloscopeAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
-{   // TODO: Change to mono and stereo output
-    return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
+{
+    return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::disabled();
 }
 #endif
 
@@ -111,9 +113,9 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     auto numOutputChannels = getTotalNumOutputChannels();
 
-    if (getActiveEditor() != nullptr) {
-        outputAnalyzer.addAudioData(buffer, 0, numOutputChannels);
-    }
+    //if (getActiveEditor() != nullptr) {
+    //    outputAnalyzer.addAudioData(buffer, 0, numOutputChannels);
+    //}
 }
 
 //==============================================================================
@@ -142,26 +144,10 @@ void OscilloscopeAudioProcessor::setStateInformation (const void* data, int size
     }
 }
 
-juce::Point<int> OscilloscopeAudioProcessor::getSavedSize() const
-{
-    return editorSize;
-}
-
-void OscilloscopeAudioProcessor::setSavedSize(const juce::Point<int>& size)
-{
-    editorSize = size;
-}
-
-void OscilloscopeAudioProcessor::createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float minFreq)
-{
-    outputAnalyzer.createPath(p, bounds.toFloat(), minFreq);
-}
-
-
-bool OscilloscopeAudioProcessor::checkForNewAnalyserData()
-{
-    return outputAnalyzer.checkForNewData();
-}
+//bool OscilloscopeAudioProcessor::checkForNewAnalyserData()
+//{
+//    return outputAnalyzer.checkForNewData();
+//}
 
 //==============================================================================
 // This creates new instances of the plugin..

@@ -7,8 +7,8 @@ class RotaryKnob  : public juce::Component
 public:
     RotaryKnob(
         const juce::String& text,
-        //juce::AudioProcessorValueTreeState& apvts,
-        //const juce::ParameterID& parameterID,
+        juce::AudioProcessorValueTreeState& apvts,
+        const juce::ParameterID& parameterID,
         bool drawFromMiddle = false
     );
 
@@ -19,7 +19,7 @@ public:
     juce::Slider slider;
     juce::Label label;
 
-    //juce::AudioProcessorValueTreeState::SliderAttachment attachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment attachment;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RotaryKnob)
