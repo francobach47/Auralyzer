@@ -28,7 +28,9 @@ public:
 	int   verticalScale      = 0;
 	int   rangeValue         = 0;
 	int   modeValue          = 0;
+	
 	bool  timeFreq           = false;
+	juce::AudioParameterBool*   timeFreqParam;
 
 private:
 
@@ -39,5 +41,4 @@ private:
 	juce::AudioParameterInt*    verticalScaleParam;
 	juce::AudioParameterChoice* rangeParam;
 	juce::AudioParameterChoice* modeParam;
-	juce::AudioParameterBool*   timeFreqParam;
 };

@@ -7,6 +7,7 @@
 #include "UI/LookAndFeel.h"
 
 class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
+                                          public juce::Button::Listener,
                                           public juce::Timer
 {
 public:
@@ -19,8 +20,13 @@ public:
 
     void timerCallback() override; // juce::Timer virtual void
 
+    void buttonClicked(juce::Button* button) override;
+
 private:
     OscilloscopeAudioProcessor& audioProcessor;
+    
+    //void parameterValueChanged(int, float) override;
+    //void parameterGestureChanged(int, bool) override { }
 
     juce::GroupComponent verticalGroup, horizontalGroup;
     juce::GroupComponent optionsGroup;
@@ -34,6 +40,11 @@ private:
     RotaryKnob modeKnob{ "Mode", audioProcessor.apvts, modeParamID, false };
 
     MainLookAndFeel mainLF;
+
+    juce::TextButton timeFreqButton;
+    juce::AudioProcessorValueTreeState::ButtonAttachment timeFreqAttachment{
+        audioProcessor.apvts, timeFreqParamID.getParamID(), timeFreqButton
+    };
 
     //float getFrequencyForPosition(float pos);
     //juce::Rectangle<int> plotFrame;

@@ -4,10 +4,11 @@
 static float maxDB = 24.0f;
 
 //==============================================================================
-OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor (OscilloscopeAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeAudioProcessor& p)
+    : AudioProcessorEditor(&p), audioProcessor(p)
 {
     tooltipWindow->setMillisecondsBeforeTipAppears(1000);
+
 
     addAndMakeVisible(plotGroup);
 
@@ -27,9 +28,16 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor (Oscilloscope
     verticalGroup.addAndMakeVisible(verticalScaleKnob);
     addAndMakeVisible(verticalGroup);
 
+    timeFreqButton.setButtonText("Time");
+    timeFreqButton.setClickingTogglesState(true);
+    timeFreqButton.setBounds(0, 0, 100, 27);
+    timeFreqButton.setLookAndFeel(ButtonLookAndFeel::get());
+    timeFreqButton.addListener(this);
+    addAndMakeVisible(timeFreqButton);
+
     setLookAndFeel(&mainLF);
 
-    setSize(1200, 450);
+    setSize(1200, 480);
 
 #ifdef JUCE_OPENGL
         openGLContext.attachTo(*getTopLevelComponent());
@@ -55,9 +63,6 @@ void OscilloscopeAudioProcessorEditor::paint (juce::Graphics& g)
 
 void OscilloscopeAudioProcessorEditor::resized()
 {
-    //audioProcessor.setSavedSize({ getWidth(), getHeight() });
-    //plotFrame = getLocalBounds().reduced(3, 3);
-    
     auto bounds = getLocalBounds();
 
     int y = 20;
@@ -80,6 +85,17 @@ void OscilloscopeAudioProcessorEditor::resized()
     horizontalScaleKnob.setTopLeftPosition(horizontalPositionKnob.getX(), horizontalPositionKnob.getBottom() + 10);
     verticalPositionKnob.setTopLeftPosition(20, 20);
     verticalScaleKnob.setTopLeftPosition(verticalPositionKnob.getX(), verticalPositionKnob.getBottom() + 10);
+    timeFreqButton.setTopLeftPosition(25, 440);
+
+    //audioProcessor.setSavedSize({ getWidth(), getHeight() });
+    //plotFrame = getLocalBounds().reduced(3, 3);
+}
+
+void OscilloscopeAudioProcessorEditor::buttonClicked(juce::Button* button) {
+    if (button == &timeFreqButton) {
+        bool isToggled = timeFreqButton.getToggleState();
+        timeFreqButton.setButtonText(isToggled ? "Frequency" : "Time");
+    }
 }
 
 void OscilloscopeAudioProcessorEditor::timerCallback()
