@@ -9,21 +9,27 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor (Oscilloscope
 {
     tooltipWindow->setMillisecondsBeforeTipAppears(1000);
 
+    addAndMakeVisible(plotGroup);
+
+    optionsGroup.addAndMakeVisible(rangeKnob);
+    optionsGroup.addAndMakeVisible(modeKnob);
+    addAndMakeVisible(optionsGroup);
+
     horizontalGroup.setText("Horizontal");
     horizontalGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
-    horizontalGroup.addAndMakeVisible(horizontalScaleKnob);
     horizontalGroup.addAndMakeVisible(horizontalPositionKnob);
+    horizontalGroup.addAndMakeVisible(horizontalScaleKnob);
     addAndMakeVisible(horizontalGroup);
 
     verticalGroup.setText("Vertical");
     verticalGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
-    verticalGroup.addAndMakeVisible(verticalScaleKnob);
     verticalGroup.addAndMakeVisible(verticalPositionKnob);
+    verticalGroup.addAndMakeVisible(verticalScaleKnob);
     addAndMakeVisible(verticalGroup);
 
     setLookAndFeel(&mainLF);
 
-    setSize(1200, 600);
+    setSize(1200, 450);
 
 #ifdef JUCE_OPENGL
         openGLContext.attachTo(*getTopLevelComponent());
@@ -44,49 +50,7 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
 //==============================================================================
 void OscilloscopeAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    //const auto frequencyResponseColor = juce::Colours::greenyellow;
-    //
-    //juce::Graphics::ScopedSaveState state(g);
-
     g.fillAll (Colors::background);
-
-    //g.setFont(12.0f);
-    //g.setColour(juce::Colours::silver);
-    //g.drawRoundedRectangle(plotFrame.toFloat(), 5, 2);
-
-    //for (int i = 0; i < 10; ++i)
-    //{
-    //    g.setColour(juce::Colours::silver.withAlpha(0.3f));
-    //    auto x = plotFrame.getX() + plotFrame.getWidth() * i * 0.1f;
-    //    if (i > 0)
-    //        g.drawVerticalLine(juce::roundToInt(x), float(plotFrame.getY()), float(plotFrame.getBottom()));
-    //        
-    //    g.setColour(juce::Colours::silver);
-    //    auto freq = getFrequencyForPosition(i * 0.1f);
-    //    g.drawFittedText((freq < 1000) ? juce::String(freq) + " Hz"
-    //                                   : juce::String(freq / 1000, 1) + " kHz",
-    //                                   juce::roundToInt(x + 3), plotFrame.getBottom() - 18, 50, 15, juce::Justification::left, 1);
-    //}
-
-    //g.setColour(juce::Colours::silver.withAlpha(0.3f));
-    //g.drawHorizontalLine(juce::roundToInt(plotFrame.getY() + 0.25 * plotFrame.getHeight()), float(plotFrame.getX()), float(plotFrame.getRight()));
-    //g.drawHorizontalLine(juce::roundToInt(plotFrame.getY() + 0.75 * plotFrame.getHeight()), float(plotFrame.getX()), float(plotFrame.getRight()));
-
-    //g.setColour(juce::Colours::silver);
-    //g.drawFittedText(juce::String(maxDB) + " dB", plotFrame.getX() + 3, plotFrame.getY() + 2, 50, 14, juce::Justification::left, 1);
-    //g.drawFittedText(juce::String(maxDB / 2) + " dB", plotFrame.getX() + 3, juce::roundToInt(plotFrame.getY() + 2 + 0.25 * plotFrame.getHeight()), 50, 14, juce::Justification::left, 1);
-    //g.drawFittedText(" 0 dB", plotFrame.getX() + 3, juce::roundToInt(plotFrame.getY() + 2 + 0.5 * plotFrame.getHeight()), 50, 14, juce::Justification::left, 1);
-    //g.drawFittedText(juce::String(-maxDB / 2) + " dB", plotFrame.getX() + 3, juce::roundToInt(plotFrame.getY() + 2 + 0.75 * plotFrame.getHeight()), 50, 14, juce::Justification::left, 1);
-
-    //g.reduceClipRegion(plotFrame);
-
-    //g.setFont(16.0f);
-    //audioProcessor.createAnalyserPlot(analyzerPath, plotFrame, 20.0f);
-    //g.setColour(frequencyResponseColor);
-    //g.strokePath(analyzerPath, juce::PathStrokeType(1.0f));
-
-    ////g.setColour(juce::Colours::silver);
-    ////g.strokePath(frequencyResponse, juce::PathStrokeType(1.0f));
 }
 
 void OscilloscopeAudioProcessorEditor::resized()
@@ -97,16 +61,25 @@ void OscilloscopeAudioProcessorEditor::resized()
     auto bounds = getLocalBounds();
 
     int y = 20;
-    int height = bounds.getHeight() - 20;
+    int height = 100;
+
+    int plotSectionWidth = 900;
+
+    // TODO: Change values into variables and applied them
 
     // Position the groups
-    horizontalGroup.setBounds(10, y, 110, height);
-    //verticalGroup.setBounds(bounds.getWidth() - 160, y, 150, height);
-    verticalGroup.setBounds(horizontalGroup.getX() + 20, y, 110, height);
+    plotGroup.setBounds(25, y, plotSectionWidth, 410);
+    optionsGroup.setBounds(plotSectionWidth + 50, y, (110 * 2) + 10, 150);
+    horizontalGroup.setBounds(plotSectionWidth + 50, y + 150, 110, 260);
+    verticalGroup.setBounds(horizontalGroup.getRight() + 10, y + 150, 110, 260);
 
     // Position the knobs inside the groups
-    horizontalScaleKnob.setTopLeftPosition(20, 20);
-    horizontalPositionKnob.setTopLeftPosition(horizontalScaleKnob.getX(), horizontalScaleKnob.getBottom() + 10);
+    rangeKnob.setTopLeftPosition(20, y);
+    modeKnob.setTopLeftPosition(rangeKnob.getRight() + 50, y);
+    horizontalPositionKnob.setTopLeftPosition(20, 20);
+    horizontalScaleKnob.setTopLeftPosition(horizontalPositionKnob.getX(), horizontalPositionKnob.getBottom() + 10);
+    verticalPositionKnob.setTopLeftPosition(20, 20);
+    verticalScaleKnob.setTopLeftPosition(verticalPositionKnob.getX(), verticalPositionKnob.getBottom() + 10);
 }
 
 void OscilloscopeAudioProcessorEditor::timerCallback()

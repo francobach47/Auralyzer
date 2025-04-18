@@ -6,7 +6,6 @@
 #include "UI/RotaryKnob.h"
 #include "UI/LookAndFeel.h"
 
-//==============================================================================
 class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
                                           public juce::Timer
 {
@@ -21,25 +20,26 @@ public:
     void timerCallback() override; // juce::Timer virtual void
 
 private:
-    float getFrequencyForPosition(float pos);
-
     OscilloscopeAudioProcessor& audioProcessor;
 
     juce::GroupComponent verticalGroup, horizontalGroup;
+    juce::GroupComponent optionsGroup;
+    juce::GroupComponent plotGroup;
 
-    RotaryKnob horizontalScaleKnob{ "Scale", audioProcessor.apvts, horizontalScaleParamID, false };
     RotaryKnob horizontalPositionKnob{ "Position", audioProcessor.apvts, horizontalPositionParamID, true };
-    RotaryKnob verticalScaleKnob{ "Scale", audioProcessor.apvts, verticalScaleParamID, false };
+    RotaryKnob horizontalScaleKnob{ "Scale", audioProcessor.apvts, horizontalScaleParamID, true };
     RotaryKnob verticalPositionKnob{ "Position", audioProcessor.apvts, verticalPositionParamID, true };
-    RotaryKnob modeKnob{ "Mode", audioProcessor.apvts, modeParamID, false };
+    RotaryKnob verticalScaleKnob{ "Scale", audioProcessor.apvts, verticalScaleParamID, true };
     RotaryKnob rangeKnob{ "Range", audioProcessor.apvts, rangeParamID, false };
+    RotaryKnob modeKnob{ "Mode", audioProcessor.apvts, modeParamID, false };
 
     MainLookAndFeel mainLF;
 
-    juce::Rectangle<int> plotFrame;
+    //float getFrequencyForPosition(float pos);
+    //juce::Rectangle<int> plotFrame;
 
-    juce::Path frequencyResponse;
-    juce::Path analyzerPath;
+    //juce::Path frequencyResponse;
+    //juce::Path analyzerPath;
 
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
 
