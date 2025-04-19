@@ -1,7 +1,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "DSP/FrequencyAnalyzer.h"
 #include "DSP/Parameters.h"
 
 class OscilloscopeAudioProcessor  : public juce::AudioProcessor

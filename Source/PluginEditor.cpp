@@ -30,14 +30,14 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 
     timeFreqButton.setButtonText("Time");
     timeFreqButton.setClickingTogglesState(true);
-    timeFreqButton.setBounds(0, 0, 100, 27);
+    timeFreqButton.setBounds(0, 0, 100, 30);
     timeFreqButton.setLookAndFeel(ButtonLookAndFeel::get());
     timeFreqButton.addListener(this);
     addAndMakeVisible(timeFreqButton);
 
     setLookAndFeel(&mainLF);
 
-    setSize(1200, 480);
+    setSize(1200, 490);
 
 #ifdef JUCE_OPENGL
         openGLContext.attachTo(*getTopLevelComponent());
@@ -66,17 +66,17 @@ void OscilloscopeAudioProcessorEditor::resized()
     auto bounds = getLocalBounds();
 
     int y = 20;
-    int height = 100;
+    //int height = 100;
 
     int plotSectionWidth = 900;
 
     // TODO: Change values into variables and applied them
 
     // Position the groups
-    plotGroup.setBounds(25, y, plotSectionWidth, 410);
+    plotGroup.setBounds(25, y, plotSectionWidth, 420);
     optionsGroup.setBounds(plotSectionWidth + 50, y, (110 * 2) + 10, 150);
-    horizontalGroup.setBounds(plotSectionWidth + 50, y + 150, 110, 260);
-    verticalGroup.setBounds(horizontalGroup.getRight() + 10, y + 150, 110, 260);
+    horizontalGroup.setBounds(plotSectionWidth + 50, y + 160, 110, 260);
+    verticalGroup.setBounds(horizontalGroup.getRight() + 10, y + 160, 110, 260);
 
     // Position the knobs inside the groups
     rangeKnob.setTopLeftPosition(20, y);
@@ -85,7 +85,7 @@ void OscilloscopeAudioProcessorEditor::resized()
     horizontalScaleKnob.setTopLeftPosition(horizontalPositionKnob.getX(), horizontalPositionKnob.getBottom() + 10);
     verticalPositionKnob.setTopLeftPosition(20, 20);
     verticalScaleKnob.setTopLeftPosition(verticalPositionKnob.getX(), verticalPositionKnob.getBottom() + 10);
-    timeFreqButton.setTopLeftPosition(25, 440);
+    timeFreqButton.setTopLeftPosition(25, 450);
 
     //audioProcessor.setSavedSize({ getWidth(), getHeight() });
     //plotFrame = getLocalBounds().reduced(3, 3);
