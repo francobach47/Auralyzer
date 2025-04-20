@@ -112,8 +112,8 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     audioTimeBuffer.makeCopyOf(buffer);
 
-    int latencySamples = getLatencySamples();
-    buffer.applyGainRamp(0, latencySamples, 0.0f, 1.0f);
+    //int latencySamples = getLatencySamples();
+    //buffer.applyGainRamp(0, latencySamples, 0.0f, 1.0f);
 
     //if (getActiveEditor() != nullptr) {
     //    frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);
@@ -123,7 +123,7 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 //==============================================================================
 bool OscilloscopeAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    return true;
 }
 
 juce::AudioProcessorEditor* OscilloscopeAudioProcessor::createEditor()
@@ -135,7 +135,6 @@ juce::AudioProcessorEditor* OscilloscopeAudioProcessor::createEditor()
 void OscilloscopeAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     copyXmlToBinary(*apvts.copyState().createXml(), destData);
-    //DBG(apvts.copyState().toXmlString());
 }
 
 void OscilloscopeAudioProcessor::setStateInformation (const void* data, int sizeInBytes)

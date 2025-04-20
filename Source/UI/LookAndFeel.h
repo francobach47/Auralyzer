@@ -25,7 +25,7 @@ namespace Colors
 	namespace Group
 	{
 		const juce::Colour label{ 160, 155, 150 };
-		const juce::Colour outline{ 235, 230, 225 };
+		const juce::Colour outline{ 220, 216, 211 };
 	}
 
 	namespace Button
@@ -34,12 +34,15 @@ namespace Colors
 		const juce::Colour textToggled{ 40,40,40 };
 		//const juce::Colour background{ 245, 240, 235 };
 		const juce::Colour backgroundToggled{ 255, 250, 245 };
-		const juce::Colour outline{ 235,230,225 };
+		const juce::Colour outline{ 220, 216, 211 };
 	}
 
-	namespace FrequencyPlot
+	namespace PlotSection
 	{
-		const juce::Colour freqMagnitudeResponse { 60, 179, 113 };
+		const juce::Colour frequencyResponse { 60, 179, 113 };
+		const juce::Colour timeResponse{ 60, 179, 113 };
+		const juce::Colour background{ 90, 90, 90};
+		const juce::Colour outline{ 220, 216, 211 };
 	}
 }
 

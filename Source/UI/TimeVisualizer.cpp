@@ -1,7 +1,7 @@
 #include <JuceHeader.h>
 #include "TimeVisualizer.h"
+#include "LookAndFeel.h"
 
-//==============================================================================
 TimeVisualizer::TimeVisualizer(OscilloscopeAudioProcessor& p)
     : processor(p)
 {
@@ -20,7 +20,23 @@ void TimeVisualizer::paint (juce::Graphics& g)
     if (!mmLock.lockWasGained())
         return;
 
-    g.fillAll(juce::Colours::transparentBlack);
+    const float cornerRadius = 8.0f;
+    const float borderThickness = 4.0f;
+    auto bounds = getLocalBounds().toFloat();
+
+    g.setColour(Colors::PlotSection::background);
+    g.fillRoundedRectangle(bounds, cornerRadius);
+
+    juce::Path clipPath;
+    clipPath.addRoundedRectangle(bounds, cornerRadius);
+    g.reduceClipRegion(clipPath);
+
+    g.setColour(Colors::PlotSection::outline);
+    g.drawRoundedRectangle(
+        getLocalBounds().toFloat(),
+        cornerRadius,
+        borderThickness
+    );
 
     if (auto* playHead = processor.getPlayHead())
     {
@@ -51,7 +67,7 @@ void TimeVisualizer::paint (juce::Graphics& g)
             path.lineTo(x, y);
     }
 
-    g.setColour(juce::Colours::red);
+    g.setColour(Colors::PlotSection::timeResponse);
     g.strokePath(path, juce::PathStrokeType(2.0f));
 }
 

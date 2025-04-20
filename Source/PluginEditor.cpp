@@ -79,7 +79,6 @@ void OscilloscopeAudioProcessorEditor::resized()
     optionsGroup.setBounds(plotSectionWidth + plotBoxesSpace, y, (verhorSectionWidth * 2) + space, optionsHeight);
     horizontalGroup.setBounds(plotSectionWidth + plotBoxesSpace, y + optionsHeight + space, verhorSectionWidth, verhorSectionHeight);
     verticalGroup.setBounds(horizontalGroup.getRight() + space, y + optionsHeight + space, verhorSectionWidth, verhorSectionHeight);
-    timeVisualizer.setBounds(plotGroup.getLocalBounds());
 
     // Position the knobs inside the groups
     rangeKnob.setTopLeftPosition(20, y);
@@ -91,6 +90,9 @@ void OscilloscopeAudioProcessorEditor::resized()
     
     // Position the button
     timeFreqButton.setTopLeftPosition(25, 450);
+
+    // Position the time visualizer
+    timeVisualizer.setBounds(plotGroup.getLocalBounds());
 }
 
 void OscilloscopeAudioProcessorEditor::buttonClicked(juce::Button* button) {
