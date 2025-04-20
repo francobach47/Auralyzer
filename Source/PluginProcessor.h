@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "DSP/Parameters.h"
+#include "DSP/FFT.h"
 
 class OscilloscopeAudioProcessor  : public juce::AudioProcessor
 {
@@ -43,10 +44,11 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    //void createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float minFreq);
+    // Timer Visualizer
+    juce::AudioBuffer<float>& getAudioBuffer() { return audioTimeBuffer; }
+    int getNumInputChannels() const { return audioTimeBuffer.getNumChannels(); }
 
-    //bool checkForNewAnalyserData();
-
+    // APVTS
     juce::AudioProcessorValueTreeState apvts{
         *this, nullptr, "Parameters", Parameters::createParameterLayout()
     };
@@ -54,9 +56,10 @@ public:
     Parameters params;
 private:
 
-    //double sampleRate = 0;
+    juce::AudioBuffer<float> audioTimeBuffer;
 
-    //FrequencyAnalyzer<float> outputAnalyzer;
+    //FFT frequencyAnalyzer;
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessor)
 };

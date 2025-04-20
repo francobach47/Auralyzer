@@ -36,6 +36,11 @@ namespace Colors
 		const juce::Colour backgroundToggled{ 255, 250, 245 };
 		const juce::Colour outline{ 235,230,225 };
 	}
+
+	namespace FrequencyPlot
+	{
+		const juce::Colour freqMagnitudeResponse { 60, 179, 113 };
+	}
 }
 
 class Fonts

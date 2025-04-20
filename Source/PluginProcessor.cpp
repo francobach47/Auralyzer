@@ -13,7 +13,7 @@ OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
 
 OscilloscopeAudioProcessor::~OscilloscopeAudioProcessor()
 {
-    //outputAnalyzer.stopThread(1000);
+    //frequencyAnalyzer.stopThread(1000);
 }
 
 //==============================================================================
@@ -81,21 +81,17 @@ void OscilloscopeAudioProcessor::changeProgramName (int index, const juce::Strin
 //==============================================================================
 void OscilloscopeAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    //sampleRate = newSampleRate;
-
     juce::dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = juce::uint32(samplesPerBlock);
+    spec.numChannels = juce::uint32(getTotalNumOutputChannels());
 
-
-    //spec.maximumBlockSize = juce::uint32(newSamplesPerBlock);
-    //spec.numChannels = juce::uint32(getTotalNumOutputChannels());
-
-    //outputAnalyzer.setUpFrequencyAnalyzer(int(sampleRate), float(sampleRate));
+    //frequencyAnalyzer.setUpFrequencyAnalyzer(int(sampleRate), sampleRate);
 }
 
 void OscilloscopeAudioProcessor::releaseResources()
 {
-    //outputAnalyzer.stopThread(1000);
+    //frequencyAnalyzer.stopThread(1000);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -112,9 +108,15 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     juce::ignoreUnused(midiMessages);
 
     auto numOutputChannels = getTotalNumOutputChannels();
+    auto numInputChannels = getTotalNumInputChannels();
+
+    audioTimeBuffer.makeCopyOf(buffer);
+
+    int latencySamples = getLatencySamples();
+    buffer.applyGainRamp(0, latencySamples, 0.0f, 1.0f);
 
     //if (getActiveEditor() != nullptr) {
-    //    outputAnalyzer.addAudioData(buffer, 0, numOutputChannels);
+    //    frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);
     //}
 }
 
@@ -143,11 +145,6 @@ void OscilloscopeAudioProcessor::setStateInformation (const void* data, int size
         apvts.replaceState(juce::ValueTree::fromXml(*xml));
     }
 }
-
-//bool OscilloscopeAudioProcessor::checkForNewAnalyserData()
-//{
-//    return outputAnalyzer.checkForNewData();
-//}
 
 //==============================================================================
 // This creates new instances of the plugin..

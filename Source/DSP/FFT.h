@@ -6,12 +6,12 @@ class FFT : public juce::Thread
 {
 public:
 	FFT();
-	//~FFT() override = default;
+	~FFT() override;
 
     void addAudioData(const juce::AudioBuffer<float>& buffer, int startChannel, int numChannels);
     void setUpFrequencyAnalyzer(int audioFifoSize, float sampleRateToUse);
     bool checkForNewData();
-    void createPath(juce::Path& p, const juce::Rectangle<float> bounds);
+    void createPath(juce::Path& p, const juce::Rectangle<float> bounds, float minFreq);
 
 private:
     void run() override;
@@ -21,7 +21,7 @@ private:
     juce::WaitableEvent waitForData;
     juce::CriticalSection pathCreationLock;
 
-    float sampleRate = 44100.0f; // CHANGE THIS!
+    double sampleRate;
 
     juce::dsp::FFT fft{ 12 };
     juce::dsp::WindowingFunction<float> windowing{ 1 << 12, juce::dsp::WindowingFunction<float>::hann, true };

@@ -8,10 +8,18 @@
     </GROUP>
     <GROUP id="{08E07DE2-9525-588F-4737-5655EBEAD69F}" name="Source">
       <GROUP id="{3BEDD452-2DA3-5752-2854-4E24FDC09C28}" name="UI">
+        <FILE id="kfLQhm" name="FrequencyVisualizer.cpp" compile="1" resource="0"
+              file="Source/UI/FrequencyVisualizer.cpp"/>
+        <FILE id="QK98GV" name="FrequencyVisualizer.h" compile="0" resource="0"
+              file="Source/UI/FrequencyVisualizer.h"/>
         <FILE id="bQxfLT" name="LookAndFeel.cpp" compile="1" resource="0" file="Source/UI/LookAndFeel.cpp"/>
         <FILE id="jQYCtF" name="LookAndFeel.h" compile="0" resource="0" file="Source/UI/LookAndFeel.h"/>
         <FILE id="eLEo14" name="RotaryKnob.cpp" compile="1" resource="0" file="Source/UI/RotaryKnob.cpp"/>
         <FILE id="M4pfZT" name="RotaryKnob.h" compile="0" resource="0" file="Source/UI/RotaryKnob.h"/>
+        <FILE id="OHSRC5" name="TimeVisualizer.cpp" compile="1" resource="0"
+              file="Source/UI/TimeVisualizer.cpp"/>
+        <FILE id="fcCMwu" name="TimeVisualizer.h" compile="0" resource="0"
+              file="Source/UI/TimeVisualizer.h"/>
       </GROUP>
       <GROUP id="{6647A5F1-9E97-4DF6-3439-BFC6A4AB94D2}" name="DSP">
         <FILE id="rCDph8" name="FFT.cpp" compile="1" resource="0" file="Source/DSP/FFT.cpp"/>

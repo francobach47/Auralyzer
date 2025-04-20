@@ -5,6 +5,10 @@ FFT::FFT() : juce::Thread("FFT-Processor")
     averager.clear();
 }
 
+FFT::~FFT() 
+{
+}
+
 void FFT::addAudioData(const juce::AudioBuffer<float>& buffer, int startChannel, int numChannels)
 {
     if (abstractFifo.getFreeSpace() < buffer.getNumSamples())
@@ -73,15 +77,14 @@ bool FFT::checkForNewData()
     return available;
 }
 
-void FFT::createPath(juce::Path& p, const juce::Rectangle<float> bounds)
+void FFT::createPath(juce::Path& p, const juce::Rectangle<float> bounds, float minFreq = 20.0f)
 {
     p.clear();
     p.preallocateSpace(8 + averager.getNumSamples() * 3);
 
     juce::ScopedLock lockedForReading(pathCreationLock);
     const auto* fftData = averager.getReadPointer(0);
-    const auto factor = bounds.getWidth() / 10.0f;
-    const float minFreq = 20.0f;
+    const auto  factor = bounds.getWidth() / 10.0f;
 
     p.startNewSubPath(bounds.getX() + factor * indexToX(0, minFreq), binToY(fftData[0], bounds));
     for (int i = 0; i < averager.getNumSamples(); ++i)

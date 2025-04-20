@@ -5,11 +5,12 @@ static float maxDB = 24.0f;
 
 //==============================================================================
 OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p)
+    : AudioProcessorEditor(&p), audioProcessor(p), timeVisualizer(p)
+    //, frequencyVisualizer(p)
 {
     tooltipWindow->setMillisecondsBeforeTipAppears(1000);
-
-
+    
+    plotGroup.addAndMakeVisible(timeVisualizer);
     addAndMakeVisible(plotGroup);
 
     optionsGroup.addAndMakeVisible(rangeKnob);
@@ -42,8 +43,8 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 #ifdef JUCE_OPENGL
         openGLContext.attachTo(*getTopLevelComponent());
 #endif
-
-    startTimerHz(30);
+     
+    //startTimerHz(30);
 }
 
 OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
@@ -58,25 +59,27 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
 //==============================================================================
 void OscilloscopeAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (Colors::background);
+    g.fillAll(Colors::background);
 }
 
 void OscilloscopeAudioProcessorEditor::resized()
 {
-    auto bounds = getLocalBounds();
-
     int y = 20;
-    //int height = 100;
-
+    int height = 100;
     int plotSectionWidth = 900;
-
-    // TODO: Change values into variables and applied them
+    int plotSectionHeight = 420;
+    int verhorSectionHeight = 260;
+    int verhorSectionWidth = 110;
+    int optionsHeight = 150;
+    int space = 10;
+    int plotBoxesSpace = 50;
 
     // Position the groups
-    plotGroup.setBounds(25, y, plotSectionWidth, 420);
-    optionsGroup.setBounds(plotSectionWidth + 50, y, (110 * 2) + 10, 150);
-    horizontalGroup.setBounds(plotSectionWidth + 50, y + 160, 110, 260);
-    verticalGroup.setBounds(horizontalGroup.getRight() + 10, y + 160, 110, 260);
+    plotGroup.setBounds(25, y, plotSectionWidth, plotSectionHeight);
+    optionsGroup.setBounds(plotSectionWidth + plotBoxesSpace, y, (verhorSectionWidth * 2) + space, optionsHeight);
+    horizontalGroup.setBounds(plotSectionWidth + plotBoxesSpace, y + optionsHeight + space, verhorSectionWidth, verhorSectionHeight);
+    verticalGroup.setBounds(horizontalGroup.getRight() + space, y + optionsHeight + space, verhorSectionWidth, verhorSectionHeight);
+    timeVisualizer.setBounds(plotGroup.getLocalBounds());
 
     // Position the knobs inside the groups
     rangeKnob.setTopLeftPosition(20, y);
@@ -85,10 +88,9 @@ void OscilloscopeAudioProcessorEditor::resized()
     horizontalScaleKnob.setTopLeftPosition(horizontalPositionKnob.getX(), horizontalPositionKnob.getBottom() + 10);
     verticalPositionKnob.setTopLeftPosition(20, 20);
     verticalScaleKnob.setTopLeftPosition(verticalPositionKnob.getX(), verticalPositionKnob.getBottom() + 10);
+    
+    // Position the button
     timeFreqButton.setTopLeftPosition(25, 450);
-
-    //audioProcessor.setSavedSize({ getWidth(), getHeight() });
-    //plotFrame = getLocalBounds().reduced(3, 3);
 }
 
 void OscilloscopeAudioProcessorEditor::buttonClicked(juce::Button* button) {
@@ -97,16 +99,3 @@ void OscilloscopeAudioProcessorEditor::buttonClicked(juce::Button* button) {
         timeFreqButton.setButtonText(isToggled ? "Frequency" : "Time");
     }
 }
-
-void OscilloscopeAudioProcessorEditor::timerCallback()
-{
-    //if (audioProcessor.checkForNewAnalyserData())
-    //{
-    //    repaint(plotFrame);
-    //}
-}
-
-//float OscilloscopeAudioProcessorEditor::getFrequencyForPosition(float pos)
-//{
-//    return 20.0f * std::pow(2.0f, pos * 10.0f);
-//}

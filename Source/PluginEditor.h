@@ -2,13 +2,15 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+
 #include "DSP/Parameters.h"
+
+#include "UI/TimeVisualizer.h"
 #include "UI/RotaryKnob.h"
 #include "UI/LookAndFeel.h"
 
 class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
-                                          public juce::Button::Listener,
-                                          public juce::Timer
+                                          public juce::Button::Listener
 {
 public:
     OscilloscopeAudioProcessorEditor (OscilloscopeAudioProcessor&);
@@ -18,15 +20,12 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    void timerCallback() override; // juce::Timer virtual void
-
     void buttonClicked(juce::Button* button) override;
 
 private:
     OscilloscopeAudioProcessor& audioProcessor;
     
-    //void parameterValueChanged(int, float) override;
-    //void parameterGestureChanged(int, bool) override { }
+    TimeVisualizer timeVisualizer;
 
     juce::GroupComponent verticalGroup, horizontalGroup;
     juce::GroupComponent optionsGroup;
@@ -45,12 +44,6 @@ private:
     juce::AudioProcessorValueTreeState::ButtonAttachment timeFreqAttachment{
         audioProcessor.apvts, timeFreqParamID.getParamID(), timeFreqButton
     };
-
-    //float getFrequencyForPosition(float pos);
-    //juce::Rectangle<int> plotFrame;
-
-    //juce::Path frequencyResponse;
-    //juce::Path analyzerPath;
 
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
 
