@@ -3,11 +3,13 @@
 #include "LookAndFeel.h"
 
 static float maxDB = 24.0f;
+static float minDB = -40.0f;
 
 FrequencyVisualizer::FrequencyVisualizer(OscilloscopeAudioProcessor& p)
-    : audioProcessor(p) 
+    : processor(p)
 {
-    startTimerHz(30);
+    setOpaque(true);
+    startTimerHz(60);
 }
 
 FrequencyVisualizer::~FrequencyVisualizer()
@@ -16,11 +18,28 @@ FrequencyVisualizer::~FrequencyVisualizer()
 
 void FrequencyVisualizer::paint (juce::Graphics& g)
 {
-    const auto frequencyResponseColor = juce::Colours::greenyellow;
+    juce::MessageManagerLock mmLock;
+    if (!mmLock.lockWasGained()) return;
 
-	juce::Graphics::ScopedSaveState state(g);
+	//juce::Graphics::ScopedSaveState state(g);
 
-	g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+    const float cornerRadius = 8.0f;
+    const float borderThickness = 4.0f;
+    auto bounds = getLocalBounds().toFloat();
+
+    g.setColour(Colors::PlotSection::background);
+    g.fillRoundedRectangle(bounds, cornerRadius);
+
+    juce::Path clipPath;
+    clipPath.addRoundedRectangle(bounds, cornerRadius);
+    g.reduceClipRegion(clipPath);
+
+    g.setColour(Colors::PlotSection::outline);
+    g.drawRoundedRectangle(
+        getLocalBounds().toFloat(),
+        cornerRadius,
+        borderThickness
+    );
 
 	g.setFont(12.0f);
 	g.setColour(juce::Colours::silver);
@@ -52,20 +71,23 @@ void FrequencyVisualizer::paint (juce::Graphics& g)
 
     g.reduceClipRegion(plotFrame);
 
-    g.setFont(16.0f);
-    //audioProcessor.createAnalyserPlot(analyzerPath, plotFrame, 20.0f);
-    g.setColour(frequencyResponseColor);
-    g.drawFittedText("Output", plotFrame.reduced(8, 28), juce::Justification::topRight, 1);
-    g.strokePath(analyzerPath, juce::PathStrokeType(1.0f));
+    processor.createAnalyserPlot(analyzerPath, plotFrame, 20.0f);
+    g.setColour(Colors::PlotSection::frequencyResponse);
+    //g.drawFittedText("Output", plotFrame.reduced(8, 28), juce::Justification::topRight, 1);
+    g.strokePath(analyzerPath, juce::PathStrokeType(2.0f));
+}
 
+void FrequencyVisualizer::resized()
+{
+    plotFrame = getLocalBounds();
 }
 
 void FrequencyVisualizer::timerCallback()
 {
-    //if (audioProcessor.checkForNewAnalyserData())
-    //{
-    //    repaint(plotFrame);
-    //}
+    if (processor.checkForNewAnalyserData())
+    {
+        repaint(plotFrame);
+    }
 }
 
 float FrequencyVisualizer::getFrequencyForPosition(float pos)

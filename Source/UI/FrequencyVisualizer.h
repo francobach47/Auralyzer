@@ -7,9 +7,10 @@ class FrequencyVisualizer  : public juce::Component,
                              public juce::Timer
 {
 public:
-    FrequencyVisualizer(OscilloscopeAudioProcessor& p);
+    FrequencyVisualizer(OscilloscopeAudioProcessor& processor);
     ~FrequencyVisualizer() override;
 
+    void resized() override;
     void paint (juce::Graphics&) override;
 
     void timerCallback() override;
@@ -17,7 +18,7 @@ public:
 private:
     float getFrequencyForPosition(float pos);
     
-    OscilloscopeAudioProcessor& audioProcessor;
+    OscilloscopeAudioProcessor& processor;
 
     juce::Rectangle<int> plotFrame;
 

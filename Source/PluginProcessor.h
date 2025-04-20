@@ -44,6 +44,10 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    // Frequency Visualizer
+    void createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float minFreq);
+    bool checkForNewAnalyserData();
+
     // Timer Visualizer
     juce::AudioBuffer<float>& getAudioBuffer() { return audioTimeBuffer; }
     int getNumInputChannels() const { return audioTimeBuffer.getNumChannels(); }
@@ -54,11 +58,12 @@ public:
     };
 
     Parameters params;
+
 private:
 
     juce::AudioBuffer<float> audioTimeBuffer;
 
-    //FFT frequencyAnalyzer;
+    FFT frequencyAnalyzer;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessor)

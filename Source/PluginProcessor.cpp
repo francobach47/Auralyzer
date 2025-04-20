@@ -86,12 +86,12 @@ void OscilloscopeAudioProcessor::prepareToPlay(double sampleRate, int samplesPer
     spec.maximumBlockSize = juce::uint32(samplesPerBlock);
     spec.numChannels = juce::uint32(getTotalNumOutputChannels());
 
-    //frequencyAnalyzer.setUpFrequencyAnalyzer(int(sampleRate), sampleRate);
+    frequencyAnalyzer.setUpFrequencyAnalyzer(int(sampleRate), sampleRate);
 }
 
 void OscilloscopeAudioProcessor::releaseResources()
 {
-    //frequencyAnalyzer.stopThread(1000);
+    frequencyAnalyzer.stopThread(1000);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -115,9 +115,9 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     //int latencySamples = getLatencySamples();
     //buffer.applyGainRamp(0, latencySamples, 0.0f, 1.0f);
 
-    //if (getActiveEditor() != nullptr) {
-    //    frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);
-    //}
+    if (getActiveEditor() != nullptr) {
+        frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);
+    }
 }
 
 //==============================================================================
@@ -143,6 +143,16 @@ void OscilloscopeAudioProcessor::setStateInformation (const void* data, int size
     if (xml.get() != nullptr && xml->hasTagName(apvts.state.getType())) {
         apvts.replaceState(juce::ValueTree::fromXml(*xml));
     }
+}
+
+void OscilloscopeAudioProcessor::createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float minFreq)
+{
+    frequencyAnalyzer.createPath(p, bounds.toFloat(), minFreq);
+}
+
+bool OscilloscopeAudioProcessor::checkForNewAnalyserData()
+{
+    return frequencyAnalyzer.checkForNewData();
 }
 
 //==============================================================================

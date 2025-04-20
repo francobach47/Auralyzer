@@ -6,6 +6,7 @@
 #include "DSP/Parameters.h"
 
 #include "UI/TimeVisualizer.h"
+#include "UI/FrequencyVisualizer.h"
 #include "UI/RotaryKnob.h"
 #include "UI/LookAndFeel.h"
 
@@ -26,6 +27,7 @@ private:
     OscilloscopeAudioProcessor& audioProcessor;
     
     TimeVisualizer timeVisualizer;
+    FrequencyVisualizer frequencyVisualizer;
 
     juce::GroupComponent verticalGroup, horizontalGroup;
     juce::GroupComponent optionsGroup;

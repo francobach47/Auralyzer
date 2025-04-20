@@ -5,12 +5,12 @@ static float maxDB = 24.0f;
 
 //==============================================================================
 OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p), timeVisualizer(p)
-    //, frequencyVisualizer(p)
+    : AudioProcessorEditor(&p), audioProcessor(p), timeVisualizer(p), frequencyVisualizer(p)
 {
     tooltipWindow->setMillisecondsBeforeTipAppears(1000);
     
-    plotGroup.addAndMakeVisible(timeVisualizer);
+    //plotGroup.addAndMakeVisible(timeVisualizer);
+    plotGroup.addAndMakeVisible(frequencyVisualizer);
     addAndMakeVisible(plotGroup);
 
     optionsGroup.addAndMakeVisible(rangeKnob);
@@ -42,9 +42,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 
 #ifdef JUCE_OPENGL
         openGLContext.attachTo(*getTopLevelComponent());
-#endif
-     
-    //startTimerHz(30);
+#endif     
 }
 
 OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
@@ -92,7 +90,8 @@ void OscilloscopeAudioProcessorEditor::resized()
     timeFreqButton.setTopLeftPosition(25, 450);
 
     // Position the time visualizer
-    timeVisualizer.setBounds(plotGroup.getLocalBounds());
+    frequencyVisualizer.setBounds(plotGroup.getLocalBounds());
+    //timeVisualizer.setBounds(plotGroup.getLocalBounds());
 }
 
 void OscilloscopeAudioProcessorEditor::buttonClicked(juce::Button* button) {
