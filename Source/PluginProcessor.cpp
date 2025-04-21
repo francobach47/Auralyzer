@@ -13,7 +13,7 @@ OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
 
 OscilloscopeAudioProcessor::~OscilloscopeAudioProcessor()
 {
-    //frequencyAnalyzer.stopThread(1000);
+    frequencyAnalyzer.stopThread(1000);
 }
 
 //==============================================================================
@@ -104,19 +104,25 @@ bool OscilloscopeAudioProcessor::isBusesLayoutSupported (const BusesLayout& layo
 void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
                               [[maybe_unused]] juce::MidiBuffer& midiMessages)
 {
+    params.update();
+
     juce::ScopedNoDenormals noDenormals;
     juce::ignoreUnused(midiMessages);
 
     auto numOutputChannels = getTotalNumOutputChannels();
     auto numInputChannels = getTotalNumInputChannels();
 
-    audioTimeBuffer.makeCopyOf(buffer);
+    bool isFrequencyMode = apvts.getRawParameterValue(timeFreqParamID.getParamID())->load() > 0.5f;
 
-    //int latencySamples = getLatencySamples();
-    //buffer.applyGainRamp(0, latencySamples, 0.0f, 1.0f);
-
-    if (getActiveEditor() != nullptr) {
-        frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);
+    if (isFrequencyMode) {
+        if (getActiveEditor() != nullptr) {
+            frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);
+        }
+    }
+    else {
+        audioTimeBuffer.makeCopyOf(buffer);
+        int latencySamples = getLatencySamples();
+        buffer.applyGainRamp(0, latencySamples, 0.0f, 1.0f);    
     }
 }
 

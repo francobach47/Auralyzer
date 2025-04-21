@@ -11,7 +11,9 @@
 #include "UI/LookAndFeel.h"
 
 class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
-                                          public juce::Button::Listener
+                                          //public juce::Button::Listener
+                                          public juce::AudioProcessorValueTreeState::Listener
+
 {
 public:
     OscilloscopeAudioProcessorEditor (OscilloscopeAudioProcessor&);
@@ -21,7 +23,8 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    void buttonClicked(juce::Button* button) override;
+    //void buttonClicked(juce::Button* button) override;
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
 
 private:
     OscilloscopeAudioProcessor& audioProcessor;
@@ -43,9 +46,7 @@ private:
     MainLookAndFeel mainLF;
 
     juce::TextButton timeFreqButton;
-    juce::AudioProcessorValueTreeState::ButtonAttachment timeFreqAttachment{
-        audioProcessor.apvts, timeFreqParamID.getParamID(), timeFreqButton
-    };
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> timeFreqAttachment;
 
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
 

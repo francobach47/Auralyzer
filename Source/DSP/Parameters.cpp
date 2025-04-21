@@ -65,7 +65,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 		modeParamID, "Mode", modeOptions, 0));
 
 	layout.add(std::make_unique<juce::AudioParameterBool>(
-		timeFreqParamID, "Frequency / Time", false));
+		timeFreqParamID,
+		"Time/Frequency",
+		false,
+		juce::String(),
+		[](bool value, int) { return value ? "Frequency" : "Time"; }
+	));
 
 	return layout;
 }

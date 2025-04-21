@@ -9,9 +9,25 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 {
     tooltipWindow->setMillisecondsBeforeTipAppears(1000);
     
-    //plotGroup.addAndMakeVisible(timeVisualizer);
-    plotGroup.addAndMakeVisible(frequencyVisualizer);
+    // TODO: CHANGE AND FIX THIS
+    // INSTANCIATE TIME WHEN YOU RUN AND START THE PLUGIN.
+    // IF YOU CLICK THE BUTTON WITHOUT SOUND IT CRASHES
+    timeFreqButton.setButtonText("Time");
+    timeFreqButton.setClickingTogglesState(true);
+    timeFreqButton.setBounds(0, 0, 100, 30);
+    timeFreqButton.setLookAndFeel(ButtonLookAndFeel::get());
+    addAndMakeVisible(timeFreqButton);
+    timeFreqAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
+        audioProcessor.apvts, timeFreqParamID.getParamID(), timeFreqButton
+    );
+    audioProcessor.apvts.addParameterListener(timeFreqParamID.getParamID(), this);
+
+    plotGroup.addAndMakeVisible(timeVisualizer);
+    plotGroup.addChildComponent(frequencyVisualizer);
     addAndMakeVisible(plotGroup);
+
+    timeVisualizer.setVisible(true);
+    frequencyVisualizer.setVisible(false);
 
     optionsGroup.addAndMakeVisible(rangeKnob);
     optionsGroup.addAndMakeVisible(modeKnob);
@@ -28,13 +44,6 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     verticalGroup.addAndMakeVisible(verticalPositionKnob);
     verticalGroup.addAndMakeVisible(verticalScaleKnob);
     addAndMakeVisible(verticalGroup);
-
-    timeFreqButton.setButtonText("Time");
-    timeFreqButton.setClickingTogglesState(true);
-    timeFreqButton.setBounds(0, 0, 100, 30);
-    timeFreqButton.setLookAndFeel(ButtonLookAndFeel::get());
-    timeFreqButton.addListener(this);
-    addAndMakeVisible(timeFreqButton);
 
     setLookAndFeel(&mainLF);
 
@@ -91,12 +100,28 @@ void OscilloscopeAudioProcessorEditor::resized()
 
     // Position the time visualizer
     frequencyVisualizer.setBounds(plotGroup.getLocalBounds());
-    //timeVisualizer.setBounds(plotGroup.getLocalBounds());
+    timeVisualizer.setBounds(plotGroup.getLocalBounds());
 }
 
-void OscilloscopeAudioProcessorEditor::buttonClicked(juce::Button* button) {
-    if (button == &timeFreqButton) {
-        bool isToggled = timeFreqButton.getToggleState();
-        timeFreqButton.setButtonText(isToggled ? "Frequency" : "Time");
+//void OscilloscopeAudioProcessorEditor::buttonClicked(juce::Button* button)
+//{
+//    if (button == &timeFreqButton)
+//    {
+//        bool showFrequency = timeFreqButton.getToggleState();
+//        timeFreqButton.setButtonText(showFrequency ? "Time" : "Frequency");
+//        
+//        timeVisualizer.setVisible(!showFrequency);
+//        frequencyVisualizer.setVisible(showFrequency);
+//    }
+//}
+
+void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& parameterID, float newValue)
+{
+    if (parameterID == timeFreqParamID.getParamID())
+    {
+        bool showFrequency = newValue > 0.5f;
+        timeVisualizer.setVisible(!showFrequency);
+        frequencyVisualizer.setVisible(showFrequency);
+        timeFreqButton.setButtonText(showFrequency ? "Time" : "Frequency");
     }
 }
