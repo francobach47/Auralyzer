@@ -114,20 +114,4 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         frequencyVisualizer.setVisible(isFrequencyMode);
         plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
     }
-
-    static int lastRangeIndex = -1;
-    if (parameterID == rangeParamID.getParamID())
-    {
-        int rangeIndex = static_cast<int>(newValue * 4.0f);
-        rangeIndex = juce::jmin(3, rangeIndex);
-
-        if (rangeIndex != lastRangeIndex) {
-            lastRangeIndex = rangeIndex;
-
-            bool ledOn = (rangeIndex == 1 || rangeIndex == 3);
-            audioProcessor.getSerialDevice().setLightColor(ledOn ? 0xFFFF : 0x0000);
-
-            DBG("Rango cambiado a: " << rangeIndex << " | LED: " << (ledOn ? "ON" : "OFF"));
-        }
-    }
 }

@@ -113,11 +113,19 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     juce::ScopedNoDenormals noDenormals;
     juce::ignoreUnused(midiMessages);
 
+    static bool lastFrequencyMode = false;
+    bool currentFrequencyMode = apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
+
+    if (currentFrequencyMode != lastFrequencyMode) {
+        lastFrequencyMode = currentFrequencyMode;
+        serialDevice.setLightColor(currentFrequencyMode ? 0xFFFF : 0x0000);
+    }
+
     auto numOutputChannels = getTotalNumOutputChannels();
     auto numInputChannels = getTotalNumInputChannels();
 
     bool isFrequencyMode = apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
-
+        
     if (isFrequencyMode) {
         if (getActiveEditor() != nullptr) {
             frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);

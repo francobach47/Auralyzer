@@ -60,10 +60,6 @@ public:
 
     Parameters params;
 
-    //// ESP32
-    SerialDevice& getSerialDevice() { return serialDevice; }
-
-
 private:
 
     juce::AudioBuffer<float> audioTimeBuffer;
@@ -71,6 +67,7 @@ private:
     FFT frequencyAnalyzer;
 
     SerialDevice serialDevice;
+    bool lastFrequencyModeState = false;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessor)
