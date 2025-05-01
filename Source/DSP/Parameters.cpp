@@ -77,6 +77,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 
 	return layout;
 }
+
 void Parameters::update() noexcept
 {
 	horizontalScale = horizontalScaleParam->get();
