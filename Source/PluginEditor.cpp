@@ -9,25 +9,25 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 {
     tooltipWindow->setMillisecondsBeforeTipAppears(1000);
     
-    // TODO: CHANGE AND FIX THIS
-    // INSTANCIATE TIME WHEN YOU RUN AND START THE PLUGIN.
-    // IF YOU CLICK THE BUTTON WITHOUT SOUND IT CRASHES
-    timeFreqButton.setButtonText("Time");
-    timeFreqButton.setClickingTogglesState(true);
-    timeFreqButton.setBounds(0, 0, 100, 30);
-    timeFreqButton.setLookAndFeel(ButtonLookAndFeel::get());
-    addAndMakeVisible(timeFreqButton);
-    timeFreqAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
-        audioProcessor.apvts, timeFreqParamID.getParamID(), timeFreqButton
+    plotModeButton.setButtonText("Time");
+    plotModeButton.setClickingTogglesState(true);
+    plotModeButton.setBounds(0, 0, 100, 30);
+    plotModeButton.setLookAndFeel(ButtonLookAndFeel::get());
+    addAndMakeVisible(plotModeButton);
+
+    plotModeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
+        audioProcessor.apvts, plotModeParamID.getParamID(), plotModeButton
     );
-    audioProcessor.apvts.addParameterListener(timeFreqParamID.getParamID(), this);
+    audioProcessor.apvts.addParameterListener(plotModeParamID.getParamID(), this);
 
-    plotGroup.addAndMakeVisible(timeVisualizer);
+    isFrequencyMode = audioProcessor.apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
+    plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
+
+    plotGroup.addChildComponent(timeVisualizer);
     plotGroup.addChildComponent(frequencyVisualizer);
+    timeVisualizer.setVisible(!isFrequencyMode);
+    frequencyVisualizer.setVisible(isFrequencyMode);
     addAndMakeVisible(plotGroup);
-
-    timeVisualizer.setVisible(true);
-    frequencyVisualizer.setVisible(false);
 
     optionsGroup.addAndMakeVisible(rangeKnob);
     optionsGroup.addAndMakeVisible(modeKnob);
@@ -96,32 +96,20 @@ void OscilloscopeAudioProcessorEditor::resized()
     verticalScaleKnob.setTopLeftPosition(verticalPositionKnob.getX(), verticalPositionKnob.getBottom() + 10);
     
     // Position the button
-    timeFreqButton.setTopLeftPosition(25, 450);
+    plotModeButton.setTopLeftPosition(25, 450);
 
     // Position the time visualizer
     frequencyVisualizer.setBounds(plotGroup.getLocalBounds());
     timeVisualizer.setBounds(plotGroup.getLocalBounds());
 }
 
-//void OscilloscopeAudioProcessorEditor::buttonClicked(juce::Button* button)
-//{
-//    if (button == &timeFreqButton)
-//    {
-//        bool showFrequency = timeFreqButton.getToggleState();
-//        timeFreqButton.setButtonText(showFrequency ? "Time" : "Frequency");
-//        
-//        timeVisualizer.setVisible(!showFrequency);
-//        frequencyVisualizer.setVisible(showFrequency);
-//    }
-//}
-
 void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& parameterID, float newValue)
 {
-    if (parameterID == timeFreqParamID.getParamID())
+    if (parameterID == plotModeParamID.getParamID())
     {
-        bool showFrequency = newValue > 0.5f;
-        timeVisualizer.setVisible(!showFrequency);
-        frequencyVisualizer.setVisible(showFrequency);
-        timeFreqButton.setButtonText(showFrequency ? "Time" : "Frequency");
+        bool isFrequencyMode = newValue > 0.5f; // 0=Time, 1=Frequency
+        timeVisualizer.setVisible(!isFrequencyMode);
+        frequencyVisualizer.setVisible(isFrequencyMode);
+        plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
     }
 }

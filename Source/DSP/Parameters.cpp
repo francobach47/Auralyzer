@@ -16,7 +16,7 @@ Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
 	castParameter(apvts, verticalScaleParamID, verticalScaleParam);
 	castParameter(apvts, rangeParamID, rangeParam);
 	castParameter(apvts, modeParamID, modeParam);
-	castParameter(apvts, timeFreqParamID, timeFreqParam);
+	castParameter(apvts, plotModeParamID, plotModeParam);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterLayout()
@@ -64,12 +64,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 	layout.add(std::make_unique<juce::AudioParameterChoice>(
 		modeParamID, "Mode", modeOptions, 0));
 
-	layout.add(std::make_unique<juce::AudioParameterBool>(
-		timeFreqParamID,
-		"Time/Frequency",
-		false,
-		juce::String(),
-		[](bool value, int) { return value ? "Frequency" : "Time"; }
+	juce::StringArray plotOptions = {
+		"Time",
+		"Frequency"
+	};
+	layout.add(std::make_unique<juce::AudioParameterChoice>(
+		plotModeParamID,
+		"Plot Option",
+		plotOptions,
+		0
 	));
 
 	return layout;
@@ -85,5 +88,5 @@ void Parameters::update() noexcept
 	modeValue = modeParam->getIndex();
 	rangeValue = rangeParam->getIndex();
 
-	timeFreq = timeFreqParam->get();
+	plotMode = plotModeParam->getIndex();
 }

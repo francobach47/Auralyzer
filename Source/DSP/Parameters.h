@@ -9,7 +9,7 @@ const juce::ParameterID verticalPositionParamID{ "verticalPosition", 1 };
 const juce::ParameterID verticalScaleParamID{ "verticalScale", 1 };
 const juce::ParameterID rangeParamID{ "range", 1 };
 const juce::ParameterID modeParamID{ "mode", 1 };
-const juce::ParameterID timeFreqParamID{ "timeFreq", 1 };
+const juce::ParameterID plotModeParamID{ "plotMode", 1 };
 const juce::ParameterID bypassParamID{ "bypass", 1 };
 
 class Parameters
@@ -29,8 +29,8 @@ public:
 	int   rangeValue         = 0;
 	int   modeValue          = 0;
 	
-	bool  timeFreq           = false;
-	juce::AudioParameterBool*   timeFreqParam;
+	int plotMode = 0;
+	juce::AudioParameterChoice* plotModeParam;
 
 private:
 

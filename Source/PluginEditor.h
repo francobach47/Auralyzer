@@ -23,7 +23,6 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    //void buttonClicked(juce::Button* button) override;
     void parameterChanged(const juce::String& parameterID, float newValue) override;
 
 private:
@@ -45,8 +44,9 @@ private:
 
     MainLookAndFeel mainLF;
 
-    juce::TextButton timeFreqButton;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> timeFreqAttachment;
+    juce::TextButton plotModeButton;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> plotModeAttachment;
+    bool isFrequencyMode;
 
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
 

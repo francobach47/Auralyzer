@@ -112,7 +112,7 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     auto numOutputChannels = getTotalNumOutputChannels();
     auto numInputChannels = getTotalNumInputChannels();
 
-    bool isFrequencyMode = apvts.getRawParameterValue(timeFreqParamID.getParamID())->load() > 0.5f;
+    bool isFrequencyMode = apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
 
     if (isFrequencyMode) {
         if (getActiveEditor() != nullptr) {
