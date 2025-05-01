@@ -51,6 +51,7 @@
     <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_serialport" showAllCode="1" useLocalCopy="1" useGlobalPath="0"/>
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
@@ -73,6 +74,7 @@
         <MODULEPATH id="juce_graphics" path="../../../../Documents/JUCE/modules"/>
         <MODULEPATH id="juce_gui_basics" path="../../../../Documents/JUCE/modules"/>
         <MODULEPATH id="juce_gui_extra" path="../../../../Documents/JUCE/modules"/>
+        <MODULEPATH id="juce_serialport" path="Modules\juce_serialport"/>
       </MODULEPATHS>
     </VS2022>
   </EXPORTFORMATS>
