@@ -2,7 +2,7 @@
 #include "PluginEditor.h"
 
 // TODO: Change into plugin parameter
-const juce::String kSerialPortName{ "\\\\.\\COM4" };
+const juce::String kSerialPortName{ "\\\\.\\COM5" };
 
 //==============================================================================
 OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
