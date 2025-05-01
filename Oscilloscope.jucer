@@ -7,6 +7,15 @@
       <FILE id="RQa0Fx" name="Lato-Medium.ttf" compile="0" resource="1" file="Assets/Lato-Medium.ttf"/>
     </GROUP>
     <GROUP id="{08E07DE2-9525-588F-4737-5655EBEAD69F}" name="Source">
+      <GROUP id="{EE4C89BC-6CA3-1A52-3F48-B138E2F07349}" name="Serial">
+        <FILE id="JY6Rpq" name="SerialDevice.cpp" compile="1" resource="0"
+              file="Source/Serial/SerialDevice.cpp"/>
+        <FILE id="Cyczez" name="SerialDevice.h" compile="0" resource="0" file="Source/Serial/SerialDevice.h"/>
+        <FILE id="ij8IuI" name="SerialPortListMonitor.cpp" compile="1" resource="0"
+              file="Source/Serial/SerialPortListMonitor.cpp"/>
+        <FILE id="PcCln2" name="SerialPortListMonitor.h" compile="0" resource="0"
+              file="Source/Serial/SerialPortListMonitor.h"/>
+      </GROUP>
       <GROUP id="{3BEDD452-2DA3-5752-2854-4E24FDC09C28}" name="UI">
         <FILE id="kfLQhm" name="FrequencyVisualizer.cpp" compile="1" resource="0"
               file="Source/UI/FrequencyVisualizer.cpp"/>
