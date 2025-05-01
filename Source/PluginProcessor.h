@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "DSP/Parameters.h"
 #include "DSP/FFT.h"
+#include "Serial/SerialDevice.h"
 
 class OscilloscopeAudioProcessor  : public juce::AudioProcessor
 {
@@ -59,11 +60,17 @@ public:
 
     Parameters params;
 
+    //// ESP32
+    SerialDevice& getSerialDevice() { return serialDevice; }
+
+
 private:
 
     juce::AudioBuffer<float> audioTimeBuffer;
 
     FFT frequencyAnalyzer;
+
+    SerialDevice serialDevice;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessor)

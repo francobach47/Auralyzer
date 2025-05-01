@@ -50,5 +50,9 @@ private:
 
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
 
+    //void parameterValueChanged(int parameterIndex, float newValue) override;
+    //void updateLedState();
+    //bool lastLedState = false;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessorEditor)
 };
