@@ -64,33 +64,14 @@ void SerialDevice::setLightColor(uint16_t color)
 	if (serialPortOutput.get() == nullptr)
 		return;
 
-	const std::vector<uint8_t> data{ kStartByte1, kStartByte2, Command::lightColor, 2,
-									  static_cast<uint8_t>(color & 0xff), static_cast<uint8_t>((color >> 8) & 0xff) };
+	const std::vector<uint8_t> data{ 
+        kStartByte1, kStartByte2, 
+        Command::lightColor, 2,
+        static_cast<uint8_t>(color & 0xff), 
+        static_cast<uint8_t>((color >> 8) & 0xff) };
+
 	serialPortOutput->write(data.data(), data.size());
 }
-
-void SerialDevice::setTempo(float tempoToSend)
-{
-    if (serialPortOutput.get() == nullptr)
-        return;
-
-    // NOTE: by sending an int instead of a float we don't have to worry about the receiving end storing floats in the same format as the send
-    const auto tempo_as_int{ static_cast<uint32_t>(tempoToSend * std::pow(10, kNumberOfDecimalPlaces)) };
-    const std::vector<uint8_t> data{ kStartByte1, kStartByte2, Command::tempo, 4,
-                                      static_cast<uint8_t>(tempo_as_int & 0xff), static_cast<uint8_t>((tempo_as_int >> 8) & 0xff),
-                                      static_cast<uint8_t>((tempo_as_int >> 16) & 0xff), static_cast<uint8_t>((tempo_as_int >> 24) & 0xff) };
-    serialPortOutput->write(data.data(), data.size());
-}
-
-//void SerialDevice::setChargingAlarmLevel(uint8_t alarmType, uint8_t chargeLevel)
-//{
-//    if (serialPortOutput.get() == nullptr)
-//        return;
-//
-//    const std::vector<uint8_t> data{ kStartByte1, kStartByte2, Command::chargingAlarmLevel, 2,
-//                                      alarmType, chargeLevel };
-//    serialPortOutput->write(data.data(), data.size());
-//}
 
 bool SerialDevice::openSerialPort(void)
 {
@@ -131,14 +112,6 @@ void SerialDevice::closeSerialPort(void)
 	}
 }
 
-void SerialDevice::handleTempoCommand(uint8_t* data, int dataSize)
-{
-    if (dataSize != 4)
-        return;
-    const auto tempoAsInt{ static_cast<uint32_t>(data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24)) };
-    tempo = static_cast<float>(tempoAsInt / std::pow(10, kNumberOfDecimalPlaces));
-}
-
 void SerialDevice::handleLightColorCommand(uint8_t* data, int dataSize)
 {
     if (dataSize != 2)
@@ -146,25 +119,11 @@ void SerialDevice::handleLightColorCommand(uint8_t* data, int dataSize)
     lightColor = static_cast<uint16_t>(data[0] + (data[1] << 8));
 }
 
-//void SerialDevice::handleChargingAlarmLevelCommand(uint8_t* data, int dataSize)
-//{
-//    if (dataSize != 2)
-//        return;
-//
-//    const auto alarmIndex{ data[0] };
-//    if (alarmIndex >= 2)
-//        return;
-//
-//    alarmLevels[alarmIndex] = data[1];
-//}
-
 void SerialDevice::handleCommand(uint8_t command, uint8_t* data, int dataSize)
 {
 	switch (command)
 	{
-	case Command::tempo: handleTempoCommand(data, dataSize); break;
 	case Command::lightColor: handleLightColorCommand(data, dataSize); break;
-	//case Command::chargingAlarmLevel: handleChargingAlarmLevelCommand(data, dataSize); break;
 	}
 }
 
@@ -336,23 +295,9 @@ void SerialDevice::timerCallback ()
         {
             juce::Logger::outputDebugString ("setting lightColor");
             setLightColor (100);
-            gTestCommandToExecute = Command::tempo;
+            gTestCommandToExecute = Command::lightColor;
         }
         break;
-        case Command::tempo:
-        {
-            juce::Logger::outputDebugString ("setting tempo");
-            setTempo (120.f);
-            gTestCommandToExecute = Command::chargingAlarmLevel;
-        }
-        break;
-        //case Command::chargingAlarmLevel:
-        //{
-        //    juce::Logger::outputDebugString ("setting ChargingAlarmLevel");
-        //    setChargingAlarmLevel(0, 50);
-        //    gTestCommandToExecute = Command::lightColor;
-        //}
-        //break;
     }
 }
 

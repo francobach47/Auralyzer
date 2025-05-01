@@ -12,10 +12,7 @@ public:
 	void close(void);
 	void init(juce::String newSerialPortName);
 
-	// NOTE: examples of API's which take different parameters
 	void setLightColor(uint16_t color);
-	void setTempo(float tempo);
-	//void setChargingAlarmLevel(uint8_t alarmType, uint8_t chargeLevel);
 
 private:
 	enum class ThreadTask
@@ -46,8 +43,6 @@ private:
 	void closeSerialPort(void);
 
 	void handleLightColorCommand(uint8_t* data, int dataSize);
-	void handleTempoCommand(uint8_t* data, int dataSize);
-	//void handleChargingAlarmLevelCommand(uint8_t* data, int dataSize);
 	void handleCommand(uint8_t command, uint8_t* data, int dataSize);
 
 	void run() override;
