@@ -20,9 +20,7 @@ enum Command
 {
 	none,
 	lightColor,
-	tempo,
-	chargingAlarmLevel,
-	endOfList
+    endOfList
 };
 const int kMaxPayloadSize = 20;
 Command gTestCommandToExecute{ Command::lightColor };
@@ -34,7 +32,7 @@ SerialDevice::SerialDevice()
 	startThread();
 
 	// NOTE: this timer is used to send commands for testing purposes
-	startTimer(500);
+	//startTimer(10);
 }
 
 SerialDevice::~SerialDevice()
@@ -285,19 +283,7 @@ void SerialDevice::run()
     }
 }
 
-void SerialDevice::timerCallback ()
+void SerialDevice::timerCallback()
 {
-    if (serialPortOutput.get () == nullptr)
-        return;
-    switch (gTestCommandToExecute)
-    {
-        case Command::lightColor:
-        {
-            juce::Logger::outputDebugString ("setting lightColor");
-            setLightColor (100);
-            gTestCommandToExecute = Command::lightColor;
-        }
-        break;
-    }
-}
 
+}

@@ -11,9 +11,7 @@
 #include "UI/LookAndFeel.h"
 
 class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
-                                          //public juce::Button::Listener
                                           public juce::AudioProcessorValueTreeState::Listener
-
 {
 public:
     OscilloscopeAudioProcessorEditor (OscilloscopeAudioProcessor&);
@@ -50,7 +48,6 @@ private:
 
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
 
-    //void parameterValueChanged(int parameterIndex, float newValue) override;
     //void updateLedState();
     //bool lastLedState = false;
 

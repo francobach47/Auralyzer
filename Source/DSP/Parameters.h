@@ -32,6 +32,8 @@ public:
 	int plotMode = 0;
 	juce::AudioParameterChoice* plotModeParam;
 
+	juce::AudioParameterChoice* rangeParam;
+
 private:
 
 	// Parameters definition
@@ -39,6 +41,5 @@ private:
 	juce::AudioParameterInt*    horizontalScaleParam;
 	juce::AudioParameterFloat*  verticalPositionParam;
 	juce::AudioParameterInt*    verticalScaleParam;
-	juce::AudioParameterChoice* rangeParam;
 	juce::AudioParameterChoice* modeParam;
 };

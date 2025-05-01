@@ -8,7 +8,9 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     : AudioProcessorEditor(&p), audioProcessor(p), timeVisualizer(p), frequencyVisualizer(p)
 {
     tooltipWindow->setMillisecondsBeforeTipAppears(1000);
-    
+ 
+    audioProcessor.apvts.addParameterListener(rangeParamID.getParamID(), this);
+
     plotModeButton.setButtonText("Time");
     plotModeButton.setClickingTogglesState(true);
     plotModeButton.setBounds(0, 0, 100, 30);
@@ -111,5 +113,21 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         timeVisualizer.setVisible(!isFrequencyMode);
         frequencyVisualizer.setVisible(isFrequencyMode);
         plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
+    }
+
+    static int lastRangeIndex = -1;
+    if (parameterID == rangeParamID.getParamID())
+    {
+        int rangeIndex = static_cast<int>(newValue * 4.0f);
+        rangeIndex = juce::jmin(3, rangeIndex);
+
+        if (rangeIndex != lastRangeIndex) {
+            lastRangeIndex = rangeIndex;
+
+            bool ledOn = (rangeIndex == 1 || rangeIndex == 3);
+            audioProcessor.getSerialDevice().setLightColor(ledOn ? 0xFFFF : 0x0000);
+
+            DBG("Rango cambiado a: " << rangeIndex << " | LED: " << (ledOn ? "ON" : "OFF"));
+        }
     }
 }
