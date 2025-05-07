@@ -6,7 +6,8 @@ RotaryKnob::RotaryKnob(
     const juce::String& text,
     juce::AudioProcessorValueTreeState& apvts,
     const juce::ParameterID& parameterID,
-    bool drawFromMiddle
+    bool drawFromMiddle,
+    bool isDiscrete
 ) : attachment(apvts, parameterID.getParamID(), slider)
 {
     slider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
@@ -28,6 +29,18 @@ RotaryKnob::RotaryKnob(
     slider.setRotaryParameters(1.25f * pi, 2.75f * pi, true);
 
     slider.getProperties().set("drawFromMiddle", drawFromMiddle);
+
+    // Obtener el rango original del parámetro
+    if (auto* param = apvts.getParameter(parameterID.getParamID()))
+    {
+        auto range = param->getNormalisableRange();
+
+        if (isDiscrete)
+            slider.setRange(range.start, range.end, range.interval); // paso fijo
+        else
+            slider.setRange(range.start, range.end); // sin paso
+    }
+
 }
 
 RotaryKnob::~RotaryKnob()

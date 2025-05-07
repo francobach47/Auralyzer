@@ -26,7 +26,7 @@ public:
 	int   horizontalScale    = 0;
 	float verticalPosition   = 0.0f;
 	int   verticalScale      = 0;
-	int   rangeValue         = 0;
+	int	  rangeValue	     = 0;
 	int   modeValue          = 0;
 	
 	int plotMode = 0;
