@@ -9,8 +9,7 @@ public:
         const juce::String& text,
         juce::AudioProcessorValueTreeState& apvts,
         const juce::ParameterID& parameterID,
-        bool drawFromMiddle = false,
-        bool isDiscrete = false // <- parametro para hacer continuo el pote
+        bool drawFromMiddle = false
     );
 
     ~RotaryKnob() override;
