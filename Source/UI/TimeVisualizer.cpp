@@ -13,7 +13,7 @@ TimeVisualizer::~TimeVisualizer()
 {
 }
 
-void TimeVisualizer::paint (juce::Graphics& g)
+void TimeVisualizer::paint(juce::Graphics& g)
 {
     juce::MessageManagerLock mmLock;
 
@@ -58,8 +58,8 @@ void TimeVisualizer::paint (juce::Graphics& g)
             sum += channelData[sample];
         }
 
-        float x = static_cast<float>(sample) / numSamples * getWidth();
-        float y = getHeight() / 2 + sum / numChannels * getHeight() / 2;
+        float x = ((static_cast<float>(sample) / numSamples) - 0.5f + horizontalOffset) * horizontalScale * getWidth() + getWidth() / 2.0f;
+        float y = getHeight() / 2 - (sum / numChannels * verticalGain * getHeight() / 2) - verticalOffset;
 
         if (sample == 0)
             path.startNewSubPath(x, y);

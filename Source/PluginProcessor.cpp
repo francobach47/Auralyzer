@@ -1,14 +1,18 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+// TODO: Change into plugin parameter
+const juce::String kSerialPortName{ "\\\\.\\COM5" };
+
 //==============================================================================
 OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
      : AudioProcessor (BusesProperties()
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), false)
                        ),
-    params(apvts)
+    params(apvts), serialDevice()
 {
+    serialDevice.init(kSerialPortName);
 }
 
 OscilloscopeAudioProcessor::~OscilloscopeAudioProcessor()
@@ -109,11 +113,19 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     juce::ScopedNoDenormals noDenormals;
     juce::ignoreUnused(midiMessages);
 
+    static bool lastFrequencyMode = false;
+    bool currentFrequencyMode = apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
+
+    if (currentFrequencyMode != lastFrequencyMode) {
+        lastFrequencyMode = currentFrequencyMode;
+        serialDevice.setLightColor(currentFrequencyMode ? 0xFFFF : 0x0000);
+    }
+
     auto numOutputChannels = getTotalNumOutputChannels();
     auto numInputChannels = getTotalNumInputChannels();
 
     bool isFrequencyMode = apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
-
+        
     if (isFrequencyMode) {
         if (getActiveEditor() != nullptr) {
             frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);

@@ -10,24 +10,22 @@
 #include "UI/RotaryKnob.h"
 #include "UI/LookAndFeel.h"
 
-class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
-                                          //public juce::Button::Listener
-                                          public juce::AudioProcessorValueTreeState::Listener
-
+class OscilloscopeAudioProcessorEditor : public juce::AudioProcessorEditor,
+    public juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    OscilloscopeAudioProcessorEditor (OscilloscopeAudioProcessor&);
+    OscilloscopeAudioProcessorEditor(OscilloscopeAudioProcessor&);
     ~OscilloscopeAudioProcessorEditor() override;
 
     //==============================================================================
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
 
     void parameterChanged(const juce::String& parameterID, float newValue) override;
 
 private:
     OscilloscopeAudioProcessor& audioProcessor;
-    
+
     TimeVisualizer timeVisualizer;
     FrequencyVisualizer frequencyVisualizer;
 
@@ -50,5 +48,5 @@ private:
 
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OscilloscopeAudioProcessorEditor)
 };

@@ -26,11 +26,13 @@ public:
 	int   horizontalScale    = 0;
 	float verticalPosition   = 0.0f;
 	int   verticalScale      = 0;
-	int   rangeValue         = 0;
+	int	  rangeValue	     = 0;
 	int   modeValue          = 0;
 	
 	int plotMode = 0;
 	juce::AudioParameterChoice* plotModeParam;
+
+	juce::AudioParameterChoice* rangeParam;
 
 private:
 
@@ -39,6 +41,5 @@ private:
 	juce::AudioParameterInt*    horizontalScaleParam;
 	juce::AudioParameterFloat*  verticalPositionParam;
 	juce::AudioParameterInt*    verticalScaleParam;
-	juce::AudioParameterChoice* rangeParam;
 	juce::AudioParameterChoice* modeParam;
 };

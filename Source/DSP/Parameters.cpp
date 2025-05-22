@@ -26,25 +26,25 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 	layout.add(std::make_unique<juce::AudioParameterFloat>(
 		horizontalPositionParamID,
 		"Hor Position",
-		juce::NormalisableRange<float> {-5.0f, 5.0f },
+		juce::NormalisableRange<float> {-5.0f, 5.0f, 0.01f },
 		0.0f
 	));
 	layout.add(std::make_unique<juce::AudioParameterInt>(
 		horizontalScaleParamID,
 		"Hor Scale",
-		-5.0f, 5.0f, 0.0f
+		-5, 5, 0
 	));
 
 	layout.add(std::make_unique<juce::AudioParameterFloat>(
 		verticalPositionParamID,
 		"Ver Position",
-		juce::NormalisableRange<float> {-5.0f, 5.0f },
+		juce::NormalisableRange<float> {-5.0f, 5.0f, 0.01f },
 		0.0f
 	));
 	layout.add(std::make_unique<juce::AudioParameterInt>(
 		verticalScaleParamID,
 		"Ver Scale",
-		-5.0f, 5.0f, 0.0f
+		-5, 5, 0
 	));
 
 	juce::StringArray rangeOptions = {

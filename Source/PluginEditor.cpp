@@ -8,7 +8,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     : AudioProcessorEditor(&p), audioProcessor(p), timeVisualizer(p), frequencyVisualizer(p)
 {
     tooltipWindow->setMillisecondsBeforeTipAppears(1000);
-    
+
     plotModeButton.setButtonText("Time");
     plotModeButton.setClickingTogglesState(true);
     plotModeButton.setBounds(0, 0, 100, 30);
@@ -19,6 +19,11 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
         audioProcessor.apvts, plotModeParamID.getParamID(), plotModeButton
     );
     audioProcessor.apvts.addParameterListener(plotModeParamID.getParamID(), this);
+
+    audioProcessor.apvts.addParameterListener(verticalScaleParamID.getParamID(), this);
+    audioProcessor.apvts.addParameterListener(verticalPositionParamID.getParamID(), this);
+    audioProcessor.apvts.addParameterListener(horizontalScaleParamID.getParamID(), this);
+    audioProcessor.apvts.addParameterListener(horizontalPositionParamID.getParamID(), this);
 
     isFrequencyMode = audioProcessor.apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
     plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
@@ -50,12 +55,19 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     setSize(1200, 490);
 
 #ifdef JUCE_OPENGL
-        openGLContext.attachTo(*getTopLevelComponent());
+    openGLContext.attachTo(*getTopLevelComponent());
 #endif     
 }
 
 OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
 {
+    audioProcessor.apvts.removeParameterListener(plotModeParamID.getParamID(), this);
+    audioProcessor.apvts.removeParameterListener(verticalScaleParamID.getParamID(), this);
+    audioProcessor.apvts.removeParameterListener(verticalPositionParamID.getParamID(), this);
+    audioProcessor.apvts.removeParameterListener(horizontalScaleParamID.getParamID(), this);
+    audioProcessor.apvts.removeParameterListener(horizontalPositionParamID.getParamID(), this);
+
+
     setLookAndFeel(nullptr);
 
 #ifdef JUCE_OPENGL
@@ -64,7 +76,7 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
 }
 
 //==============================================================================
-void OscilloscopeAudioProcessorEditor::paint (juce::Graphics& g)
+void OscilloscopeAudioProcessorEditor::paint(juce::Graphics& g)
 {
     g.fillAll(Colors::background);
 }
@@ -94,7 +106,7 @@ void OscilloscopeAudioProcessorEditor::resized()
     horizontalScaleKnob.setTopLeftPosition(horizontalPositionKnob.getX(), horizontalPositionKnob.getBottom() + 10);
     verticalPositionKnob.setTopLeftPosition(20, 20);
     verticalScaleKnob.setTopLeftPosition(verticalPositionKnob.getX(), verticalPositionKnob.getBottom() + 10);
-    
+
     // Position the button
     plotModeButton.setTopLeftPosition(25, 450);
 
@@ -111,5 +123,30 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         timeVisualizer.setVisible(!isFrequencyMode);
         frequencyVisualizer.setVisible(isFrequencyMode);
         plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
+    }
+
+    if (parameterID == verticalScaleParamID.getParamID())
+    {
+        float verticalGain = std::pow(2.0f, newValue); // escalar exponencial
+        timeVisualizer.setVerticalGain(verticalGain);
+    }
+
+    if (parameterID == verticalPositionParamID.getParamID())
+    {
+        float verticalOffset = newValue * (timeVisualizer.getHeight() / 2); // ajustar como prefieras
+        timeVisualizer.setVerticalOffset(verticalOffset);
+    }
+
+
+    if (parameterID == horizontalScaleParamID.getParamID())
+    {
+        float horizontalGain = std::pow(2.0f, newValue); // escalar exponencial
+        timeVisualizer.setHorizontalScale(horizontalGain);
+    }
+
+    if (parameterID == horizontalPositionParamID.getParamID())
+    {
+        float horizontalOffset = newValue * (timeVisualizer.getHeight() / 2); // ajustar como prefieras
+        timeVisualizer.setHorizontalOffset(horizontalOffset);
     }
 }
