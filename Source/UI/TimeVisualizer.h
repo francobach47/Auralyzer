@@ -31,7 +31,7 @@ private:
     float horizontalScale = 1.0f;
     float horizontalOffset = 0.0f;
 
-    float triggerLevel = 0.5f;     // Nivel para detectar flanco ascendente
+    float triggerLevel = 0.0f;     // Nivel para detectar flanco ascendente
     float triggerOffset = 0.0f;    // Desplazamiento horizontal en tiempo (0..1 relativo al buffer)
 
 

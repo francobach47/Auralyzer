@@ -24,6 +24,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     audioProcessor.apvts.addParameterListener(verticalPositionParamID.getParamID(), this);
     audioProcessor.apvts.addParameterListener(horizontalScaleParamID.getParamID(), this);
     audioProcessor.apvts.addParameterListener(horizontalPositionParamID.getParamID(), this);
+    //audioProcessor.apvts.addParameterListener(triggerLevelParamID.getParamID(), this);
 
     isFrequencyMode = audioProcessor.apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
     plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
@@ -42,6 +43,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     horizontalGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
     horizontalGroup.addAndMakeVisible(horizontalPositionKnob);
     horizontalGroup.addAndMakeVisible(horizontalScaleKnob);
+    //horizontalGroup.addAndMakeVisible(triggerLevelKnob);
     addAndMakeVisible(horizontalGroup);
 
     verticalGroup.setText("Vertical");
@@ -49,6 +51,20 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     verticalGroup.addAndMakeVisible(verticalPositionKnob);
     verticalGroup.addAndMakeVisible(verticalScaleKnob);
     addAndMakeVisible(verticalGroup);
+
+    // Forzar valores iniciales para visualización
+    float hScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(horizontalScaleParamID.getParamID()));
+    float hOffset = *audioProcessor.apvts.getRawParameterValue(horizontalPositionParamID.getParamID());
+    float vScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(verticalScaleParamID.getParamID()));
+    float vOffset = *audioProcessor.apvts.getRawParameterValue(verticalPositionParamID.getParamID());
+    //float trigLevel = *audioProcessor.apvts.getRawParameterValue(triggerLevelParamID.getParamID());
+
+    timeVisualizer.setHorizontalScale(hScale);
+    timeVisualizer.setHorizontalOffset(hOffset);
+    timeVisualizer.setVerticalGain(vScale);
+    timeVisualizer.setVerticalOffset(vOffset);
+   // timeVisualizer.setTriggerLevel(trigLevel);
+
 
     setLookAndFeel(&mainLF);
 
@@ -66,6 +82,7 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
     audioProcessor.apvts.removeParameterListener(verticalPositionParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(horizontalScaleParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(horizontalPositionParamID.getParamID(), this);
+    //audioProcessor.apvts.removeParameterListener(triggerLevelParamID.getParamID(), this);
 
 
     setLookAndFeel(nullptr);
@@ -104,6 +121,7 @@ void OscilloscopeAudioProcessorEditor::resized()
     modeKnob.setTopLeftPosition(rangeKnob.getRight() + 50, y);
     horizontalPositionKnob.setTopLeftPosition(20, 20);
     horizontalScaleKnob.setTopLeftPosition(horizontalPositionKnob.getX(), horizontalPositionKnob.getBottom() + 10);
+    //triggerLevelKnob.setTopLeftPosition(horizontalScaleKnob.getX(), horizontalScaleKnob.getBottom() + 10);
     verticalPositionKnob.setTopLeftPosition(20, 20);
     verticalScaleKnob.setTopLeftPosition(verticalPositionKnob.getX(), verticalPositionKnob.getBottom() + 10);
 
@@ -147,6 +165,11 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
     if (parameterID == horizontalPositionParamID.getParamID())
     {
         float horizontalOffset = newValue * (timeVisualizer.getHeight() / 2); // ajustar como prefieras
-        timeVisualizer.setHorizontalOffset(horizontalOffset);
+        timeVisualizer.setHorizontalOffset(newValue); // pasa directamente el valor del pote
     }
+
+    /*if (parameterID == triggerLevelParamID.getParamID())
+    {
+        timeVisualizer.setTriggerLevel(newValue);
+    }*/
 }
