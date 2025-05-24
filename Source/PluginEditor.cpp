@@ -43,7 +43,6 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     horizontalGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
     horizontalGroup.addAndMakeVisible(horizontalPositionKnob);
     horizontalGroup.addAndMakeVisible(horizontalScaleKnob);
-    //horizontalGroup.addAndMakeVisible(triggerLevelKnob);
     addAndMakeVisible(horizontalGroup);
 
     verticalGroup.setText("Vertical");
@@ -52,23 +51,27 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     verticalGroup.addAndMakeVisible(verticalScaleKnob);
     addAndMakeVisible(verticalGroup);
 
+    triggerGroup.setText("Trigger");
+    triggerGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
+    //triggerGroup.addAndMakeVisible(triggerLevelKnob);
+    addAndMakeVisible(triggerGroup);
+
     // Forzar valores iniciales para visualización
-    float hScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(horizontalScaleParamID.getParamID()));
-    float hOffset = *audioProcessor.apvts.getRawParameterValue(horizontalPositionParamID.getParamID());
-    float vScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(verticalScaleParamID.getParamID()));
-    float vOffset = *audioProcessor.apvts.getRawParameterValue(verticalPositionParamID.getParamID());
+    //float hScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(horizontalScaleParamID.getParamID()));
+    //float hOffset = *audioProcessor.apvts.getRawParameterValue(horizontalPositionParamID.getParamID());
+    //float vScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(verticalScaleParamID.getParamID()));
+    //float vOffset = *audioProcessor.apvts.getRawParameterValue(verticalPositionParamID.getParamID());
     //float trigLevel = *audioProcessor.apvts.getRawParameterValue(triggerLevelParamID.getParamID());
 
-    timeVisualizer.setHorizontalScale(hScale);
-    timeVisualizer.setHorizontalOffset(hOffset);
-    timeVisualizer.setVerticalGain(vScale);
-    timeVisualizer.setVerticalOffset(vOffset);
+    //timeVisualizer.setHorizontalScale(hScale);
+    //timeVisualizer.setHorizontalOffset(hOffset);
+    //timeVisualizer.setVerticalGain(vScale);
+    //timeVisualizer.setVerticalOffset(vOffset);
    // timeVisualizer.setTriggerLevel(trigLevel);
-
 
     setLookAndFeel(&mainLF);
 
-    setSize(1200, 490);
+    setSize(1350, 490);
 
 #ifdef JUCE_OPENGL
     openGLContext.attachTo(*getTopLevelComponent());
@@ -83,7 +86,6 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
     audioProcessor.apvts.removeParameterListener(horizontalScaleParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(horizontalPositionParamID.getParamID(), this);
     //audioProcessor.apvts.removeParameterListener(triggerLevelParamID.getParamID(), this);
-
 
     setLookAndFeel(nullptr);
 
@@ -112,18 +114,21 @@ void OscilloscopeAudioProcessorEditor::resized()
 
     // Position the groups
     plotGroup.setBounds(25, y, plotSectionWidth, plotSectionHeight);
-    optionsGroup.setBounds(plotSectionWidth + plotBoxesSpace, y, (verhorSectionWidth * 2) + space, optionsHeight);
+    optionsGroup.setBounds(plotSectionWidth + plotBoxesSpace, y, (verhorSectionWidth * 3) + space * 2, optionsHeight);
     horizontalGroup.setBounds(plotSectionWidth + plotBoxesSpace, y + optionsHeight + space, verhorSectionWidth, verhorSectionHeight);
     verticalGroup.setBounds(horizontalGroup.getRight() + space, y + optionsHeight + space, verhorSectionWidth, verhorSectionHeight);
+    triggerGroup.setBounds(verticalGroup.getRight() + space, y + optionsHeight + space, verhorSectionWidth, verhorSectionHeight);
 
     // Position the knobs inside the groups
-    rangeKnob.setTopLeftPosition(20, y);
-    modeKnob.setTopLeftPosition(rangeKnob.getRight() + 50, y);
+    // TO DO: Terminar de acomodar las perillas de rango y modo
+    rangeKnob.setTopLeftPosition(height - 20, y);
+    modeKnob.setTopLeftPosition((height * 2 + space) - 20, y);
+
     horizontalPositionKnob.setTopLeftPosition(20, 20);
     horizontalScaleKnob.setTopLeftPosition(horizontalPositionKnob.getX(), horizontalPositionKnob.getBottom() + 10);
-    //triggerLevelKnob.setTopLeftPosition(horizontalScaleKnob.getX(), horizontalScaleKnob.getBottom() + 10);
     verticalPositionKnob.setTopLeftPosition(20, 20);
     verticalScaleKnob.setTopLeftPosition(verticalPositionKnob.getX(), verticalPositionKnob.getBottom() + 10);
+    //triggerLevelKnob.setTopLeftPosition(horizontalScaleKnob.getX(), horizontalScaleKnob.getBottom() + 10);
 
     // Position the button
     plotModeButton.setTopLeftPosition(25, 450);
