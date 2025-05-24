@@ -31,9 +31,8 @@ private:
     float horizontalScale = 1.0f;
     float horizontalOffset = 0.0f;
 
-    float triggerLevel = 0.0f;     // Nivel para detectar flanco ascendente
-    float triggerOffset = 0.0f;    // Desplazamiento horizontal en tiempo (0..1 relativo al buffer)
-
+    float triggerLevel = 0.0f;
+    float triggerOffset = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimeVisualizer)
 };

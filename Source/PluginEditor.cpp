@@ -24,7 +24,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     audioProcessor.apvts.addParameterListener(verticalPositionParamID.getParamID(), this);
     audioProcessor.apvts.addParameterListener(horizontalScaleParamID.getParamID(), this);
     audioProcessor.apvts.addParameterListener(horizontalPositionParamID.getParamID(), this);
-    //audioProcessor.apvts.addParameterListener(triggerLevelParamID.getParamID(), this);
+    audioProcessor.apvts.addParameterListener(triggerLevelParamID.getParamID(), this);
 
     isFrequencyMode = audioProcessor.apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
     plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
@@ -53,7 +53,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 
     triggerGroup.setText("Trigger");
     triggerGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
-    //triggerGroup.addAndMakeVisible(triggerLevelKnob);
+    triggerGroup.addAndMakeVisible(triggerLevelKnob);
     addAndMakeVisible(triggerGroup);
 
     // Forzar valores iniciales para visualización
@@ -71,7 +71,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 
     setLookAndFeel(&mainLF);
 
-    setSize(1350, 490);
+    setSize(1325, 490);
 
 #ifdef JUCE_OPENGL
     openGLContext.attachTo(*getTopLevelComponent());
@@ -85,7 +85,7 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
     audioProcessor.apvts.removeParameterListener(verticalPositionParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(horizontalScaleParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(horizontalPositionParamID.getParamID(), this);
-    //audioProcessor.apvts.removeParameterListener(triggerLevelParamID.getParamID(), this);
+    audioProcessor.apvts.removeParameterListener(triggerLevelParamID.getParamID(), this);
 
     setLookAndFeel(nullptr);
 
@@ -128,7 +128,7 @@ void OscilloscopeAudioProcessorEditor::resized()
     horizontalScaleKnob.setTopLeftPosition(horizontalPositionKnob.getX(), horizontalPositionKnob.getBottom() + 10);
     verticalPositionKnob.setTopLeftPosition(20, 20);
     verticalScaleKnob.setTopLeftPosition(verticalPositionKnob.getX(), verticalPositionKnob.getBottom() + 10);
-    //triggerLevelKnob.setTopLeftPosition(horizontalScaleKnob.getX(), horizontalScaleKnob.getBottom() + 10);
+    triggerLevelKnob.setTopLeftPosition(20, 20);
 
     // Position the button
     plotModeButton.setTopLeftPosition(25, 450);

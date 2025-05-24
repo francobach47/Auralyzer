@@ -40,7 +40,7 @@ private:
     RotaryKnob verticalScaleKnob{ "Scale", audioProcessor.apvts, verticalScaleParamID, true };
     RotaryKnob rangeKnob{ "Range", audioProcessor.apvts, rangeParamID, false };
     RotaryKnob modeKnob{ "Mode", audioProcessor.apvts, modeParamID, false };
-    //RotaryKnob triggerLevelKnob{ "Trig Level", audioProcessor.apvts, triggerLevelParamID, true };
+    RotaryKnob triggerLevelKnob{ "Level", audioProcessor.apvts, triggerLevelParamID, true };
 
     MainLookAndFeel mainLF;
 

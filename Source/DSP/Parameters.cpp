@@ -17,7 +17,7 @@ Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
 	castParameter(apvts, rangeParamID, rangeParam);
 	castParameter(apvts, modeParamID, modeParam);
 	castParameter(apvts, plotModeParamID, plotModeParam);
-	//castParameter(apvts, triggerLevelParamID, triggerLevelParam);
+	castParameter(apvts, triggerLevelParamID, triggerLevelParam);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterLayout()
@@ -76,12 +76,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 		0
 	));
 
-	/*layout.add(std::make_unique<juce::AudioParameterFloat>(
+	layout.add(std::make_unique<juce::AudioParameterFloat>(
 		triggerLevelParamID,
 		"Trigger Level",
 		juce::NormalisableRange<float>{ -1.0f, 1.0f, 0.01f },
 		0.0f
-	));*/
+	));
 
 	return layout;
 }
@@ -97,7 +97,7 @@ void Parameters::update() noexcept
 	modeValue = modeParam->getIndex();
 	rangeValue = rangeParam->getIndex();
 
-	//triggerLevel = triggerLevelParam->get();
+	triggerLevel = triggerLevelParam->get();
 
 	plotMode = plotModeParam->getIndex();
 }
