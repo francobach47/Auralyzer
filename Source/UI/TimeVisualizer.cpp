@@ -1,6 +1,5 @@
 #include <JuceHeader.h>
 #include "TimeVisualizer.h"
-#include "LookAndFeel.h"
 
 TimeVisualizer::TimeVisualizer(OscilloscopeAudioProcessor& p)
     : processor(p)
@@ -32,30 +31,12 @@ void TimeVisualizer::paint(juce::Graphics& g)
     g.setColour(Colors::PlotSection::outline);
     g.drawRoundedRectangle(bounds, cornerRadius, borderThickness);
 
+    const auto& buffer = processor.getAudioBuffer();
     const int numChannels = processor.getTotalNumInputChannels();
     const int numSamples = processor.getAudioBuffer().getNumSamples();
-    const float* input = processor.getAudioBuffer().getReadPointer(0); // canal 0
 
-    // --- Filtro pasa bajos simple
-    std::vector<float> filtered(numSamples, 0.0f);
-    filtered[0] = input[0];
-    for (int i = 1; i < numSamples - 1; ++i)
-        filtered[i] = (input[i - 1] + input[i] + input[i + 1]) / 3.0f;
-
-    // --- Buscar trigger a partir de offset
-    int triggerStart = juce::jlimit(1, numSamples - 2, int(triggerOffset * numSamples));
-    int triggerSample = triggerStart;
-    for (int i = triggerStart + 1; i < numSamples; ++i)
-    {
-        if (filtered[i - 1] < triggerLevel && filtered[i] >= triggerLevel)
-        {
-            triggerSample = i;
-            break;
-        }
-    }
-
-    // --- Determinar cuántas muestras mostrar según el zoom (horizontalScale)
-    int displaySamples = juce::jlimit(16, numSamples - triggerSample, int(numSamples / horizontalScale));
+    int triggerSample = trigger.findTriggerPoint(buffer, 0);
+    int displaySamples = juce::jlimit(16, numSamples - triggerSample, static_cast<int>(numSamples / horizontalScale));
 
     juce::Path path;
     for (int i = 0; i < displaySamples; ++i)
@@ -65,9 +46,9 @@ void TimeVisualizer::paint(juce::Graphics& g)
 
         float sum = 0.0f;
         for (int c = 0; c < numChannels; ++c)
-            sum += processor.getAudioBuffer().getSample(c, sampleIndex);
+            sum += buffer.getSample(c, sampleIndex);
 
-        float x = ((float)i / displaySamples + horizontalOffset) * getWidth(); // offset en coordenadas
+        float x = ((float)i / displaySamples + horizontalOffset) * getWidth();
         float y = getHeight() / 2.0f - (sum / numChannels * verticalGain * getHeight() / 2.0f) - verticalOffset;
 
         if (i == 0)

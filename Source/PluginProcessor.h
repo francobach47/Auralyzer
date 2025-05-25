@@ -4,6 +4,7 @@
 #include "DSP/Parameters.h"
 #include "DSP/FFT.h"
 #include "Serial/SerialDevice.h"
+#include "DSP/Trigger.h"
 
 class OscilloscopeAudioProcessor  : public juce::AudioProcessor
 {
@@ -61,7 +62,6 @@ public:
     Parameters params;
 
 private:
-
     juce::AudioBuffer<float> audioTimeBuffer;
 
     FFT frequencyAnalyzer;

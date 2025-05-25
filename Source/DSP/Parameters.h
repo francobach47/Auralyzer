@@ -30,8 +30,8 @@ public:
 	int	  rangeValue	     = 0;
 	int   modeValue          = 0;
 
-	float triggerLevel = 0.0f;
 	juce::AudioParameterFloat* triggerLevelParam;
+	float triggerLevel = 0.0f;
 	
 	int plotMode = 0;
 	juce::AudioParameterChoice* plotModeParam;

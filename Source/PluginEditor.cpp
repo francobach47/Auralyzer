@@ -56,7 +56,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     triggerGroup.addAndMakeVisible(triggerLevelKnob);
     addAndMakeVisible(triggerGroup);
 
-    // Forzar valores iniciales para visualización
+    // Forzar valores iniciales para visualizacin
     //float hScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(horizontalScaleParamID.getParamID()));
     //float hOffset = *audioProcessor.apvts.getRawParameterValue(horizontalPositionParamID.getParamID());
     //float vScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(verticalScaleParamID.getParamID()));
@@ -173,8 +173,8 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         timeVisualizer.setHorizontalOffset(newValue); // pasa directamente el valor del pote
     }
 
-    /*if (parameterID == triggerLevelParamID.getParamID())
-    {
-        timeVisualizer.setTriggerLevel(newValue);
-    }*/
+    //if (parameterID == triggerLevelParamID.getParamID())
+    //{
+    //    timeVisualizer.setTriggerLevel(newValue);
+    //}
 }
