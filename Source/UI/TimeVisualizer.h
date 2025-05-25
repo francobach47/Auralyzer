@@ -6,7 +6,7 @@
 #include "LookAndFeel.h"
 
 class TimeVisualizer : public juce::Component,
-    public juce::Timer
+                       public juce::Timer
 {
 public:
     TimeVisualizer(OscilloscopeAudioProcessor& processor);
@@ -21,6 +21,8 @@ public:
     void setHorizontalScale(float scale) { horizontalScale = scale; }
     void setHorizontalOffset(float offset) { horizontalOffset = offset; }
     
+   void updateTriggerParameters(float level, float offset, bool filterEnabled);
+
 private:
     OscilloscopeAudioProcessor& processor;
     Trigger trigger;

@@ -11,7 +11,7 @@
 #include "UI/LookAndFeel.h"
 
 class OscilloscopeAudioProcessorEditor : public juce::AudioProcessorEditor,
-    public juce::AudioProcessorValueTreeState::Listener
+                                         public juce::AudioProcessorValueTreeState::Listener
 {
 public:
     OscilloscopeAudioProcessorEditor(OscilloscopeAudioProcessor&);

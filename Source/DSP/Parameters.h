@@ -38,6 +38,8 @@ public:
 
 	juce::AudioParameterChoice* rangeParam;
 
+	float getTriggerLevel() const noexcept;
+
 private:
 
 	// Parameters definition

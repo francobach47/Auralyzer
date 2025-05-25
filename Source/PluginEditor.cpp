@@ -150,31 +150,26 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
 
     if (parameterID == verticalScaleParamID.getParamID())
     {
-        float verticalGain = std::pow(2.0f, newValue); // escalar exponencial
+        float verticalGain = std::pow(2.0f, newValue);
         timeVisualizer.setVerticalGain(verticalGain);
     }
 
     if (parameterID == verticalPositionParamID.getParamID())
     {
-        float verticalOffset = newValue * (timeVisualizer.getHeight() / 2); // ajustar como prefieras
+        float verticalOffset = newValue * (timeVisualizer.getHeight() / 2);
         timeVisualizer.setVerticalOffset(verticalOffset);
     }
 
 
     if (parameterID == horizontalScaleParamID.getParamID())
     {
-        float horizontalGain = std::pow(2.0f, newValue); // escalar exponencial
+        float horizontalGain = std::pow(2.0f, newValue);
         timeVisualizer.setHorizontalScale(horizontalGain);
     }
 
     if (parameterID == horizontalPositionParamID.getParamID())
     {
-        float horizontalOffset = newValue * (timeVisualizer.getHeight() / 2); // ajustar como prefieras
-        timeVisualizer.setHorizontalOffset(newValue); // pasa directamente el valor del pote
+        float horizontalOffset = newValue * (timeVisualizer.getHeight() / 2);
+        timeVisualizer.setHorizontalOffset(newValue);
     }
-
-    //if (parameterID == triggerLevelParamID.getParamID())
-    //{
-    //    timeVisualizer.setTriggerLevel(newValue);
-    //}
 }

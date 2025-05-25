@@ -61,6 +61,8 @@ public:
 
     Parameters params;
 
+    float getTriggerLevel() const { return params.getTriggerLevel(); }
+
 private:
     juce::AudioBuffer<float> audioTimeBuffer;
 

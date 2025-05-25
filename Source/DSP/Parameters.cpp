@@ -101,3 +101,8 @@ void Parameters::update() noexcept
 
 	plotMode = plotModeParam->getIndex();
 }
+
+float Parameters::getTriggerLevel() const noexcept
+{
+	return triggerLevelParam != nullptr ? triggerLevelParam->get() : triggerLevel;
+}

@@ -6,6 +6,7 @@ TimeVisualizer::TimeVisualizer(OscilloscopeAudioProcessor& p)
 {
     setOpaque(true);
     startTimerHz(30);
+    //updateTriggerParameters(0.0f, 0.5f, false);
 }
 
 TimeVisualizer::~TimeVisualizer()
@@ -64,6 +65,17 @@ void TimeVisualizer::paint(juce::Graphics& g)
 
 void TimeVisualizer::timerCallback()
 {
+    float triggerLevel = processor.getTriggerLevel();
+    //float currentOffset = processor.triggerOffsetParam->get()
+    //bool currentFilterEnabled = processor.filterEnabledParam->get() > 0.5f;
+
+    updateTriggerParameters(triggerLevel, 0.0f, false); // change
+
     if (isVisible())
         repaint();
+}
+
+void TimeVisualizer::updateTriggerParameters(float level, float offset, bool filterEnabled)
+{
+    trigger.setParameters(level, offset, filterEnabled);
 }
