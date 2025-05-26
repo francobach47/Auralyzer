@@ -60,6 +60,21 @@ void TimeVisualizer::paint(juce::Graphics& g)
 
     g.setColour(Colors::PlotSection::timeResponse);
     g.strokePath(path, juce::PathStrokeType(2.0f));
+
+    float triggerY = getHeight() / 2.0f
+        - (currentTriggerLevel * verticalGain * getHeight() / 2.0f)
+        - verticalOffset;
+    const float x0 = bounds.getX() + 6.0f;      // pequeño margen
+    const float size = 8.0f;                     // ancho del triángulo
+
+    juce::Path tri;
+    tri.addTriangle(x0 + size, triggerY,   
+        x0, triggerY - size * 0.6f,   // base arriba
+        x0, triggerY + size * 0.6f);  // base abajo
+
+
+    g.setColour(Colors::PlotSection::triggerMarker);  // añade este color a tu LookAndFeel
+    g.fillPath(tri);
 }
 
 
@@ -71,11 +86,12 @@ void TimeVisualizer::timerCallback()
 
     updateTriggerParameters(triggerLevel, 0.0f, false); // change
 
-    if (isVisible())
+    if (isVisible()) 
         repaint();
 }
 
 void TimeVisualizer::updateTriggerParameters(float level, float offset, bool filterEnabled)
 {
+    currentTriggerLevel = juce::jlimit(-1.0f, 1.0f, level);
     trigger.setParameters(level, offset, filterEnabled);
 }

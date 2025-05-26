@@ -56,18 +56,16 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     triggerGroup.addAndMakeVisible(triggerLevelKnob);
     addAndMakeVisible(triggerGroup);
 
-    // Forzar valores iniciales para visualizacin
-    //float hScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(horizontalScaleParamID.getParamID()));
-    //float hOffset = *audioProcessor.apvts.getRawParameterValue(horizontalPositionParamID.getParamID());
-    //float vScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(verticalScaleParamID.getParamID()));
-    //float vOffset = *audioProcessor.apvts.getRawParameterValue(verticalPositionParamID.getParamID());
-    //float trigLevel = *audioProcessor.apvts.getRawParameterValue(triggerLevelParamID.getParamID());
+    // Forzar valores iniciales para visualizacion
+    float hScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(horizontalScaleParamID.getParamID()));
+    float hOffset = *audioProcessor.apvts.getRawParameterValue(horizontalPositionParamID.getParamID());
+    float vScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(verticalScaleParamID.getParamID()));
+    float vOffset = *audioProcessor.apvts.getRawParameterValue(verticalPositionParamID.getParamID());
 
-    //timeVisualizer.setHorizontalScale(hScale);
-    //timeVisualizer.setHorizontalOffset(hOffset);
-    //timeVisualizer.setVerticalGain(vScale);
-    //timeVisualizer.setVerticalOffset(vOffset);
-   // timeVisualizer.setTriggerLevel(trigLevel);
+    timeVisualizer.setHorizontalScale(hScale);
+    timeVisualizer.setHorizontalOffset(hOffset);
+    timeVisualizer.setVerticalGain(vScale);
+    timeVisualizer.setVerticalOffset(vOffset);
 
     setLookAndFeel(&mainLF);
 
