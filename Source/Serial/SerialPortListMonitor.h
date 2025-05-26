@@ -9,11 +9,12 @@ class SerialPortListMonitor : public juce::Thread
 public:
 	SerialPortListMonitor(void);
 	~SerialPortListMonitor(void);
-	
+
 	bool hasListChanged(void);
 	juce::StringPairArray getSerialPortList(void);
 	void setSleepTime(int sleepTime);
 	void run() override;
+	std::function<void(const juce::StringPairArray&)> onPortListChanged;
 
 private:
 	juce::CriticalSection dataLock;

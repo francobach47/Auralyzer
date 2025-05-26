@@ -58,6 +58,10 @@ public:
         *this, nullptr, "Parameters", Parameters::createParameterLayout()
     };
 
+    // Serial Communication
+    SerialDevice& getSerialDevice() { return serialDevice; }
+    const SerialDevice& getSerialDevice() const { return serialDevice; }
+
     Parameters params;
 
 private:

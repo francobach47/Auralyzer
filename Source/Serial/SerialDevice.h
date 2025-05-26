@@ -14,6 +14,16 @@ public:
 
 	void setLightColor(uint16_t color);
 
+	// NUEVOS prototipos
+	void setMode(uint8_t mode);   
+	void setRange(uint8_t idx);
+
+	juce::String getCurrentPortName() const { return serialPortName; }
+	void resetPort();  // cerrar puerto y borrar el nombre
+
+	// NOTE: included but not used in this example. shows how to monitor for serial port device list changes
+	SerialPortListMonitor serialPortListMonitor;
+
 private:
 	enum class ThreadTask
 	{
@@ -36,8 +46,6 @@ private:
 	float tempo{ 60.0f };
 	uint8_t alarmLevels[2]{ 0,0 };
 
-	// NOTE: included but not used in this example. shows how to monitor for serial port device list changes
-	SerialPortListMonitor serialPortListMonitor;
 
 	bool openSerialPort(void);
 	void closeSerialPort(void);

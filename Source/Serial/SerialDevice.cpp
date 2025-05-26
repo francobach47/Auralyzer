@@ -1,6 +1,6 @@
 #include "SerialDevice.h"
 
-#define kBPS 9600
+#define kBPS 115200
 const auto kNumberOfDecimalPlaces{ 4 };
 
 enum ParseState
@@ -20,6 +20,8 @@ enum Command
 {
 	none,
 	lightColor,
+    setMode,
+    setRange,
     endOfList
 };
 const int kMaxPayloadSize = 20;
@@ -69,6 +71,33 @@ void SerialDevice::setLightColor(uint16_t color)
         static_cast<uint8_t>((color >> 8) & 0xff) };
 
 	serialPortOutput->write(data.data(), data.size());
+}
+
+void SerialDevice::setMode(uint8_t mode)
+{
+    if (serialPortOutput == nullptr) 
+        return;
+
+    const std::vector<uint8_t> data{
+        kStartByte1, kStartByte2,
+        Command::setMode, 1,
+        mode                     // 0 = AC, 1 = DC
+    };
+    serialPortOutput->write(data.data(), data.size());
+}
+
+void SerialDevice::setRange(uint8_t idx)
+{
+    jassert(idx < 4);
+    if (serialPortOutput == nullptr) 
+        return;
+
+    const std::vector<uint8_t> data{
+        kStartByte1, kStartByte2,
+        Command::setRange, 1,
+        idx                      // 0-3
+    };
+    serialPortOutput->write(data.data(), data.size());
 }
 
 bool SerialDevice::openSerialPort(void)

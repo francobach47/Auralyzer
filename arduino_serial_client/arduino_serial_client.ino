@@ -1,9 +1,16 @@
 #include <HardwareSerial.h>
 
-// Definición del pin del LED - CAMBIA ESTO AL PIN QUE USES EN TU ESP32
-const int LED_PIN = 2;  // Pin donde tienes conectado el LED
+// ---------- Pines de salida -----------------------------------
+const int LED_PIN  = 2;    // led testigo (sin cambios)
+const int PIN_AC   = 25;   // MODO – AC
+const int PIN_DC   = 26;   // MODO – DC
+const int PIN_R0   = 27;   // RANGO 0
+const int PIN_R1   = 32;   // RANGO 1
+const int PIN_R2   = 33;   // RANGO 2
+const int PIN_R3   = 14;   // RANGO 3
+// --------------------------------------------------------------
 
-// Estados para el parsing de comandos
+// ---------- Parser y comandos (sin cambios salvo los nuevos) ---
 enum ParseState {
   waitingForStartByte1,
   waitingForStartByte2,
@@ -13,129 +20,178 @@ enum ParseState {
 };
 ParseState parseState = waitingForStartByte1;
 
-// Bytes de inicio y comandos
 const int kStartByte1 = '*';
 const int kStartByte2 = '~';
+
 enum Command {
     none,
-    lightColor,
-    tempo,
-    chargingAlarmLevel,
+    lightColor,   // se mantiene para el LED
+    setMode,   // NUEVO  (payload 1 byte: 0=AC,1=DC)
+    setRange,   // NUEVO  (payload 1 byte: 0-3)
+    // los antiguos 'tempo' y 'chargingAlarmLevel' no se usan ahora
     endOfList
 };
 
-// Buffer para datos seriales
-const int kMaxPayloadSize = 100;
-uint8_t gSerialDataBuffer[kMaxPayloadSize];
+const int kMaxPayloadSize      = 100;
+uint8_t   gSerialDataBuffer[kMaxPayloadSize];
 
-// Variables para el comando actual
 const int kMaxCommandDataBytes = 4;
-uint8_t gCommandData[kMaxCommandDataBytes];
-uint8_t gCommand = Command::none;
-uint8_t gCommandDataSize = 0;
-uint8_t gCommandDataCount = 0;
+uint8_t   gCommandData[kMaxCommandDataBytes];
+uint8_t   gCommand          = Command::none;
+uint8_t   gCommandDataSize  = 0;
+uint8_t   gCommandDataCount = 0;
 
-// Estado del LED
+// ---------- Estado del LED interno -----------------------------
 bool currentLedState = false;
 
-void handleLightColorCommand(uint8_t* commandData, const int commandDataSize) {
-    if (commandDataSize != 2) return;
-    
+// ---------- Helpers de salidas ---------------------------------
+void activarModo(uint8_t m)               // 0 = AC, 1 = DC
+{
+    digitalWrite(PIN_AC, m == 0 ? HIGH : LOW);
+    digitalWrite(PIN_DC, m == 1 ? HIGH : LOW);
+}
+
+void activarRango(uint8_t idx)            // 0-3
+{
+    digitalWrite(PIN_R0, LOW);
+    digitalWrite(PIN_R1, LOW);
+    digitalWrite(PIN_R2, LOW);
+    digitalWrite(PIN_R3, LOW);
+
+    switch (idx)
+    {
+        case 0: digitalWrite(PIN_R0, HIGH); break;
+        case 1: digitalWrite(PIN_R1, HIGH); break;
+        case 2: digitalWrite(PIN_R2, HIGH); break;
+        case 3: digitalWrite(PIN_R3, HIGH); break;
+    }
+}
+
+// ---------- Handlers de comandos -------------------------------
+void handleLightColorCommand(uint8_t* commandData, const int sz)
+{
+    if (sz != 2) return;
+
     uint16_t colorValue = (commandData[1] << 8) | commandData[0];
     bool newLedState = (colorValue > 0);
-    
-    if(newLedState != currentLedState) {
+
+    if (newLedState != currentLedState)
+    {
         currentLedState = newLedState;
         digitalWrite(LED_PIN, currentLedState ? HIGH : LOW);
-        
+
         Serial.print("LED cambiado a: ");
         Serial.println(currentLedState ? "ON" : "OFF");
     }
 }
 
-void processCommand(uint8_t command, uint8_t* commandData, const int commandDataSize) {
-    switch (command) {
-        case Command::lightColor: 
-            handleLightColorCommand(commandData, commandDataSize); 
-            break;
-        // Puedes añadir más comandos aquí si los necesitas
-        default: 
-            break;
+void handleSetMode(uint8_t* commandData, const int sz)
+{
+    if (sz != 1 || commandData[0] > 1) return;
+    activarModo(commandData[0]);
+}
+
+void handleSetRange(uint8_t* commandData, const int sz)
+{
+    if (sz != 1 || commandData[0] > 3) return;
+    activarRango(commandData[0]);
+}
+
+void processCommand(uint8_t command, uint8_t* data, const int sz)
+{
+    switch (command)
+    {
+        case Command::lightColor: handleLightColorCommand(data, sz); break;
+        case Command::setMode   : handleSetMode        (data, sz);   break;
+        case Command::setRange  : handleSetRange       (data, sz);   break;
+        default: break;
     }
 }
 
-void parseInputData(const uint8_t* data, const int dataSize) {
-    auto resetParseState = []() {
+// ---------- Parser (sin cambios) -------------------------------
+void parseInputData(const uint8_t* data, const int dataSize)
+{
+    auto resetParseState = []()
+    {
         gCommand = Command::none;
         gCommandDataSize = 0;
         gCommandDataCount = 0;
         parseState = ParseState::waitingForStartByte1;
     };
 
-    for (int dataIndex = 0; dataIndex < dataSize; ++dataIndex) {
-        const uint8_t dataByte = data[dataIndex];
-        
-        switch(parseState) {
-            case ParseState::waitingForStartByte1:
-                if (dataByte == kStartByte1)
-                    parseState = ParseState::waitingForStartByte2;
+    for (int i = 0; i < dataSize; ++i)
+    {
+        const uint8_t byteIn = data[i];
+
+        switch (parseState)
+        {
+            case waitingForStartByte1:
+                if (byteIn == kStartByte1) parseState = waitingForStartByte2;
                 break;
-                
-            case ParseState::waitingForStartByte2:
-                if (dataByte == kStartByte2)
-                    parseState = ParseState::waitingForCommand;
-                else
-                    resetParseState();
+
+            case waitingForStartByte2:
+                if (byteIn == kStartByte2) parseState = waitingForCommand;
+                else resetParseState();
                 break;
-                
-            case ParseState::waitingForCommand:
-                if (dataByte >= Command::none && dataByte < Command::endOfList) {
-                    gCommand = dataByte;
-                    parseState = ParseState::waitingForCommandDataSize;
-                } else {
-                    resetParseState();
+
+            case waitingForCommand:
+                if (byteIn < Command::endOfList)
+                {
+                    gCommand = byteIn;
+                    parseState = waitingForCommandDataSize;
                 }
+                else resetParseState();
                 break;
-                
-            case ParseState::waitingForCommandDataSize:
-                if (dataByte >= 0 && dataByte <= kMaxCommandDataBytes) {
-                    gCommandDataSize = dataByte;
-                    parseState = ParseState::waitingForCommandData;
-                } else {
-                    resetParseState();
+
+            case waitingForCommandDataSize:
+                if (byteIn <= kMaxCommandDataBytes)
+                {
+                    gCommandDataSize = byteIn;
+                    gCommandDataCount = 0;
+                    parseState = waitingForCommandData;
                 }
+                else resetParseState();
                 break;
-                
-            case ParseState::waitingForCommandData:
-                if (gCommandDataSize != 0) {
-                    gCommandData[gCommandDataCount] = dataByte;
-                    ++gCommandDataCount;
-                }
-                if (gCommandDataCount == gCommandDataSize) {
+
+            case waitingForCommandData:
+                if (gCommandDataCount < gCommandDataSize)
+                    gCommandData[gCommandDataCount++] = byteIn;
+
+                if (gCommandDataCount == gCommandDataSize)
+                {
                     processCommand(gCommand, gCommandData, gCommandDataSize);
                     resetParseState();
                 }
                 break;
-                
-            default:
-                resetParseState();
+
+            default: resetParseState();
         }
     }
 }
 
-void setup() {
-    Serial.begin(9600);
+// ---------- Setup / Loop ---------------------------------------
+void setup()
+{
+    Serial.begin(115200);
+
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, LOW);
-    
-    Serial.println("ESP32 Listo. Esperando comandos...");
+
+    pinMode(PIN_AC, OUTPUT);   pinMode(PIN_DC, OUTPUT);
+    pinMode(PIN_R0, OUTPUT);   pinMode(PIN_R1, OUTPUT);
+    pinMode(PIN_R2, OUTPUT);   pinMode(PIN_R3, OUTPUT);
+
+    Serial.println("ESP32 listo. esperando comandos...");
 }
 
-void loop() {
-    if (Serial.available() > 0) {
-        uint8_t bytesToRead = min(Serial.available(), kMaxPayloadSize);
-        Serial.readBytes(gSerialDataBuffer, bytesToRead);
-        parseInputData(gSerialDataBuffer, bytesToRead);
+void loop()
+{
+    if (Serial.available() > 0)
+    {
+        uint8_t n = min(Serial.available(), kMaxPayloadSize);
+        Serial.readBytes(gSerialDataBuffer, n);
+        parseInputData(gSerialDataBuffer, n);
     }
-    delay(10); // Pequeña pausa para evitar sobrecarga
+    delay(10);
 }
+

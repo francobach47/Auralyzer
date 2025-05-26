@@ -11,8 +11,9 @@
 #include "UI/LookAndFeel.h"
 
 class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
-                                          public juce::AudioProcessorValueTreeState::Listener
-{
+                                          public juce::AudioProcessorValueTreeState::Listener,
+                                          private juce::Timer     
+{       
 public:
     OscilloscopeAudioProcessorEditor (OscilloscopeAudioProcessor&);
     ~OscilloscopeAudioProcessorEditor() override;
@@ -45,6 +46,11 @@ private:
     juce::TextButton plotModeButton;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> plotModeAttachment;
     bool isFrequencyMode;
+
+    void timerCallback() override;      
+    juce::ComboBox serialPortSelector;
+    juce::Label serialPortLabel;
+
 
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
 

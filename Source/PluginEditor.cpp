@@ -10,7 +10,8 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     tooltipWindow->setMillisecondsBeforeTipAppears(1000);
  
     audioProcessor.apvts.addParameterListener(rangeParamID.getParamID(), this);
-
+    audioProcessor.apvts.addParameterListener(modeParamID.getParamID(), this);
+    
     plotModeButton.setButtonText("Time");
     plotModeButton.setClickingTogglesState(true);
     plotModeButton.setBounds(0, 0, 100, 30);
@@ -35,6 +36,62 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     optionsGroup.addAndMakeVisible(modeKnob);
     addAndMakeVisible(optionsGroup);
 
+    serialPortLabel.attachToComponent(&serialPortSelector, true);
+    addAndMakeVisible(serialPortSelector);
+
+    serialPortSelector.onChange = [this]()
+        {
+            auto selectedText = serialPortSelector.getText();
+            if (selectedText.contains("("))
+                selectedText = selectedText.upToFirstOccurrenceOf("(", false, false).trim();  // obtener solo COMx
+
+            if (!selectedText.isEmpty())
+            {
+                juce::Logger::writeToLog("[SerialCombo] Seleccionado: " + selectedText);
+
+                auto& device = audioProcessor.getSerialDevice();
+                startTimer(100);              // 100 ms para darle tiempo a mandar la data a la ESP
+
+                device.close();
+                device.init(selectedText);  //  esto asigna serialPortName dentro de SerialDevice
+                device.open();              //  esto lo abre
+            }
+        };
+
+    auto portList = SerialPort::getSerialPortPaths();
+    for (int i = 0; i < portList.size(); ++i)
+    {
+        const auto path = portList.getAllKeys()[i];
+        const auto desc = portList.getAllValues()[i];
+
+        serialPortSelector.addItem(path + " (" + desc + ")", i + 1);
+    }
+
+    audioProcessor.getSerialDevice().serialPortListMonitor.onPortListChanged = [this](const juce::StringPairArray& portList)
+        {
+            juce::MessageManager::callAsync([this, portList]() {
+                auto selectedText = serialPortSelector.getText();
+                serialPortSelector.clear(true);  // limpiar
+
+                for (int i = 0; i < portList.size(); ++i)
+                {
+                    auto path = portList.getAllKeys()[i];
+                    auto desc = portList.getAllValues()[i];
+                    serialPortSelector.addItem(path + " (" + desc + ")", i + 1);
+                }
+
+                // restaurar selección anterior si sigue existiendo
+                for (int i = 0; i < serialPortSelector.getNumItems(); ++i)
+                {
+                    if (serialPortSelector.getItemText(i).startsWith(selectedText))
+                    {
+                        serialPortSelector.setSelectedItemIndex(i);
+                        break;
+                    }
+                }
+                });
+        };
+
     horizontalGroup.setText("Horizontal");
     horizontalGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
     horizontalGroup.addAndMakeVisible(horizontalPositionKnob);
@@ -46,9 +103,9 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     verticalGroup.addAndMakeVisible(verticalPositionKnob);
     verticalGroup.addAndMakeVisible(verticalScaleKnob);
     addAndMakeVisible(verticalGroup);
-
+  
     setLookAndFeel(&mainLF);
-
+    
     setSize(1200, 490);
 
 #ifdef JUCE_OPENGL
@@ -59,6 +116,9 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
 {
     setLookAndFeel(nullptr);
+    audioProcessor.apvts.removeParameterListener(rangeParamID.getParamID(), this);
+    audioProcessor.apvts.removeParameterListener(modeParamID.getParamID(), this);
+    audioProcessor.apvts.removeParameterListener(plotModeParamID.getParamID(), this);
 
 #ifdef JUCE_OPENGL
     openGLContext.detach();
@@ -103,6 +163,10 @@ void OscilloscopeAudioProcessorEditor::resized()
     // Position the time visualizer
     frequencyVisualizer.setBounds(plotGroup.getLocalBounds());
     timeVisualizer.setBounds(plotGroup.getLocalBounds());
+
+    //Position the COM Port List
+    serialPortSelector.setBounds(150, 453, 200, 24);
+
 }
 
 void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& parameterID, float newValue)
@@ -114,4 +178,30 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         frequencyVisualizer.setVisible(isFrequencyMode);
         plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
     }
+
+    if (parameterID == modeParamID.getParamID())
+    {
+        uint8_t modeByte = newValue < 0.5f ? 0 : 1;      // knob discreto 0/1
+        audioProcessor.getSerialDevice().setMode(modeByte);
+    }
+    else if (parameterID == rangeParamID.getParamID())
+    {
+        uint8_t rangeByte = static_cast<uint8_t>(juce::roundToInt(newValue));  // 0-3
+        audioProcessor.getSerialDevice().setRange(rangeByte);
+    }
+
+}
+
+void OscilloscopeAudioProcessorEditor::timerCallback()
+{
+    stopTimer();
+
+    auto* modeParam = audioProcessor.apvts.getRawParameterValue(modeParamID.getParamID());
+    auto* rangeParam = audioProcessor.apvts.getRawParameterValue(rangeParamID.getParamID());
+
+    if (modeParam != nullptr)
+        parameterChanged(modeParamID.getParamID(), modeParam->load());
+
+    if (rangeParam != nullptr)
+        parameterChanged(rangeParamID.getParamID(), rangeParam->load());
 }

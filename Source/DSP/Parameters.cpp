@@ -59,7 +59,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 	juce::StringArray modeOptions = {
 		"AC",
 		"DC",
-		"Calibration"
 	};
 	layout.add(std::make_unique<juce::AudioParameterChoice>(
 		modeParamID, "Mode", modeOptions, 0));
