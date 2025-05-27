@@ -1,16 +1,22 @@
 #include <HardwareSerial.h>
 
 // ---------- Pines de salida -----------------------------------
-const int LED_PIN  = 2;    // led testigo (sin cambios)
-const int PIN_AC   = 25;   // MODO – AC
-const int PIN_DC   = 26;   // MODO – DC
-const int PIN_R0   = 27;   // RANGO 0
-const int PIN_R1   = 32;   // RANGO 1
-const int PIN_R2   = 33;   // RANGO 2
-const int PIN_R3   = 14;   // RANGO 3
-// --------------------------------------------------------------
+const int LED_PIN   = 2;     // led testigo ---> este despues vuela
 
-// ---------- Parser y comandos (sin cambios salvo los nuevos) ---
+//RANGOS DC
+const int PIN_BIN0  = 12;    // NUEVO – RANGO binario LSB
+const int PIN_BIN1  = 14;    // NUEVO – RANGO binario MSB
+
+//RANGOS AC
+const int PIN_R0    = 32;    // RANGO 0
+const int PIN_R1    = 33;    // RANGO 1
+const int PIN_R2    = 25;    // RANGO 2
+const int PIN_R3    = 26;    // RANGO 3
+
+//MODOS DE MEDICION
+const int PIN_MODO  = 27;    // NUEVO – MODO: HIGH = AC, LOW = DC
+
+// ---------- Parser y comandos ---------------
 enum ParseState {
   waitingForStartByte1,
   waitingForStartByte2,
@@ -25,10 +31,9 @@ const int kStartByte2 = '~';
 
 enum Command {
     none,
-    lightColor,   // se mantiene para el LED
-    setMode,   // NUEVO  (payload 1 byte: 0=AC,1=DC)
-    setRange,   // NUEVO  (payload 1 byte: 0-3)
-    // los antiguos 'tempo' y 'chargingAlarmLevel' no se usan ahora
+    lightColor,
+    setMode,
+    setRange,
     endOfList
 };
 
@@ -45,26 +50,31 @@ uint8_t   gCommandDataCount = 0;
 bool currentLedState = false;
 
 // ---------- Helpers de salidas ---------------------------------
-void activarModo(uint8_t m)               // 0 = AC, 1 = DC
+void activarModo(uint8_t m) // 0 = AC, 1 = DC
 {
-    digitalWrite(PIN_AC, m == 0 ? HIGH : LOW);
-    digitalWrite(PIN_DC, m == 1 ? HIGH : LOW);
+    digitalWrite(PIN_MODO, m == 0 ? HIGH : LOW);
 }
 
-void activarRango(uint8_t idx)            // 0-3
+void activarRango(uint8_t idx) // 0-3
 {
     digitalWrite(PIN_R0, LOW);
     digitalWrite(PIN_R1, LOW);
     digitalWrite(PIN_R2, LOW);
     digitalWrite(PIN_R3, LOW);
+    digitalWrite(PIN_BIN1, LOW);
+    digitalWrite(PIN_BIN0, LOW);
 
-    switch (idx)
-    {
+    switch (idx) {
         case 0: digitalWrite(PIN_R0, HIGH); break;
         case 1: digitalWrite(PIN_R1, HIGH); break;
         case 2: digitalWrite(PIN_R2, HIGH); break;
         case 3: digitalWrite(PIN_R3, HIGH); break;
     }
+
+    // Codificación binaria (MSB, LSB)
+    uint8_t inv = 3 - idx;
+    digitalWrite(PIN_BIN1, (inv & 0b10) >> 1);
+    digitalWrite(PIN_BIN0, (inv & 0b01));
 }
 
 // ---------- Handlers de comandos -------------------------------
@@ -75,8 +85,7 @@ void handleLightColorCommand(uint8_t* commandData, const int sz)
     uint16_t colorValue = (commandData[1] << 8) | commandData[0];
     bool newLedState = (colorValue > 0);
 
-    if (newLedState != currentLedState)
-    {
+    if (newLedState != currentLedState) {
         currentLedState = newLedState;
         digitalWrite(LED_PIN, currentLedState ? HIGH : LOW);
 
@@ -99,8 +108,7 @@ void handleSetRange(uint8_t* commandData, const int sz)
 
 void processCommand(uint8_t command, uint8_t* data, const int sz)
 {
-    switch (command)
-    {
+    switch (command) {
         case Command::lightColor: handleLightColorCommand(data, sz); break;
         case Command::setMode   : handleSetMode        (data, sz);   break;
         case Command::setRange  : handleSetRange       (data, sz);   break;
@@ -111,20 +119,17 @@ void processCommand(uint8_t command, uint8_t* data, const int sz)
 // ---------- Parser (sin cambios) -------------------------------
 void parseInputData(const uint8_t* data, const int dataSize)
 {
-    auto resetParseState = []()
-    {
+    auto resetParseState = []() {
         gCommand = Command::none;
         gCommandDataSize = 0;
         gCommandDataCount = 0;
         parseState = ParseState::waitingForStartByte1;
     };
 
-    for (int i = 0; i < dataSize; ++i)
-    {
+    for (int i = 0; i < dataSize; ++i) {
         const uint8_t byteIn = data[i];
 
-        switch (parseState)
-        {
+        switch (parseState) {
             case waitingForStartByte1:
                 if (byteIn == kStartByte1) parseState = waitingForStartByte2;
                 break;
@@ -135,8 +140,7 @@ void parseInputData(const uint8_t* data, const int dataSize)
                 break;
 
             case waitingForCommand:
-                if (byteIn < Command::endOfList)
-                {
+                if (byteIn < Command::endOfList) {
                     gCommand = byteIn;
                     parseState = waitingForCommandDataSize;
                 }
@@ -144,8 +148,7 @@ void parseInputData(const uint8_t* data, const int dataSize)
                 break;
 
             case waitingForCommandDataSize:
-                if (byteIn <= kMaxCommandDataBytes)
-                {
+                if (byteIn <= kMaxCommandDataBytes) {
                     gCommandDataSize = byteIn;
                     gCommandDataCount = 0;
                     parseState = waitingForCommandData;
@@ -157,8 +160,7 @@ void parseInputData(const uint8_t* data, const int dataSize)
                 if (gCommandDataCount < gCommandDataSize)
                     gCommandData[gCommandDataCount++] = byteIn;
 
-                if (gCommandDataCount == gCommandDataSize)
-                {
+                if (gCommandDataCount == gCommandDataSize) {
                     processCommand(gCommand, gCommandData, gCommandDataSize);
                     resetParseState();
                 }
@@ -174,20 +176,23 @@ void setup()
 {
     Serial.begin(115200);
 
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LOW);
+    pinMode(LED_PIN, OUTPUT);    digitalWrite(LED_PIN, LOW);
+    pinMode(PIN_MODO, OUTPUT);   digitalWrite(PIN_MODO, HIGH);
 
-    pinMode(PIN_AC, OUTPUT);   pinMode(PIN_DC, OUTPUT);
-    pinMode(PIN_R0, OUTPUT);   pinMode(PIN_R1, OUTPUT);
-    pinMode(PIN_R2, OUTPUT);   pinMode(PIN_R3, OUTPUT);
+    pinMode(PIN_R0, OUTPUT);     digitalWrite(PIN_R0, LOW);
+    pinMode(PIN_R1, OUTPUT);     digitalWrite(PIN_R1, LOW);
+    pinMode(PIN_R2, OUTPUT);     digitalWrite(PIN_R2, LOW);
+    pinMode(PIN_R3, OUTPUT);     digitalWrite(PIN_R3, LOW);
+
+    pinMode(PIN_BIN0, OUTPUT);   digitalWrite(PIN_BIN0, LOW);
+    pinMode(PIN_BIN1, OUTPUT);   digitalWrite(PIN_BIN1, LOW);
 
     Serial.println("ESP32 listo. esperando comandos...");
 }
 
 void loop()
 {
-    if (Serial.available() > 0)
-    {
+    if (Serial.available() > 0) {
         uint8_t n = min(Serial.available(), kMaxPayloadSize);
         Serial.readBytes(gSerialDataBuffer, n);
         parseInputData(gSerialDataBuffer, n);
