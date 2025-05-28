@@ -19,6 +19,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
         audioProcessor.apvts, plotModeParamID.getParamID(), plotModeButton
     );
     audioProcessor.apvts.addParameterListener(plotModeParamID.getParamID(), this);
+    audioProcessor.apvts.addParameterListener(modeParamID.getParamID(), this);
 
     audioProcessor.apvts.addParameterListener(verticalScaleParamID.getParamID(), this);
     audioProcessor.apvts.addParameterListener(verticalPositionParamID.getParamID(), this);
@@ -34,6 +35,10 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     timeVisualizer.setVisible(!isFrequencyMode);
     frequencyVisualizer.setVisible(isFrequencyMode);
     addAndMakeVisible(plotGroup);
+
+    // Inicializar modo DC si corresponde
+    bool initialDC = audioProcessor.params.modeValue == 1;
+    timeVisualizer.setModeDC(initialDC);
 
     optionsGroup.addAndMakeVisible(rangeKnob);
     optionsGroup.addAndMakeVisible(modeKnob);
@@ -84,6 +89,7 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
     audioProcessor.apvts.removeParameterListener(horizontalScaleParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(horizontalPositionParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(triggerLevelParamID.getParamID(), this);
+    audioProcessor.apvts.removeParameterListener(modeParamID.getParamID(), this);
 
     setLookAndFeel(nullptr);
 
@@ -170,4 +176,11 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         float horizontalOffset = newValue * (timeVisualizer.getHeight() / 2);
         timeVisualizer.setHorizontalOffset(newValue);
     }
+
+    if (parameterID == modeParamID.getParamID())
+    {
+        bool isDC = std::round(newValue) == 1; // 0=AC, 1=DC
+        timeVisualizer.setModeDC(isDC);
+    }
+
 }

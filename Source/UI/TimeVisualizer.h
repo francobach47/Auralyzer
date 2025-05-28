@@ -24,6 +24,9 @@ public:
    void updateTriggerParameters(float level, float offset, bool filterEnabled);
    float currentTriggerLevel = 0.0f;   // -1 … +1
 
+   //DC Mode
+   void setModeDC(bool enabled);
+
 private:
     OscilloscopeAudioProcessor& processor;
     Trigger trigger;
@@ -33,6 +36,8 @@ private:
 
     float horizontalScale = 1.0f;
     float horizontalOffset = 0.0f;
+
+    bool modeDC = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimeVisualizer)
 };
