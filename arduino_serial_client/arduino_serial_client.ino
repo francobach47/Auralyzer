@@ -1,22 +1,30 @@
 #include <HardwareSerial.h>
 
-// ---------- Pines de salida -----------------------------------
-const int LED_PIN   = 2;     // led testigo ---> este despues vuela
+// ---------- Pines de entrada/salida -----------------------------
+const int LED_PIN      = 2;    // LED interno de la placa
+const int CTRL_PIN     = 23;   // 1 = plugin controla, 0 = llaves
 
-//RANGOS DC
-const int PIN_BIN0  = 12;    // NUEVO – RANGO binario LSB
-const int PIN_BIN1  = 14;    // NUEVO – RANGO binario MSB
+const int PIN_MODO     = 27;   // Salida para modo: HIGH = AC, LOW = DC
 
-//RANGOS AC
-const int PIN_R0    = 32;    // RANGO 0
-const int PIN_R1    = 33;    // RANGO 1
-const int PIN_R2    = 25;    // RANGO 2
-const int PIN_R3    = 26;    // RANGO 3
+const int PIN_R0       = 32;   // Salidas AC
+const int PIN_R1       = 33;
+const int PIN_R2       = 25;
+const int PIN_R3       = 26;
 
-//MODOS DE MEDICION
-const int PIN_MODO  = 27;    // NUEVO – MODO: HIGH = AC, LOW = DC
+const int PIN_BIN0     = 12;   // Salidas DC (bits invertidos)
+const int PIN_BIN1     = 14;
 
-// ---------- Parser y comandos ---------------
+// Entradas para replicar desde llaves analógicas
+const int IN_MODO      = 5;
+const int IN_BIN0_i    = 4;
+const int IN_BIN1_i    = 0;
+
+// Estado previo
+bool    lastControlState = true;   // HIGH=plugin controla
+uint8_t lastModo         = 255;
+uint8_t lastRango        = 255;
+
+// ---------- Protocolo serial ------------------------------------
 enum ParseState {
   waitingForStartByte1,
   waitingForStartByte2,
@@ -26,177 +34,210 @@ enum ParseState {
 };
 ParseState parseState = waitingForStartByte1;
 
-const int kStartByte1 = '*';
-const int kStartByte2 = '~';
+const uint8_t kStartByte1 = '*';
+const uint8_t kStartByte2 = '~';
 
 enum Command {
-    none,
-    lightColor,
-    setMode,
-    setRange,
-    endOfList
+  none,
+  lightColor,
+  setMode,
+  setRange,
+  syncKnobs,
+  controlModeStatus,
+  endOfList
 };
 
 const int kMaxPayloadSize      = 100;
-uint8_t   gSerialDataBuffer[kMaxPayloadSize];
-
 const int kMaxCommandDataBytes = 4;
-uint8_t   gCommandData[kMaxCommandDataBytes];
-uint8_t   gCommand          = Command::none;
-uint8_t   gCommandDataSize  = 0;
-uint8_t   gCommandDataCount = 0;
 
-// ---------- Estado del LED interno -----------------------------
-bool currentLedState = false;
+uint8_t gSerialDataBuffer[kMaxPayloadSize];
+uint8_t gCommandData[kMaxCommandDataBytes];
+uint8_t gCommand          = Command::none;
+uint8_t gCommandDataSize  = 0;
+uint8_t gCommandDataCount = 0;
 
-// ---------- Helpers de salidas ---------------------------------
-void activarModo(uint8_t m) // 0 = AC, 1 = DC
-{
-    digitalWrite(PIN_MODO, m == 0 ? HIGH : LOW);
+// ---------- Helpers de activación ------------------------------
+void activarModo(uint8_t m) {
+  // m==0 → AC (HIGH), m==1 → DC (LOW)
+  digitalWrite(PIN_MODO, m == 0 ? HIGH : LOW);
 }
 
-void activarRango(uint8_t idx) // 0-3
-{
-    digitalWrite(PIN_R0, LOW);
-    digitalWrite(PIN_R1, LOW);
-    digitalWrite(PIN_R2, LOW);
-    digitalWrite(PIN_R3, LOW);
-    digitalWrite(PIN_BIN1, LOW);
-    digitalWrite(PIN_BIN0, LOW);
+void activarRango(uint8_t idx) {
+  // Limpio todas las salidas
+  digitalWrite(PIN_R0, LOW);
+  digitalWrite(PIN_R1, LOW);
+  digitalWrite(PIN_R2, LOW);
+  digitalWrite(PIN_R3, LOW);
+  digitalWrite(PIN_BIN0, LOW);
+  digitalWrite(PIN_BIN1, LOW);
 
-    switch (idx) {
-        case 0: digitalWrite(PIN_R0, HIGH); break;
-        case 1: digitalWrite(PIN_R1, HIGH); break;
-        case 2: digitalWrite(PIN_R2, HIGH); break;
-        case 3: digitalWrite(PIN_R3, HIGH); break;
-    }
+  // Selección AC
+  switch (idx) {
+    case 0: digitalWrite(PIN_R0, HIGH); break;
+    case 1: digitalWrite(PIN_R1, HIGH); break;
+    case 2: digitalWrite(PIN_R2, HIGH); break;
+    case 3: digitalWrite(PIN_R3, HIGH); break;
+  }
 
-    // Codificación binaria (MSB, LSB)
-    uint8_t inv = 3 - idx;
-    digitalWrite(PIN_BIN1, (inv & 0b10) >> 1);
-    digitalWrite(PIN_BIN0, (inv & 0b01));
+  // Bits DC invertidos
+  uint8_t inv = 3 - idx;
+  digitalWrite(PIN_BIN1, (inv & 0b10) >> 1);
+  digitalWrite(PIN_BIN0, (inv & 0b01));
 }
 
-// ---------- Handlers de comandos -------------------------------
-void handleLightColorCommand(uint8_t* commandData, const int sz)
-{
-    if (sz != 2) return;
-
-    uint16_t colorValue = (commandData[1] << 8) | commandData[0];
-    bool newLedState = (colorValue > 0);
-
-    if (newLedState != currentLedState) {
-        currentLedState = newLedState;
-        digitalWrite(LED_PIN, currentLedState ? HIGH : LOW);
-
-        Serial.print("LED cambiado a: ");
-        Serial.println(currentLedState ? "ON" : "OFF");
-    }
+// ---------- Envío de comandos al plugin -------------------------
+void sendCommand(uint8_t cmd, const uint8_t* data, uint8_t size) {
+  Serial.write(kStartByte1);
+  Serial.write(kStartByte2);
+  Serial.write(cmd);
+  Serial.write(size);
+  Serial.write(data, size);
 }
 
-void handleSetMode(uint8_t* commandData, const int sz)
-{
-    if (sz != 1 || commandData[0] > 1) return;
-    activarModo(commandData[0]);
+void sendControlMode(bool pluginControls) {
+  uint8_t payload = pluginControls ? 1 : 0;
+  sendCommand(controlModeStatus, &payload, 1);
 }
 
-void handleSetRange(uint8_t* commandData, const int sz)
-{
-    if (sz != 1 || commandData[0] > 3) return;
-    activarRango(commandData[0]);
+void sendSyncKnobs(uint8_t modo, uint8_t rango) {
+  uint8_t payload[2] = { modo, rango };
+  sendCommand(syncKnobs, payload, 2);
 }
 
-void processCommand(uint8_t command, uint8_t* data, const int sz)
-{
-    switch (command) {
-        case Command::lightColor: handleLightColorCommand(data, sz); break;
-        case Command::setMode   : handleSetMode        (data, sz);   break;
-        case Command::setRange  : handleSetRange       (data, sz);   break;
-        default: break;
-    }
+// ---------- Recepción de comandos del plugin --------------------
+void handleSetMode(uint8_t* d, int sz) {
+  if (sz == 1 && d[0] <= 1)
+    activarModo(d[0]);
 }
 
-// ---------- Parser (sin cambios) -------------------------------
-void parseInputData(const uint8_t* data, const int dataSize)
-{
-    auto resetParseState = []() {
-        gCommand = Command::none;
-        gCommandDataSize = 0;
-        gCommandDataCount = 0;
-        parseState = ParseState::waitingForStartByte1;
-    };
+void handleSetRange(uint8_t* d, int sz) {
+  if (sz == 1 && d[0] <= 3)
+    activarRango(d[0]);
+}
 
-    for (int i = 0; i < dataSize; ++i) {
-        const uint8_t byteIn = data[i];
+void processCommand(uint8_t c, uint8_t* d, int sz) {
+  switch (c) {
+    case setMode:  handleSetMode (d, sz); break;
+    case setRange: handleSetRange(d, sz); break;
+    default: break;
+  }
+}
 
-        switch (parseState) {
-            case waitingForStartByte1:
-                if (byteIn == kStartByte1) parseState = waitingForStartByte2;
-                break;
+void parseInputData(const uint8_t* data, int dataSize) {
+  auto resetParser = [] {
+    gCommand          = Command::none;
+    gCommandDataSize  = 0;
+    gCommandDataCount = 0;
+    parseState        = waitingForStartByte1;
+  };
 
-            case waitingForStartByte2:
-                if (byteIn == kStartByte2) parseState = waitingForCommand;
-                else resetParseState();
-                break;
+  for (int i = 0; i < dataSize; ++i) {
+    uint8_t b = data[i];
+    switch (parseState) {
+      case waitingForStartByte1:
+        if (b == kStartByte1) parseState = waitingForStartByte2;
+        break;
 
-            case waitingForCommand:
-                if (byteIn < Command::endOfList) {
-                    gCommand = byteIn;
-                    parseState = waitingForCommandDataSize;
-                }
-                else resetParseState();
-                break;
+      case waitingForStartByte2:
+        if (b == kStartByte2) parseState = waitingForCommand;
+        else resetParser();
+        break;
 
-            case waitingForCommandDataSize:
-                if (byteIn <= kMaxCommandDataBytes) {
-                    gCommandDataSize = byteIn;
-                    gCommandDataCount = 0;
-                    parseState = waitingForCommandData;
-                }
-                else resetParseState();
-                break;
+      case waitingForCommand:
+        if (b < endOfList) {
+          gCommand = b;
+          parseState = waitingForCommandDataSize;
+        } else resetParser();
+        break;
 
-            case waitingForCommandData:
-                if (gCommandDataCount < gCommandDataSize)
-                    gCommandData[gCommandDataCount++] = byteIn;
+      case waitingForCommandDataSize:
+        if (b <= kMaxCommandDataBytes) {
+          gCommandDataSize = b;
+          gCommandDataCount = 0;
+          parseState = waitingForCommandData;
+        } else resetParser();
+        break;
 
-                if (gCommandDataCount == gCommandDataSize) {
-                    processCommand(gCommand, gCommandData, gCommandDataSize);
-                    resetParseState();
-                }
-                break;
-
-            default: resetParseState();
+      case waitingForCommandData:
+        gCommandData[gCommandDataCount++] = b;
+        if (gCommandDataCount == gCommandDataSize) {
+          processCommand(gCommand, gCommandData, gCommandDataSize);
+          resetParser();
         }
+        break;
+
+      default:
+        resetParser();
+        break;
     }
+  }
 }
 
-// ---------- Setup / Loop ---------------------------------------
-void setup()
-{
-    Serial.begin(115200);
-
-    pinMode(LED_PIN, OUTPUT);    digitalWrite(LED_PIN, LOW);
-    pinMode(PIN_MODO, OUTPUT);   digitalWrite(PIN_MODO, HIGH);
-
-    pinMode(PIN_R0, OUTPUT);     digitalWrite(PIN_R0, LOW);
-    pinMode(PIN_R1, OUTPUT);     digitalWrite(PIN_R1, LOW);
-    pinMode(PIN_R2, OUTPUT);     digitalWrite(PIN_R2, LOW);
-    pinMode(PIN_R3, OUTPUT);     digitalWrite(PIN_R3, LOW);
-
-    pinMode(PIN_BIN0, OUTPUT);   digitalWrite(PIN_BIN0, LOW);
-    pinMode(PIN_BIN1, OUTPUT);   digitalWrite(PIN_BIN1, LOW);
-
-    Serial.println("ESP32 listo. esperando comandos...");
+// ---------- Lectura de llaves analógicas -----------------------
+uint8_t leerModo() {
+  return digitalRead(IN_MODO) ? 0 : 1; // HIGH=AC(0), LOW=DC(1)
 }
 
-void loop()
-{
-    if (Serial.available() > 0) {
-        uint8_t n = min(Serial.available(), kMaxPayloadSize);
-        Serial.readBytes(gSerialDataBuffer, n);
-        parseInputData(gSerialDataBuffer, n);
+uint8_t leerRango() {
+  uint8_t inv = (digitalRead(IN_BIN1_i) << 1) | digitalRead(IN_BIN0_i);
+  return 3 - inv; // bits invertidos → rango 0–3
+}
+
+// ---------- Setup / Loop ----------------------------------------
+void setup() {
+  Serial.begin(115200);
+
+  // Configuro pines
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(CTRL_PIN, INPUT_PULLUP);  // activa pull-up interna
+
+  pinMode(PIN_MODO, OUTPUT);
+  pinMode(PIN_R0, OUTPUT);
+  pinMode(PIN_R1, OUTPUT);
+  pinMode(PIN_R2, OUTPUT);
+  pinMode(PIN_R3, OUTPUT);
+  pinMode(PIN_BIN0, OUTPUT);
+  pinMode(PIN_BIN1, OUTPUT);
+
+  pinMode(IN_MODO,  INPUT_PULLUP);
+  pinMode(IN_BIN0_i, INPUT_PULLUP);
+  pinMode(IN_BIN1_i, INPUT_PULLUP);
+
+  // Iniciales
+  digitalWrite(LED_PIN, LOW);
+  activarModo(0);
+  activarRango(0);
+
+  Serial.println("ESP32 listo.");
+}
+
+void loop() {
+  // 1) ¿Cambió quién controla?
+  bool pluginControls = digitalRead(CTRL_PIN); // HIGH=plugin controla
+  if (pluginControls != lastControlState) {
+    lastControlState = pluginControls;
+    // invertimos el LED: ON si llaves controlan, OFF si plugin controla
+    digitalWrite(LED_PIN, pluginControls ? LOW : HIGH);
+    sendControlMode(pluginControls);
+  }
+
+  // 2) Si las llaves controlan (CTRL_PIN == LOW), envío sus valores
+  if (!pluginControls) {
+    uint8_t modoActual  = leerModo();
+    uint8_t rangoActual = leerRango();
+    if (modoActual != lastModo || rangoActual != lastRango) {
+      lastModo  = modoActual;
+      lastRango = rangoActual;
+      sendSyncKnobs(modoActual, rangoActual);
     }
-    delay(10);
-}
+  }
 
+  // 3) Procesar comandos entrantes del plugin
+  if (Serial.available() > 0) {
+    int n = min(Serial.available(), kMaxPayloadSize);
+    Serial.readBytes(gSerialDataBuffer, n);
+    parseInputData(gSerialDataBuffer, n);
+  }
+
+  delay(10);
+}

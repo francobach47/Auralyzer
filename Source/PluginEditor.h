@@ -23,6 +23,8 @@ public:
     void resized() override;
 
     void parameterChanged(const juce::String& parameterID, float newValue) override;
+    void actualizarKnobsDesdeESP(uint8_t modo, uint8_t rango);
+    void bloquearControles(bool pluginControls);
 
 private:
     OscilloscopeAudioProcessor& audioProcessor;
@@ -45,7 +47,10 @@ private:
 
     juce::TextButton plotModeButton;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> plotModeAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> modeAttachment, rangeAttachment;
+
     bool isFrequencyMode;
+    bool pluginIsInControl = true;   // por defecto controla el plugin
 
     void timerCallback() override;      
     juce::ComboBox serialPortSelector;

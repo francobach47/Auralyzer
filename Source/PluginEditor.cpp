@@ -1,4 +1,4 @@
-#include "PluginProcessor.h"
+﻿#include "PluginProcessor.h"
 #include "PluginEditor.h"
 
 static float maxDB = 24.0f;
@@ -54,7 +54,30 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 
                 device.close();
                 device.init(selectedText);  //  esto asigna serialPortName dentro de SerialDevice
-                device.open();              //  esto lo abre
+                
+                // Callback de controlModeStatus (GIOP23)
+                device.onControlStatusReceived = [this](bool pluginControls)
+                    {
+                        juce::MessageManager::callAsync([this, pluginControls]
+                            {
+                                bloquearControles(pluginControls);
+                            });
+                    };
+
+                // Callback de syncKnobs
+                device.onSyncKnobsReceived = [this](uint8_t modo, uint8_t rango)
+                    {
+                        if (!pluginIsInControl)
+                        {
+                            juce::MessageManager::callAsync([this, modo, rango]
+                                {
+                                    actualizarKnobsDesdeESP(modo, rango);
+                                });
+                        }
+                    };
+
+                // Abrimos el puerto              
+                device.open();
             }
         };
 
@@ -80,7 +103,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
                     serialPortSelector.addItem(path + " (" + desc + ")", i + 1);
                 }
 
-                // restaurar selecci�n anterior si sigue existiendo
+                // restaurar selección anterior si sigue existiendo
                 for (int i = 0; i < serialPortSelector.getNumItems(); ++i)
                 {
                     if (serialPortSelector.getItemText(i).startsWith(selectedText))
@@ -103,7 +126,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     verticalGroup.addAndMakeVisible(verticalPositionKnob);
     verticalGroup.addAndMakeVisible(verticalScaleKnob);
     addAndMakeVisible(verticalGroup);
-  
+
     setLookAndFeel(&mainLF);
     
     setSize(1200, 490);
@@ -169,27 +192,30 @@ void OscilloscopeAudioProcessorEditor::resized()
 
 }
 
-void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& parameterID, float newValue)
+void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& paramID, float newValue)
 {
-    if (parameterID == plotModeParamID.getParamID())
+    if (paramID == plotModeParamID.getParamID())
     {
         bool isFrequencyMode = newValue > 0.5f; // 0=Time, 1=Frequency
         timeVisualizer.setVisible(!isFrequencyMode);
         frequencyVisualizer.setVisible(isFrequencyMode);
         plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
     }
+    
+    if (!pluginIsInControl)
+        return;
 
-    if (parameterID == modeParamID.getParamID())
-    {
-        uint8_t modeByte = newValue < 0.5f ? 0 : 1;      // knob discreto 0/1
-        audioProcessor.getSerialDevice().setMode(modeByte);
-    }
-    else if (parameterID == rangeParamID.getParamID())
-    {
-        uint8_t rangeByte = static_cast<uint8_t>(juce::roundToInt(newValue));  // 0-3
-        audioProcessor.getSerialDevice().setRange(rangeByte);
-    }
-
+    juce::MessageManager::callAsync([this, paramID, newValue]
+        {
+            if (paramID == modeParamID.getParamID())
+            {
+                audioProcessor.getSerialDevice().setMode(newValue < 0.5f ? 0 : 1);
+            }
+            else if (paramID == rangeParamID.getParamID())
+            {
+                audioProcessor.getSerialDevice().setRange(static_cast<uint8_t>(juce::roundToInt(newValue)));
+            }
+        });
 }
 
 void OscilloscopeAudioProcessorEditor::timerCallback()
@@ -204,4 +230,28 @@ void OscilloscopeAudioProcessorEditor::timerCallback()
 
     if (rangeParam != nullptr)
         parameterChanged(rangeParamID.getParamID(), rangeParam->load());
+}
+
+void OscilloscopeAudioProcessorEditor::actualizarKnobsDesdeESP(uint8_t modo, uint8_t rango)
+{
+    auto* modoParam = audioProcessor.apvts.getParameter(modeParamID.getParamID());
+    auto* rangoParam = audioProcessor.apvts.getParameter(rangeParamID.getParamID());
+
+    if (modoParam != nullptr)
+        modoParam->setValueNotifyingHost(static_cast<float>(modo));
+
+    if (rangoParam != nullptr)
+        rangoParam->setValueNotifyingHost(static_cast<float>(rango) / 3.0f);
+}
+
+void OscilloscopeAudioProcessorEditor::bloquearControles(bool pluginControls)
+{
+    pluginIsInControl = pluginControls;
+
+    // Solo se habilitan si el plugin está en control
+    modeKnob.setEnabled(pluginIsInControl);
+    rangeKnob.setEnabled(pluginIsInControl);
+
+    // LED testigo inverso
+    audioProcessor.getSerialDevice().setLightColor(pluginIsInControl ? 0x0000 : 0xFFFF);
 }

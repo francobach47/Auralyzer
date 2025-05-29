@@ -16,12 +16,14 @@ ParseState parseState = waitingForStartByte1;
 const int kStartByte1 = '*';
 const int kStartByte2 = '~';
 
-enum Command
+enum Command : uint8_t
 {
-	none,
-	lightColor,
-    setMode,
-    setRange,
+    none = 0,
+    lightColor = 1, // por las dudas
+    setMode = 2,
+    setRange = 3,
+    syncKnobs = 4,
+    controlModeStatus = 5,   // GIOP-23
     endOfList
 };
 const int kMaxPayloadSize = 20;
@@ -95,7 +97,7 @@ void SerialDevice::setRange(uint8_t idx)
     const std::vector<uint8_t> data{
         kStartByte1, kStartByte2,
         Command::setRange, 1,
-        idx                      // 0-3
+        idx                      // 0-3 = range
     };
     serialPortOutput->write(data.data(), data.size());
 }
@@ -148,9 +150,23 @@ void SerialDevice::handleLightColorCommand(uint8_t* data, int dataSize)
 
 void SerialDevice::handleCommand(uint8_t command, uint8_t* data, int dataSize)
 {
+    //LOG de depuración
+    juce::Logger::writeToLog("[SerialDevice] comando recibido: " + juce::String(command)
+        + " con tamaño " + juce::String(dataSize));
 	switch (command)
 	{
-	case Command::lightColor: handleLightColorCommand(data, dataSize); break;
+	case Command::lightColor: handleLightColorCommand(data, dataSize);
+        break;
+
+    case Command::controlModeStatus:
+        if (dataSize == 1 && onControlStatusReceived)
+            onControlStatusReceived(data[0] == 1);     // 1 = plugin controla
+        break;
+
+    case Command::syncKnobs:
+        if (dataSize == 2 && onSyncKnobsReceived)
+             onSyncKnobsReceived(data[0], data[1]);
+        break;
 	}
 }
 
