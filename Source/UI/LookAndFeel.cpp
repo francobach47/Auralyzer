@@ -219,5 +219,18 @@ void ButtonLookAndFeel::drawButtonText(
 	}
 
 	g.setFont(Fonts::getFont());
-	g.drawText(button.getButtonText(), buttonRect, juce::Justification::centred);
+	
+	const int yIndent = button.proportionOfHeight(0.1f);
+	const int cornerSize = juce::jmin(button.getHeight(), button.getWidth()) / 2;
+
+	const int leftIndent = cornerSize / (button.isConnectedOnLeft() ?
+		yIndent * 2 : yIndent);
+	const int rightIndent = cornerSize / (button.isConnectedOnRight() ?
+		yIndent * 2 : yIndent);
+	const int textWidth = button.getWidth() - leftIndent - rightIndent;
+
+	if (textWidth > 0)
+		g.drawFittedText(button.getButtonText(),
+			leftIndent, yIndent, textWidth, button.getHeight() - yIndent * 2,
+			juce::Justification::centred, 2);
 }

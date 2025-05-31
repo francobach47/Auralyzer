@@ -22,7 +22,7 @@ public:
     void setHorizontalOffset(float offset) { horizontalOffset = offset; }
     
    void updateTriggerParameters(float level, float offset, bool filterEnabled);
-   float currentTriggerLevel = 0.0f;   // -1 … +1
+   float currentTriggerLevel = 0.0f;   // -1 â€¦ +1
 
 private:
     OscilloscopeAudioProcessor& processor;

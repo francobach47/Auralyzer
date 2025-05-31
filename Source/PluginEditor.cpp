@@ -54,6 +54,12 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     triggerGroup.setText("Trigger");
     triggerGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
     triggerGroup.addAndMakeVisible(triggerLevelKnob);
+    movingAverageButton.setButtonText("Moving Average");
+    movingAverageButton.changeWidthToFitText();
+    movingAverageButton.setClickingTogglesState(true);
+    movingAverageButton.setBounds(0, 0, 70, 50);
+    movingAverageButton.setLookAndFeel(ButtonLookAndFeel::get());
+    triggerGroup.addAndMakeVisible(movingAverageButton);
     addAndMakeVisible(triggerGroup);
 
     // Forzar valores iniciales para visualizacion
@@ -126,7 +132,9 @@ void OscilloscopeAudioProcessorEditor::resized()
     horizontalScaleKnob.setTopLeftPosition(horizontalPositionKnob.getX(), horizontalPositionKnob.getBottom() + 10);
     verticalPositionKnob.setTopLeftPosition(20, 20);
     verticalScaleKnob.setTopLeftPosition(verticalPositionKnob.getX(), verticalPositionKnob.getBottom() + 10);
+    
     triggerLevelKnob.setTopLeftPosition(20, 20);
+    movingAverageButton.setTopLeftPosition(20, 140);
 
     // Position the button
     plotModeButton.setTopLeftPosition(25, 450);
