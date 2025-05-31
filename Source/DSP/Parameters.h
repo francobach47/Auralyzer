@@ -11,6 +11,8 @@ const juce::ParameterID rangeParamID{ "range", 1 };
 const juce::ParameterID modeParamID{ "mode", 1 };
 const juce::ParameterID plotModeParamID{ "plotMode", 1 };
 const juce::ParameterID bypassParamID{ "bypass", 1 };
+const juce::ParameterID triggerLevelParamID{ "triggerLevel", 1 };
+const juce::ParameterID movingAverageParamID{ "movingAverage", 1 };
 
 class Parameters
 {
@@ -28,11 +30,19 @@ public:
 	int   verticalScale      = 0;
 	int	  rangeValue	     = 0;
 	int   modeValue          = 0;
+
+	juce::AudioParameterFloat* triggerLevelParam;
+	float triggerLevel = 0.0f;
 	
 	int plotMode = 0;
 	juce::AudioParameterChoice* plotModeParam;
 
 	juce::AudioParameterChoice* rangeParam;
+
+	juce::AudioParameterBool* movingAverageParam;
+	bool movingAverage = true;
+
+	float getTriggerLevel() const noexcept;
 
 private:
 

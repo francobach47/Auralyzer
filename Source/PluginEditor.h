@@ -11,7 +11,7 @@
 #include "UI/LookAndFeel.h"
 
 class OscilloscopeAudioProcessorEditor : public juce::AudioProcessorEditor,
-    public juce::AudioProcessorValueTreeState::Listener
+                                         public juce::AudioProcessorValueTreeState::Listener
 {
 public:
     OscilloscopeAudioProcessorEditor(OscilloscopeAudioProcessor&);
@@ -32,19 +32,23 @@ private:
     juce::GroupComponent verticalGroup, horizontalGroup;
     juce::GroupComponent optionsGroup;
     juce::GroupComponent plotGroup;
+    juce::GroupComponent triggerGroup;
 
     RotaryKnob horizontalPositionKnob{ "Position", audioProcessor.apvts, horizontalPositionParamID, true };
-    RotaryKnob horizontalScaleKnob{ "Scale", audioProcessor.apvts, horizontalScaleParamID, true };
+    RotaryKnob horizontalScaleKnob{ "Scale", audioProcessor.apvts, horizontalScaleParamID, false };
     RotaryKnob verticalPositionKnob{ "Position", audioProcessor.apvts, verticalPositionParamID, true };
     RotaryKnob verticalScaleKnob{ "Scale", audioProcessor.apvts, verticalScaleParamID, true };
     RotaryKnob rangeKnob{ "Range", audioProcessor.apvts, rangeParamID, false };
     RotaryKnob modeKnob{ "Mode", audioProcessor.apvts, modeParamID, false };
+    RotaryKnob triggerLevelKnob{ "Level", audioProcessor.apvts, triggerLevelParamID, true };
 
     MainLookAndFeel mainLF;
 
     juce::TextButton plotModeButton;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> plotModeAttachment;
     bool isFrequencyMode;
+
+    juce::TextButton movingAverageButton;
 
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
 
