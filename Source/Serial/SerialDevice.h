@@ -13,6 +13,7 @@ public:
 	void init(juce::String newSerialPortName);
 
 	void setLightColor(uint16_t color);
+	void setCalibrationMode(uint8_t mode);
 
 	// NUEVOS prototipos
 	void setMode(uint8_t mode);   
@@ -46,15 +47,17 @@ private:
 	uint64_t delayStartTime{ 0 };
 
 	uint16_t lightColor{ 0 };
+	uint16_t calibrationMode{ 0 };
 	float tempo{ 60.0f };
 	uint8_t alarmLevels[2]{ 0,0 };
-
+	
 
 	bool openSerialPort(void);
 	void closeSerialPort(void);
 
 	void handleLightColorCommand(uint8_t* data, int dataSize);
 	void handleCommand(uint8_t command, uint8_t* data, int dataSize);
+	void handleCalibrationMode(uint8_t* data, int dataSize);
 
 	void run() override;
 	void timerCallback() override;

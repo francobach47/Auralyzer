@@ -24,6 +24,7 @@ enum Command : uint8_t
     setRange = 3,
     syncKnobs = 4,
     controlModeStatus = 5,   // GIOP-23
+    calibrationMode = 6,
     endOfList
 };
 const int kMaxPayloadSize = 20;
@@ -88,6 +89,19 @@ void SerialDevice::setMode(uint8_t mode)
     serialPortOutput->write(data.data(), data.size());
 }
 
+void SerialDevice::setCalibrationMode(uint8_t mode)
+{
+    if (serialPortOutput == nullptr)
+        return;
+
+    const std::vector<uint8_t> data{
+        kStartByte1, kStartByte2,
+        Command::calibrationMode, 1,
+        mode                     // 
+    };
+    serialPortOutput->write(data.data(), data.size());
+}
+
 void SerialDevice::setRange(uint8_t idx)
 {
     jassert(idx < 4);
@@ -148,32 +162,50 @@ void SerialDevice::handleLightColorCommand(uint8_t* data, int dataSize)
     lightColor = static_cast<uint16_t>(data[0] + (data[1] << 8));
 }
 
+void SerialDevice::handleCalibrationMode(uint8_t* data, int dataSize)
+{
+    if (dataSize != 2)
+        return;
+    calibrationMode = static_cast<uint16_t>(data[0] + (data[1] << 8));
+}
+
+
 void SerialDevice::handleCommand(uint8_t command, uint8_t* data, int dataSize)
 {
-    //LOG de depuración
     juce::Logger::writeToLog("[SerialDevice] comando recibido: " + juce::String(command)
         + " con tamaño " + juce::String(dataSize));
-	switch (command)
-	{
-	case Command::lightColor: handleLightColorCommand(data, dataSize);
+
+    switch (command)
+    {
+    case Command::lightColor:
+        handleLightColorCommand(data, dataSize);
         break;
 
     case Command::controlModeStatus:
         if (dataSize == 1 && onControlStatusReceived)
-            onControlStatusReceived(data[0] == 1);     // 1 = plugin controla
+            onControlStatusReceived(data[0] == 1);
         break;
 
     case Command::syncKnobs:
         if (dataSize == 2 && onSyncKnobsReceived)
-             onSyncKnobsReceived(data[0], data[1]);
+            onSyncKnobsReceived(data[0], data[1]);
         break;
-	}
+   
+    case Command::calibrationMode:
+        handleCalibrationMode(data, dataSize);
+        break;
+
+
+    default:
+        break;
+    }
 }
+
 
 #define kSerialPortBufferLen 256
 void SerialDevice::run()
 {
-    const int kMaxCommandDataBytes = 4;
+    const int kMaxCommandDataBytes = 64;
     uint8_t commandData[kMaxCommandDataBytes];
     uint8_t command = Command::none;
     uint8_t commandDataSize = 0;

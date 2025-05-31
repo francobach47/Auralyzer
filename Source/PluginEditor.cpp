@@ -127,6 +127,21 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     verticalGroup.addAndMakeVisible(verticalScaleKnob);
     addAndMakeVisible(verticalGroup);
 
+    calibrationButton.setButtonText("Calibration");
+    calibrationButton.setClickingTogglesState(true); // importante para modo toggle
+    calibrationButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::transparentBlack); // sin check
+    calibrationButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
+    calibrationButton.setLookAndFeel(ButtonLookAndFeel::get()); // opcional: si tenés un estilo
+    addAndMakeVisible(calibrationButton);
+    calibrationButton.setClickingTogglesState(true);
+    calibrationButton.onClick = [this]()
+        {
+            bool isOn = calibrationButton.getToggleState();
+            audioProcessor.getSerialDevice().setCalibrationMode(isOn ? 1 : 0);
+        };
+
+    addAndMakeVisible(calibrationButton);
+
     setLookAndFeel(&mainLF);
     
     setSize(1200, 490);
@@ -189,6 +204,9 @@ void OscilloscopeAudioProcessorEditor::resized()
 
     //Position the COM Port List
     serialPortSelector.setBounds(150, 453, 200, 24);
+    
+    //Calibration
+    calibrationButton.setBounds(400, 453, 100, 30);
 
 }
 

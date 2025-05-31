@@ -3,8 +3,8 @@
 #include <JuceHeader.h>
 #include "../PluginProcessor.h"
 
-class TimeVisualizer  : public juce::Component, 
-                         public juce::Timer
+class TimeVisualizer  : public juce::Component,
+    public juce::Timer
 {
 public:
     TimeVisualizer(OscilloscopeAudioProcessor& processor);
