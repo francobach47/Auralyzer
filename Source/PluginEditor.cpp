@@ -261,9 +261,9 @@ void OscilloscopeAudioProcessorEditor::resized()
 
 }
 
-void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& paramID, float newValue)
+void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& parameterID, float newValue)
 {
-    if (paramID == plotModeParamID.getParamID())
+    if (parameterID == plotModeParamID.getParamID())
     {
         bool isFrequencyMode = newValue > 0.5f; // 0=Time, 1=Frequency
         timeVisualizer.setVisible(!isFrequencyMode);
@@ -274,17 +274,48 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
     if (!pluginIsInControl)
         return;
 
-    juce::MessageManager::callAsync([this, paramID, newValue]
+    juce::MessageManager::callAsync([this, parameterID, newValue]
         {
-            if (paramID == modeParamID.getParamID())
+            if (parameterID == modeParamID.getParamID())
             {
                 audioProcessor.getSerialDevice().setMode(newValue < 0.5f ? 0 : 1);
             }
-            else if (paramID == rangeParamID.getParamID())
+            else if (parameterID == rangeParamID.getParamID())
             {
                 audioProcessor.getSerialDevice().setRange(static_cast<uint8_t>(juce::roundToInt(newValue)));
             }
         });
+
+    if (parameterID == verticalScaleParamID.getParamID())
+    {
+        float verticalGain = std::pow(2.0f, newValue);
+        timeVisualizer.setVerticalGain(verticalGain);
+    }
+
+    if (parameterID == verticalPositionParamID.getParamID())
+    {
+        float verticalOffset = newValue * (timeVisualizer.getHeight() / 2);
+        timeVisualizer.setVerticalOffset(verticalOffset);
+    }
+
+
+    if (parameterID == horizontalScaleParamID.getParamID())
+    {
+        float horizontalGain = std::pow(2.0f, newValue);
+        timeVisualizer.setHorizontalScale(horizontalGain);
+    }
+
+    if (parameterID == horizontalPositionParamID.getParamID())
+    {
+        float horizontalOffset = newValue * (timeVisualizer.getHeight() / 2);
+        timeVisualizer.setHorizontalOffset(newValue);
+    }
+
+    if (parameterID == modeParamID.getParamID())
+    {
+        bool isDC = std::round(newValue) == 1; // 0=AC, 1=DC
+        timeVisualizer.setModeDC(isDC);
+    }
 }
 
 void OscilloscopeAudioProcessorEditor::timerCallback()
@@ -323,37 +354,4 @@ void OscilloscopeAudioProcessorEditor::bloquearControles(bool pluginControls)
 
     // LED testigo inverso
     audioProcessor.getSerialDevice().setLightColor(pluginIsInControl ? 0x0000 : 0xFFFF);
-}
-
-    if (parameterID == verticalScaleParamID.getParamID())
-    {
-        float verticalGain = std::pow(2.0f, newValue);
-        timeVisualizer.setVerticalGain(verticalGain);
-    }
-
-    if (parameterID == verticalPositionParamID.getParamID())
-    {
-        float verticalOffset = newValue * (timeVisualizer.getHeight() / 2);
-        timeVisualizer.setVerticalOffset(verticalOffset);
-    }
-
-
-    if (parameterID == horizontalScaleParamID.getParamID())
-    {
-        float horizontalGain = std::pow(2.0f, newValue);
-        timeVisualizer.setHorizontalScale(horizontalGain);
-    }
-
-    if (parameterID == horizontalPositionParamID.getParamID())
-    {
-        float horizontalOffset = newValue * (timeVisualizer.getHeight() / 2);
-        timeVisualizer.setHorizontalOffset(newValue);
-    }
-
-    if (parameterID == modeParamID.getParamID())
-    {
-        bool isDC = std::round(newValue) == 1; // 0=AC, 1=DC
-        timeVisualizer.setModeDC(isDC);
-    }
-
 }
