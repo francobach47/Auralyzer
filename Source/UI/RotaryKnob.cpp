@@ -28,6 +28,14 @@ RotaryKnob::RotaryKnob(
     slider.setRotaryParameters(1.25f * pi, 2.75f * pi, true);
 
     slider.getProperties().set("drawFromMiddle", drawFromMiddle);
+
+    //// Obtener el rango original del parámetro
+    if (auto* param = apvts.getParameter(parameterID.getParamID()))
+    {
+        auto range = param->getNormalisableRange();
+
+    }
+
 }
 
 RotaryKnob::~RotaryKnob()

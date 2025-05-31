@@ -43,6 +43,7 @@ namespace Colors
 		const juce::Colour timeResponse{ 60, 179, 113 };
 		const juce::Colour background{ 90, 90, 90};
 		const juce::Colour outline{ 220, 216, 211 };
+		const juce::Colour triggerMarker{ 255, 255, 255 }; // naranja
 	}
 }
 

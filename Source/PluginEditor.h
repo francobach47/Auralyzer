@@ -15,11 +15,11 @@ class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
                                           private juce::Timer     
 {       
 public:
-    OscilloscopeAudioProcessorEditor (OscilloscopeAudioProcessor&);
+    OscilloscopeAudioProcessorEditor(OscilloscopeAudioProcessor&);
     ~OscilloscopeAudioProcessorEditor() override;
 
     //==============================================================================
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
 
     void parameterChanged(const juce::String& parameterID, float newValue) override;
@@ -28,7 +28,7 @@ public:
 
 private:
     OscilloscopeAudioProcessor& audioProcessor;
-    
+
     TimeVisualizer timeVisualizer;
     FrequencyVisualizer frequencyVisualizer;
     juce::TextButton calibrationButton{ "Calibration" };
@@ -37,13 +37,15 @@ private:
     juce::GroupComponent verticalGroup, horizontalGroup;
     juce::GroupComponent optionsGroup;
     juce::GroupComponent plotGroup;
+    juce::GroupComponent triggerGroup;
 
     RotaryKnob horizontalPositionKnob{ "Position", audioProcessor.apvts, horizontalPositionParamID, true };
-    RotaryKnob horizontalScaleKnob{ "Scale", audioProcessor.apvts, horizontalScaleParamID, true };
+    RotaryKnob horizontalScaleKnob{ "Scale", audioProcessor.apvts, horizontalScaleParamID, false };
     RotaryKnob verticalPositionKnob{ "Position", audioProcessor.apvts, verticalPositionParamID, true };
     RotaryKnob verticalScaleKnob{ "Scale", audioProcessor.apvts, verticalScaleParamID, true };
     RotaryKnob rangeKnob{ "Range", audioProcessor.apvts, rangeParamID, false };
     RotaryKnob modeKnob{ "Mode", audioProcessor.apvts, modeParamID, false };
+    RotaryKnob triggerLevelKnob{ "Level", audioProcessor.apvts, triggerLevelParamID, true };
 
     MainLookAndFeel mainLF;
 
@@ -59,7 +61,9 @@ private:
     juce::Label serialPortLabel;
 
 
+    juce::TextButton movingAverageButton;
+
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OscilloscopeAudioProcessorEditor)
 };
