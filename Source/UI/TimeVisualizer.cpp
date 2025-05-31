@@ -13,6 +13,15 @@ TimeVisualizer::~TimeVisualizer()
 {
 }
 
+void TimeVisualizer::setModeDC(bool enabled)
+{
+    if (modeDC != enabled)
+    {
+        modeDC = enabled;
+        repaint(); 
+    }
+}
+
 void TimeVisualizer::paint(juce::Graphics& g)
 {
     juce::MessageManagerLock mmLock;
@@ -39,6 +48,34 @@ void TimeVisualizer::paint(juce::Graphics& g)
     int triggerSample = trigger.findTriggerPoint(buffer, 0);
     int displaySamples = juce::jlimit(16, numSamples - triggerSample, static_cast<int>(numSamples / horizontalScale));
 
+    if (modeDC)
+    {
+        if (numSamples == 0) return;
+
+        float minVal = std::numeric_limits<float>::max();
+        float maxVal = std::numeric_limits<float>::lowest();
+
+        for (int c = 0; c < numChannels; ++c)
+        {
+            const float* data = buffer.getReadPointer(c);
+            for (int i = 0; i < numSamples; ++i)
+            {
+                minVal = std::min(minVal, data[i]);
+                maxVal = std::max(maxVal, data[i]);
+            }
+        }
+
+        float vpp = maxVal - minVal;
+
+        float y = getHeight() / 2.0f - (vpp * verticalGain * getHeight() / 2.0f) - verticalOffset;
+
+
+        g.setColour(juce::Colours::limegreen);
+        g.drawLine(0.0f, y, (float)getWidth(), y, 2.0f);
+
+        return; // saltea el dibujo de path convencional
+    }
+
     juce::Path path;
     for (int i = 0; i < displaySamples; ++i)
     {
@@ -64,8 +101,8 @@ void TimeVisualizer::paint(juce::Graphics& g)
     float triggerY = getHeight() / 2.0f
         - (currentTriggerLevel * verticalGain * getHeight() / 2.0f)
         - verticalOffset;
-    const float x0 = bounds.getX() + 6.0f;      // pequeño margen
-    const float size = 8.0f;                     // ancho del triángulo
+    const float x0 = bounds.getX() + 6.0f;      //  margen
+    const float size = 8.0f;                     // ancho del triang
 
     juce::Path tri;
     tri.addTriangle(x0 + size, triggerY,   
@@ -73,7 +110,7 @@ void TimeVisualizer::paint(juce::Graphics& g)
         x0, triggerY + size * 0.6f);  // base abajo
 
 
-    g.setColour(Colors::PlotSection::triggerMarker);  // añade este color a tu LookAndFeel
+    g.setColour(Colors::PlotSection::triggerMarker); 
     g.fillPath(tri);
 }
 
