@@ -45,6 +45,9 @@ void SerialPortListMonitor::run()
                 juce::Logger::outputDebugString(serialPortList.getAllValues()[serialPortNameIndex]);
             serialPortNames = serialPortList;
             listChanged = true;
+
+            if (onPortListChanged)
+                onPortListChanged(serialPortList);
         }
     }
 }

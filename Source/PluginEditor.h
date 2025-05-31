@@ -10,9 +10,10 @@
 #include "UI/RotaryKnob.h"
 #include "UI/LookAndFeel.h"
 
-class OscilloscopeAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                         public juce::AudioProcessorValueTreeState::Listener
-{
+class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
+                                          public juce::AudioProcessorValueTreeState::Listener,
+                                          private juce::Timer     
+{       
 public:
     OscilloscopeAudioProcessorEditor(OscilloscopeAudioProcessor&);
     ~OscilloscopeAudioProcessorEditor() override;
@@ -22,12 +23,16 @@ public:
     void resized() override;
 
     void parameterChanged(const juce::String& parameterID, float newValue) override;
+    void actualizarKnobsDesdeESP(uint8_t modo, uint8_t rango);
+    void bloquearControles(bool pluginControls);
 
 private:
     OscilloscopeAudioProcessor& audioProcessor;
 
     TimeVisualizer timeVisualizer;
     FrequencyVisualizer frequencyVisualizer;
+    juce::TextButton calibrationButton{ "Calibration" };
+    bool isCalibrating = false;
 
     juce::GroupComponent verticalGroup, horizontalGroup;
     juce::GroupComponent optionsGroup;
@@ -46,7 +51,15 @@ private:
 
     juce::TextButton plotModeButton;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> plotModeAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> modeAttachment, rangeAttachment;
+
     bool isFrequencyMode;
+    bool pluginIsInControl = true;   // por defecto controla el plugin
+
+    void timerCallback() override;      
+    juce::ComboBox serialPortSelector;
+    juce::Label serialPortLabel;
+
 
     juce::TextButton movingAverageButton;
 

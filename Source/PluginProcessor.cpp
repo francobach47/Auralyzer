@@ -2,7 +2,7 @@
 #include "PluginEditor.h"
 
 // TODO: Change into plugin parameter
-const juce::String kSerialPortName{ "\\\\.\\COM5" };
+//const juce::String kSerialPortName{ "" }; ---- ESTO SE BORRA
 
 //==============================================================================
 OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
@@ -10,9 +10,9 @@ OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), false)
                        ),
-    params(apvts), serialDevice()
+    params(apvts) //serialDevice() --- ESTO SE BORRA
 {
-    serialDevice.init(kSerialPortName);
+    //serialDevice.init(kSerialPortName); ----- ESTO SE BORRA
 }
 
 OscilloscopeAudioProcessor::~OscilloscopeAudioProcessor()
