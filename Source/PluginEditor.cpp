@@ -1,4 +1,4 @@
-﻿#include "PluginProcessor.h"
+#include "PluginProcessor.h"
 #include "PluginEditor.h"
 
 static float maxDB = 24.0f;
@@ -181,7 +181,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 
     setLookAndFeel(&mainLF);
 
-    setSize(1325, 490);
+    setSize(1325, 500);
 
 #ifdef JUCE_OPENGL
     openGLContext.attachTo(*getTopLevelComponent());
@@ -212,6 +212,16 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
 void OscilloscopeAudioProcessorEditor::paint(juce::Graphics& g)
 {
     g.fillAll(Colors::background);
+
+    auto image_logo = juce::ImageCache::getFromMemory(BinaryData::logo_png, BinaryData::logo_pngSize);
+    int destX = 1165;
+    int destY = 445;
+    int destWidth = image_logo.getWidth();
+    int destHeight = image_logo.getHeight();
+
+    g.drawImage(image_logo,
+        destX, destY, destWidth, destHeight,
+        0, 0, image_logo.getWidth(), image_logo.getHeight());
 }
 
 void OscilloscopeAudioProcessorEditor::resized()
