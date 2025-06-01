@@ -44,6 +44,7 @@ namespace Colors
 		const juce::Colour background{ 90, 90, 90};
 		const juce::Colour outline{ 220, 216, 211 };
 		const juce::Colour triggerMarker{ 255, 255, 255 }; // naranja
+		const juce::Colour referenceArrow{ 0xFFFFD500 };   // amarillo (RGB 255,213,0)
 	}
 }
 

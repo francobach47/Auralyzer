@@ -20,12 +20,20 @@ public:
     void setVerticalOffset(float offset) { verticalOffset = offset; }
     void setHorizontalScale(float scale) { horizontalScale = scale; }
     void setHorizontalOffset(float offset) { horizontalOffset = offset; }
-    
+    void setVerticalOffsetInDivisions(float divisions);  // nueva función
+
    void updateTriggerParameters(float level, float offset, bool filterEnabled);
    float currentTriggerLevel = 0.0f;   // -1 … +1
 
    //DC Mode
    void setModeDC(bool enabled);
+
+   //gridPlot
+   void drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds);
+   
+   //Para visualizar en tiempo real el valor de tension
+   float lastVpp = -1.0f;
+   int frameCounter = 0;
 
 private:
     OscilloscopeAudioProcessor& processor;
@@ -36,6 +44,7 @@ private:
 
     float horizontalScale = 1.0f;
     float horizontalOffset = 0.0f;
+    static constexpr int numVerticalDivisions = 8;
 
     bool modeDC = false;
 

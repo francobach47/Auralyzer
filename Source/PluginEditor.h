@@ -42,7 +42,7 @@ private:
     RotaryKnob horizontalPositionKnob{ "Position", audioProcessor.apvts, horizontalPositionParamID, true };
     RotaryKnob horizontalScaleKnob{ "Scale", audioProcessor.apvts, horizontalScaleParamID, false };
     RotaryKnob verticalPositionKnob{ "Position", audioProcessor.apvts, verticalPositionParamID, true };
-    RotaryKnob verticalScaleKnob{ "Scale", audioProcessor.apvts, verticalScaleParamID, true };
+    RotaryKnob verticalScaleKnob{ "Scale", audioProcessor.apvts, verticalScaleParamID, false };
     RotaryKnob rangeKnob{ "Range", audioProcessor.apvts, rangeParamID, false };
     RotaryKnob modeKnob{ "Mode", audioProcessor.apvts, modeParamID, false };
     RotaryKnob triggerLevelKnob{ "Level", audioProcessor.apvts, triggerLevelParamID, true };
