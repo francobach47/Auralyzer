@@ -196,7 +196,6 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
     audioProcessor.apvts.removeParameterListener(horizontalScaleParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(horizontalPositionParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(triggerLevelParamID.getParamID(), this);
-    audioProcessor.apvts.removeParameterListener(modeParamID.getParamID(), this);
 
     setLookAndFeel(nullptr);
     audioProcessor.apvts.removeParameterListener(rangeParamID.getParamID(), this);
@@ -270,7 +269,42 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         frequencyVisualizer.setVisible(isFrequencyMode);
         plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
     }
-    
+
+    // Esto debe ejecutarse SIEMPRE
+    if (parameterID == modeParamID.getParamID())
+    {
+        bool isDC = std::round(newValue) == 1; // 0=AC, 1=DC
+        DBG("→ modo cambiado: esModoDC = " << (isDC ? "true" : "false"));
+        timeVisualizer.setModeDC(isDC);
+    }
+
+    if (parameterID == verticalScaleParamID.getParamID())
+    {
+        float verticalGain = std::pow(2.0f, newValue);
+        timeVisualizer.setVerticalGain(verticalGain);
+    }
+
+    if (parameterID == verticalPositionParamID.getParamID())
+    {
+        float verticalOffset = newValue * (timeVisualizer.getHeight() / 2);
+        timeVisualizer.setVerticalOffset(verticalOffset);
+    }
+
+    if (parameterID == horizontalScaleParamID.getParamID())
+    {
+        float horizontalGain = std::pow(2.0f, newValue);
+        timeVisualizer.setHorizontalScale(horizontalGain);
+    }
+
+    if (parameterID == horizontalPositionParamID.getParamID())
+    {
+        float horizontalOffset = newValue * (timeVisualizer.getHeight() / 2);
+        timeVisualizer.setHorizontalOffset(newValue);
+    }
+
+    DBG("parameterChanged: " << parameterID << " = " << newValue);
+
+    //SOLO ESTO depende del control por el plugin
     if (!pluginIsInControl)
         return;
 
@@ -285,37 +319,6 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
                 audioProcessor.getSerialDevice().setRange(static_cast<uint8_t>(juce::roundToInt(newValue)));
             }
         });
-
-    if (parameterID == verticalScaleParamID.getParamID())
-    {
-        float verticalGain = std::pow(2.0f, newValue);
-        timeVisualizer.setVerticalGain(verticalGain);
-    }
-
-    if (parameterID == verticalPositionParamID.getParamID())
-    {
-        float verticalOffset = newValue * (timeVisualizer.getHeight() / 2);
-        timeVisualizer.setVerticalOffset(verticalOffset);
-    }
-
-
-    if (parameterID == horizontalScaleParamID.getParamID())
-    {
-        float horizontalGain = std::pow(2.0f, newValue);
-        timeVisualizer.setHorizontalScale(horizontalGain);
-    }
-
-    if (parameterID == horizontalPositionParamID.getParamID())
-    {
-        float horizontalOffset = newValue * (timeVisualizer.getHeight() / 2);
-        timeVisualizer.setHorizontalOffset(newValue);
-    }
-
-    if (parameterID == modeParamID.getParamID())
-    {
-        bool isDC = std::round(newValue) == 1; // 0=AC, 1=DC
-        timeVisualizer.setModeDC(isDC);
-    }
 }
 
 void OscilloscopeAudioProcessorEditor::timerCallback()
@@ -334,14 +337,24 @@ void OscilloscopeAudioProcessorEditor::timerCallback()
 
 void OscilloscopeAudioProcessorEditor::actualizarKnobsDesdeESP(uint8_t modo, uint8_t rango)
 {
-    auto* modoParam = audioProcessor.apvts.getParameter(modeParamID.getParamID());
-    auto* rangoParam = audioProcessor.apvts.getParameter(rangeParamID.getParamID());
+    pluginIsInControl = false;
+    bloquearControles(false); // deja los knobs bloqueados visualmente
 
-    if (modoParam != nullptr)
-        modoParam->setValueNotifyingHost(static_cast<float>(modo));
+    // MODO
+    if (auto* modeParam = audioProcessor.apvts.getParameter(modeParamID.getParamID()))
+    {
+        modeParam->beginChangeGesture();
+        modeParam->setValueNotifyingHost(modeParam->convertTo0to1((float)modo));
+        modeParam->endChangeGesture();
+    }
 
-    if (rangoParam != nullptr)
-        rangoParam->setValueNotifyingHost(static_cast<float>(rango) / 3.0f);
+    // RANGO
+    if (auto* rangeParam = audioProcessor.apvts.getParameter(rangeParamID.getParamID()))
+    {
+        rangeParam->beginChangeGesture();
+        rangeParam->setValueNotifyingHost(rangeParam->convertTo0to1((float)rango));
+        rangeParam->endChangeGesture();
+    }
 }
 
 void OscilloscopeAudioProcessorEditor::bloquearControles(bool pluginControls)

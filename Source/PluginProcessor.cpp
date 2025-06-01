@@ -122,14 +122,12 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     bool isFrequencyMode = apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
         
     if (isFrequencyMode) {
-        if (getActiveEditor() != nullptr) {
-            frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);
-        }
+        frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);
     }
     else {
         audioTimeBuffer.makeCopyOf(buffer);
         int latencySamples = getLatencySamples();
-        buffer.applyGainRamp(0, latencySamples, 0.0f, 1.0f);    
+        buffer.applyGainRamp(0, latencySamples, 0.0f, 1.0f);
     }
 }
 
