@@ -21,7 +21,7 @@ void TimeVisualizer::setModeDC(bool enabled)
 
 void TimeVisualizer::setVerticalOffsetInDivisions(float offsetDivs)
 {
-    // Convertís de divisiones a píxeles usando 8 divisiones verticales
+    // Converts de divisiones a pxeles usando 8 divisiones verticales
     const float pixelsPerDivision = getHeight() / 8.0f;
     verticalOffset = offsetDivs * pixelsPerDivision;
     repaint();
@@ -43,7 +43,7 @@ void TimeVisualizer::drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds)
     const int ticksPerDivision = 6;
 
     const juce::Colour gridColour = juce::Colours::white.withAlpha(0.2f);
-    const juce::Colour minorTickColour = juce::Colours::white.withAlpha(0.3f);  //  ahora más visible
+    const juce::Colour minorTickColour = juce::Colours::white.withAlpha(0.3f);  //  ahora ms visible
     const juce::Colour strongTickColour = juce::Colours::white.withAlpha(0.7f); //  contraste fuerte
 
     //  Dibujar ticks menores en TODA la grilla primero
@@ -76,7 +76,7 @@ void TimeVisualizer::drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds)
         }
     }
 
-    // Dibujar líneas de cuadrícula (luego de los ticks menores)
+    // Dibujar lineas de cuadrcula (luego de los ticks menores)
     g.setColour(gridColour);
     for (int i = 0; i <= numHDivs; ++i)
     {
@@ -130,7 +130,7 @@ void TimeVisualizer::paint(juce::Graphics& g)
     juce::MessageManagerLock mmLock;
     if (!mmLock.lockWasGained()) return;
 
-    constexpr float calibrationFactor = 12.0f; // solo para visualización
+    constexpr float calibrationFactor = 12.0f; // solo para visualizacion
 
     const float cornerRadius = 8.0f;
     const float borderThickness = 4.0f;
@@ -226,16 +226,16 @@ void TimeVisualizer::paint(juce::Graphics& g)
         //  Marcadores de referencia y trigger
         // ===============================================================
 
-        const float markerSize = 8.0f;      // ancho del triángulo
+        const float markerSize = 8.0f;      // ancho del tringulo
         const float pad = 6.0f;      // margen desde el borde
 
-        // Y del TRIGGER  (mismo cálculo que la forma de onda)
+        // Y del TRIGGER  (mismo clculo que la forma de onda)
         float triggerY = centerY - (currentTriggerLevel * pixelsPerVolt) - verticalOffset;
 
-        // Y de la REFERENCIA (0 V desplazado: línea central con offset)
+        // Y de la REFERENCIA (0 V desplazado: lnea central con offset)
         float refY = centerY - verticalOffset;
 
-        // ---------- Triángulo de TRIGGER ------------------
+        // ---------- Tringulo de TRIGGER ------------------
         {
             float x0 = bounds.getRight() - pad - markerSize;   // punta en x0
             juce::Path trig;
