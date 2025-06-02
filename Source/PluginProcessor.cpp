@@ -85,10 +85,10 @@ void OscilloscopeAudioProcessor::changeProgramName (int index, const juce::Strin
 //==============================================================================
 void OscilloscopeAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    juce::dsp::ProcessSpec spec;
-    spec.sampleRate = sampleRate;
-    spec.maximumBlockSize = juce::uint32(samplesPerBlock);
-    spec.numChannels = juce::uint32(getTotalNumOutputChannels());
+    const int bufferSeconds = 10; // capacidad total (10 s por ejemplo)
+    const int bufferSize = static_cast<int>(sampleRate * bufferSeconds);
+    circularBuffer.prepare(getTotalNumInputChannels(), bufferSize);
+
 
     frequencyAnalyzer.setUpFrequencyAnalyzer(int(sampleRate), sampleRate);
 }
@@ -125,9 +125,7 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);
     }
     else {
-        audioTimeBuffer.makeCopyOf(buffer);
-        int latencySamples = getLatencySamples();
-        buffer.applyGainRamp(0, latencySamples, 0.0f, 1.0f);
+        circularBuffer.pushBlock(buffer);
     }
 }
 

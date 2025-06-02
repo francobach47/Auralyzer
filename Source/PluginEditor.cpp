@@ -288,16 +288,36 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         timeVisualizer.setModeDC(isDC);
     }
 
-    if (parameterID == verticalScaleParamID.getParamID())
+    else if (parameterID == rangeParamID.getParamID())
     {
-        float verticalGain = std::pow(2.0f, newValue);
-        timeVisualizer.setVerticalGain(verticalGain);
+        int newRange = static_cast<int>(newValue);
+        const auto& options = verticalScaleByRange[newRange];
+
+        // Actualizar las etiquetas del pote si querés (visual)
+        for (int i = 0; i < 4; ++i)
+            verticalScaleKnob.slider.setTextValueSuffix(options[i].first);
+
+        // Forzar valor default (ej: tercera opción del rango actual)
+        if (auto* param = audioProcessor.apvts.getParameter(verticalScaleParamID.getParamID()))
+        {
+            param->beginChangeGesture();
+            param->setValueNotifyingHost(param->convertTo0to1(0)); // índice 2 del rango
+            param->endChangeGesture();
+        }
+    }
+
+    else if (parameterID == verticalScaleParamID.getParamID())
+    {
+        int index = static_cast<int>(newValue);
+        int currentRange = audioProcessor.params.rangeValue;
+        float scaleV = verticalScaleByRange[currentRange][index].second;
+
+        timeVisualizer.setVerticalGain(1.0f / scaleV); // o scaleV si lo usás directamente
     }
 
     if (parameterID == verticalPositionParamID.getParamID())
     {
-        float verticalOffset = newValue * (timeVisualizer.getHeight() / 2);
-        timeVisualizer.setVerticalOffset(verticalOffset);
+        timeVisualizer.setVerticalOffsetInDivisions(newValue);
     }
 
     if (parameterID == horizontalScaleParamID.getParamID())

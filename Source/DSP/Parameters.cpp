@@ -31,11 +31,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 		juce::NormalisableRange<float> {-5.0f, 5.0f, 0.01f },
 		0.0f
 	));
-	layout.add(std::make_unique<juce::AudioParameterInt>(
+	layout.add(std::make_unique<juce::AudioParameterChoice>(
 		horizontalScaleParamID,
 		"Hor Scale",
-		1, 8, 0
-	));
+		[] {
+			juce::StringArray labels;
+			for (const auto& pair : horizontalScaleOptions)
+				labels.add(pair.first);
+			return labels;
+		}(),
+			6 // default = "10 ms"
+			));
 
 	layout.add(std::make_unique<juce::AudioParameterFloat>(
 		verticalPositionParamID,
@@ -43,11 +49,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 		juce::NormalisableRange<float> {-5.0f, 5.0f, 0.01f },
 		0.0f
 	));
-	layout.add(std::make_unique<juce::AudioParameterInt>(
-		verticalScaleParamID,
-		"Ver Scale",
-		-5, 5, 0
-	));
+
+	juce::StringArray scaleChoices = { "A", "B", "C", "D" }; // valores placeholder
+	layout.add(std::make_unique<juce::AudioParameterChoice>(
+		verticalScaleParamID, "Ver Scale", scaleChoices, 0)); // default = tercera opción
+
 
 	juce::StringArray rangeOptions = {
 		"10 mV - 100 mV",
@@ -94,10 +100,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 
 void Parameters::update() noexcept
 {
-	horizontalScale = horizontalScaleParam->get();
+	horizontalScaleIndex = horizontalScaleParam->getIndex();
 	horizontalPosition = horizontalPositionParam->get();
 	
-	verticalScale = verticalScaleParam->get();
+	verticalScaleIndex = verticalScaleParam->getIndex();
 	verticalPosition = verticalPositionParam->get();
 
 	modeValue = modeParam->getIndex();
@@ -111,4 +117,21 @@ void Parameters::update() noexcept
 float Parameters::getTriggerLevel() const noexcept
 {
 	return triggerLevelParam != nullptr ? triggerLevelParam->get() : triggerLevel;
+}
+
+float Parameters::getVerticalScaleInVolts() const
+{
+	if (rangeValue >= 0 && rangeValue < verticalScaleByRange.size() &&
+		verticalScaleIndex >= 0 && verticalScaleIndex < 4)
+		return verticalScaleByRange[rangeValue][verticalScaleIndex].second;
+
+	return 1.0f; // valor seguro por default
+}
+
+float Parameters::getHorizontalScaleInSeconds() const
+{
+	if (horizontalScaleIndex >= 0 && horizontalScaleIndex < horizontalScaleOptions.size())
+		return horizontalScaleOptions[horizontalScaleIndex].second;
+
+	return 0.01f; // default: 10 ms/div
 }
