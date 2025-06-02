@@ -31,6 +31,10 @@
               file="Source/UI/TimeVisualizer.h"/>
       </GROUP>
       <GROUP id="{6647A5F1-9E97-4DF6-3439-BFC6A4AB94D2}" name="DSP">
+        <FILE id="ZQ7lCU" name="CircularAudioBuffer.cpp" compile="1" resource="0"
+              file="Source/DSP/CircularAudioBuffer.cpp"/>
+        <FILE id="HNkOpe" name="CircularAudioBuffer.h" compile="0" resource="0"
+              file="Source/DSP/CircularAudioBuffer.h"/>
         <FILE id="rCDph8" name="FFT.cpp" compile="1" resource="0" file="Source/DSP/FFT.cpp"/>
         <FILE id="SUW8EQ" name="FFT.h" compile="0" resource="0" file="Source/DSP/FFT.h"/>
         <FILE id="Sg9OMU" name="Parameters.cpp" compile="1" resource="0" file="Source/DSP/Parameters.cpp"/>

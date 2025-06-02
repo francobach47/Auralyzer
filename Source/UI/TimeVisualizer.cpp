@@ -43,8 +43,8 @@ void TimeVisualizer::drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds)
     const int ticksPerDivision = 6;
 
     const juce::Colour gridColour = juce::Colours::white.withAlpha(0.2f);
-    const juce::Colour minorTickColour = juce::Colours::white.withAlpha(0.3f);  //  ahora ms visible
-    const juce::Colour strongTickColour = juce::Colours::white.withAlpha(0.7f); //  contraste fuerte
+    const juce::Colour minorTickColour = juce::Colours::white.withAlpha(0.3f);  
+    const juce::Colour strongTickColour = juce::Colours::white.withAlpha(0.7f); 
 
     //  Dibujar ticks menores en TODA la grilla primero
     g.setColour(minorTickColour);
@@ -130,7 +130,7 @@ void TimeVisualizer::paint(juce::Graphics& g)
     juce::MessageManagerLock mmLock;
     if (!mmLock.lockWasGained()) return;
 
-    constexpr float calibrationFactor = 12.0f; // solo para visualizacion
+    constexpr float calibrationFactor = 12.0f; //factor de calibracion para las tensiones reales (CHEQUEAR)
 
     const float cornerRadius = 8.0f;
     const float borderThickness = 4.0f;
@@ -144,29 +144,39 @@ void TimeVisualizer::paint(juce::Graphics& g)
     g.reduceClipRegion(clipPath);
 
     drawGrid(g, bounds);
-
     g.setColour(Colors::PlotSection::outline);
     g.drawRoundedRectangle(bounds, cornerRadius, borderThickness);
 
-    const auto& buffer = processor.getAudioBuffer();
-    const int numChannels = processor.getTotalNumInputChannels();
-    const int numSamples = buffer.getNumSamples();
+    // ========== ESCALA TEMPORAL ==========
+    const float sampleRate = (float)processor.getSampleRate();
+    const float secondsPerDiv = processor.params.getHorizontalScaleInSeconds();
+    const float totalTime = secondsPerDiv * 10.0f; 
+    int displaySamples = static_cast<int>(totalTime * sampleRate);
 
+    // ========== CIRCULAR BUFFER ==========
+    juce::AudioBuffer<float> tempBuffer;
+    processor.getCircularBuffer().getMostRecentWindow(tempBuffer, displaySamples + 2048); 
+    juce::AudioBuffer<float> buffer;
+
+    int numSamples = tempBuffer.getNumSamples();
+    if (numSamples < 16) return;
+
+    buffer = std::move(tempBuffer);
+    displaySamples = std::min(displaySamples, numSamples);
+
+    const int numChannels = processor.getTotalNumInputChannels();
     const float voltsPerDiv = processor.params.getVerticalScaleInVolts();
     const float pixelsPerDiv = static_cast<float>(getHeight()) / 8.0f;
     const float pixelsPerVolt = (pixelsPerDiv / voltsPerDiv) * calibrationFactor;
     const float centerY = getHeight() / 2.0f;
 
     int triggerSample = trigger.findTriggerPoint(buffer, 0);
-    int displaySamples = juce::jlimit(16, numSamples - triggerSample, static_cast<int>(numSamples / horizontalScale));
-
     float minY = std::numeric_limits<float>::max();
     float maxY = std::numeric_limits<float>::lowest();
 
+    // ========== DIBUJO DE LA ONDA ==========
     if (modeDC)
     {
-        if (numSamples == 0) return;
-
         float minVal = std::numeric_limits<float>::max();
         float maxVal = std::numeric_limits<float>::lowest();
 
@@ -190,85 +200,64 @@ void TimeVisualizer::paint(juce::Graphics& g)
     else
     {
         juce::Path path;
-        float sampleRate = (float)processor.getSampleRate();
         float timePerSample = 1.0f / sampleRate;
-        float totalTime = displaySamples * timePerSample * horizontalScale;
         float pixelsPerSecond = getWidth() / totalTime;
+        int offsetSamples = static_cast<int>(horizontalOffset * totalTime * sampleRate);
 
         for (int i = 0; i < displaySamples; ++i)
         {
-            int sampleIndex = triggerSample + i;
-            if (sampleIndex >= numSamples) break;
+            int sampleIndex = triggerSample + offsetSamples + i;
+            while (sampleIndex >= numSamples) sampleIndex -= numSamples;
+            while (sampleIndex < 0) sampleIndex += numSamples;
 
             float sum = 0.0f;
             for (int c = 0; c < numChannels; ++c)
                 sum += buffer.getSample(c, sampleIndex);
 
-            float t = i * timePerSample * horizontalScale; // tiempo real con escala
-            float timeOffset = horizontalOffset * totalTime; // desplazamiento en segundos
-            float x = (t + timeOffset) * pixelsPerSecond;
+            float t = i * timePerSample;
+            float x = t * pixelsPerSecond;
             float y = centerY - (sum / numChannels) * pixelsPerVolt - verticalOffset;
 
-            if (i == 0)
-                path.startNewSubPath(x, y);
-            else
-                path.lineTo(x, y);
+            if (i == 0) path.startNewSubPath(x, y);
+            else        path.lineTo(x, y);
 
             minY = std::min(minY, y);
             maxY = std::max(maxY, y);
         }
 
-
         g.setColour(Colors::PlotSection::timeResponse);
         g.strokePath(path, juce::PathStrokeType(2.0f));
 
-        // ===============================================================
-        //  Marcadores de referencia y trigger
-        // ===============================================================
+        // ========== TRIGGER Y FLECHAS ==========
+        const float markerSize = 8.0f;
+        const float pad = 6.0f;
 
-        const float markerSize = 8.0f;      // ancho del tringulo
-        const float pad = 6.0f;      // margen desde el borde
-
-        // Y del TRIGGER  (mismo clculo que la forma de onda)
         float triggerY = centerY - (currentTriggerLevel * pixelsPerVolt) - verticalOffset;
-
-        // Y de la REFERENCIA (0 V desplazado: lnea central con offset)
         float refY = centerY - verticalOffset;
 
-        // ---------- Tringulo de TRIGGER ------------------
-        {
-            float x0 = bounds.getRight() - pad - markerSize;   // punta en x0
-            juce::Path trig;
-            trig.addTriangle(x0, triggerY,               //  punta
-                x0 + markerSize, triggerY - markerSize * 0.6f,
-                x0 + markerSize, triggerY + markerSize * 0.6f);
+        juce::Path trig;
+        trig.addTriangle(bounds.getRight() - pad - markerSize, triggerY,
+            bounds.getRight() - pad, triggerY - markerSize * 0.6f,
+            bounds.getRight() - pad, triggerY + markerSize * 0.6f);
+        g.setColour(Colors::PlotSection::triggerMarker);
+        g.fillPath(trig);
 
-            g.setColour(Colors::PlotSection::triggerMarker);
-            g.fillPath(trig);
-        }
-
-        // ---------- Flecha de REFERENCIA -------------
-        {
-            float x0 = bounds.getX() + pad;                      // base en el borde
-            juce::Path ref;
-            ref.addTriangle(x0, refY - markerSize * 0.6f,
-                x0, refY + markerSize * 0.6f,
-                x0 + markerSize, refY);             //  punta
-
-            g.setColour(Colors::PlotSection::referenceArrow);
-            g.fillPath(ref);
-        }
-
+        juce::Path ref;
+        ref.addTriangle(bounds.getX() + pad, refY - markerSize * 0.6f,
+            bounds.getX() + pad, refY + markerSize * 0.6f,
+            bounds.getX() + pad + markerSize, refY);
+        g.setColour(Colors::PlotSection::referenceArrow);
+        g.fillPath(ref);
     }
 
+    // ========== Vpp Y FRECUENCIA ==========
     float signalPixels = maxY - minY;
     float signalDivisions = signalPixels / pixelsPerDiv;
-    lastVpp = signalDivisions * voltsPerDiv; // sin factor de calibracion en el calculo
+    lastVpp = signalDivisions * voltsPerDiv;
 
     const int currentRange = processor.params.rangeValue;
     const int currentIndex = processor.params.verticalScaleIndex;
 
-    // === Calcular frecuencia por cruce por cero ===
     float frequencyHz = -1.0f;
     if (numSamples > 2)
     {
@@ -292,7 +281,6 @@ void TimeVisualizer::paint(juce::Graphics& g)
         if (first != -1 && second != -1)
         {
             int periodSamples = second - first;
-            float sampleRate = (float)processor.getSampleRate();
             frequencyHz = sampleRate / periodSamples;
         }
     }
@@ -321,12 +309,25 @@ void TimeVisualizer::paint(juce::Graphics& g)
         g.setColour(juce::Colours::orange.withAlpha(0.8f));
         g.drawText(labelLeft, 8, getHeight() - 24, 100, 20, juce::Justification::left);
         g.drawText(labelRight, getWidth() - 110, getHeight() - 24, 100, 20, juce::Justification::right);
-
         if (frequencyHz > 0.0f)
-        {
             g.drawText(labelFreq, getWidth() - 110, getHeight() - 42, 100, 20, juce::Justification::right);
-        }
     }
+
+    // s/div
+    float sPerDiv = processor.params.getHorizontalScaleInSeconds();
+    juce::String labelTime;
+
+    if (sPerDiv >= 1.0f)
+        labelTime = juce::String(sPerDiv, 1) + " s/div";
+    else if (sPerDiv >= 0.001f)
+        labelTime = juce::String(sPerDiv * 1000.0f, 0) + " ms/div";
+    else
+        labelTime = juce::String(sPerDiv * 1e6f, 0) + " µs/div";
+
+    // s/div encima de V/div (lado izquierdo)
+    g.setFont(14.0f);
+    g.setColour(juce::Colours::orange.withAlpha(0.8f));
+    g.drawText(labelTime, 8, getHeight() - 42, 100, 20, juce::Justification::left);
 }
 
 void TimeVisualizer::timerCallback()

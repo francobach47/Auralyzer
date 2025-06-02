@@ -31,11 +31,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 		juce::NormalisableRange<float> {-5.0f, 5.0f, 0.01f },
 		0.0f
 	));
-	layout.add(std::make_unique<juce::AudioParameterInt>(
+	layout.add(std::make_unique<juce::AudioParameterChoice>(
 		horizontalScaleParamID,
 		"Hor Scale",
-		1, 8, 0
-	));
+		[] {
+			juce::StringArray labels;
+			for (const auto& pair : horizontalScaleOptions)
+				labels.add(pair.first);
+			return labels;
+		}(),
+			6 // default = "10 ms"
+			));
 
 	layout.add(std::make_unique<juce::AudioParameterFloat>(
 		verticalPositionParamID,
@@ -94,7 +100,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 
 void Parameters::update() noexcept
 {
-	horizontalScale = horizontalScaleParam->get();
+	horizontalScaleIndex = horizontalScaleParam->getIndex();
 	horizontalPosition = horizontalPositionParam->get();
 	
 	verticalScaleIndex = verticalScaleParam->getIndex();
@@ -120,4 +126,12 @@ float Parameters::getVerticalScaleInVolts() const
 		return verticalScaleByRange[rangeValue][verticalScaleIndex].second;
 
 	return 1.0f; // valor seguro por default
+}
+
+float Parameters::getHorizontalScaleInSeconds() const
+{
+	if (horizontalScaleIndex >= 0 && horizontalScaleIndex < horizontalScaleOptions.size())
+		return horizontalScaleOptions[horizontalScaleIndex].second;
+
+	return 0.01f; // default: 10 ms/div
 }

@@ -5,6 +5,7 @@
 #include "DSP/FFT.h"
 #include "Serial/SerialDevice.h"
 #include "DSP/Trigger.h"
+#include "DSP/CircularAudioBuffer.h"
 
 class OscilloscopeAudioProcessor  : public juce::AudioProcessor
 {
@@ -66,9 +67,13 @@ public:
     Parameters params;
 
     float getTriggerLevel() const { return params.getTriggerLevel(); }
+   
+    //Circular Buffer para representacion temporal
+    CircularAudioBuffer& getCircularBuffer() { return circularBuffer; }
 
 private:
     juce::AudioBuffer<float> audioTimeBuffer;
+    CircularAudioBuffer circularBuffer;
 
     FFT frequencyAnalyzer;
 

@@ -19,6 +19,12 @@ const std::vector<std::vector<std::pair<juce::String, float>>> verticalScaleByRa
 	{ {"2 V/div", 2.0f}, {"1 V/div", 1.0f}, {"500 mV/div", 0.5f}, {"200 mV/div", 0.2f} },          // Rango 2
 	{ {"20 V/div", 20.0f}, {"10 V/div", 10.0f}, {"5 V/div", 5.0f}, {"2 V/div", 2.0f} }             // Rango 3
 };
+inline const std::vector<std::pair<juce::String, float>> horizontalScaleOptions = {
+	{ "10 s",   10.0f  }, { "5 s",    5.0f  }, { "2 s",    2.0f  }, { "1 s",    1.0f  },
+	{ "500 ms", 0.5f  }, { "200 ms", 0.2f  }, { "100 ms", 0.1f  }, { "50 ms",  0.05f },
+	{ "20 ms",  0.02f }, { "10 ms",  0.01f }, { "5 ms",   0.005f }, { "2 ms",   0.002f },
+	{ "1 ms",   0.001f }, { "0.5 ms", 0.0005f }, { "0.2 ms", 0.0002f }, { "0.1 ms", 0.0001f }
+};
 
 
 class Parameters
@@ -51,13 +57,14 @@ public:
 
 	float getTriggerLevel() const noexcept;
 	float getVerticalScaleInVolts() const;
-	float getVoltsPerDiv() const noexcept;
+	float getHorizontalScaleInSeconds() const;
+	int horizontalScaleIndex = 0;
 
 private:
 
 	// Parameters definition
 	juce::AudioParameterFloat*  horizontalPositionParam;
-	juce::AudioParameterInt*    horizontalScaleParam;
+	juce::AudioParameterChoice* horizontalScaleParam;
 	juce::AudioParameterFloat*  verticalPositionParam;
 	juce::AudioParameterChoice* verticalScaleParam;
 	juce::AudioParameterChoice* modeParam;
