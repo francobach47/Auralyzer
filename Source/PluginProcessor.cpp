@@ -1,8 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-// TODO: Change into plugin parameter
-//const juce::String kSerialPortName{ "" }; ---- ESTO SE BORRA
 
 //==============================================================================
 OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
@@ -143,14 +141,28 @@ juce::AudioProcessorEditor* OscilloscopeAudioProcessor::createEditor()
 //==============================================================================
 void OscilloscopeAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    copyXmlToBinary(*apvts.copyState().createXml(), destData);
+    juce::ValueTree state = apvts.copyState();
+
+    // Guardamos el calibrationFactor como propiedad
+    state.setProperty("calibrationFactor", calibrationFactor, nullptr);
+
+    std::unique_ptr<juce::XmlElement> xml(state.createXml());
+    copyXmlToBinary(*xml, destData);
 }
+
 
 void OscilloscopeAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     std::unique_ptr<juce::XmlElement> xml(getXmlFromBinary(data, sizeInBytes));
-    if (xml.get() != nullptr && xml->hasTagName(apvts.state.getType())) {
-        apvts.replaceState(juce::ValueTree::fromXml(*xml));
+
+    if (xml != nullptr && xml->hasTagName(apvts.state.getType()))
+    {
+        juce::ValueTree state = juce::ValueTree::fromXml(*xml);
+
+        if (state.hasProperty("calibrationFactor"))
+            calibrationFactor = static_cast<float>(state["calibrationFactor"]);
+
+        apvts.replaceState(state);
     }
 }
 
@@ -170,3 +182,34 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new OscilloscopeAudioProcessor();
 }
+
+void OscilloscopeAudioProcessor::startLevelCalibration()
+{
+    float salidaHardware = 0.4f;
+    float entradaReal = 1.0f;
+
+    float measuredVpp = circularBuffer.computeLastVpp();
+
+    if (measuredVpp > 0.0f)
+    {
+        calibrationFactor = (entradaReal / salidaHardware) * (salidaHardware / measuredVpp);
+        calibrationRange = 2;  // Forzamos calibración para el rango 1 V – 10 V
+        DBG("Nuevo calibrationFactor: " << calibrationFactor);
+    }
+}
+
+
+float OscilloscopeAudioProcessor::getCalibrationFactor() const
+{
+    float factorActual = rangeCompensationFactors[params.rangeValue];
+    float factorCalibrado = rangeCompensationFactors[calibrationRange];
+    float factorRelativo = factorActual / factorCalibrado;
+    return calibrationFactor * factorRelativo;
+}
+
+
+float OscilloscopeAudioProcessor::getCorrectedVoltage(float value) const
+{
+    return value * getCalibrationFactor();
+}
+

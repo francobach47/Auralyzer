@@ -46,3 +46,22 @@ void CircularAudioBuffer::getMostRecentWindow(juce::AudioBuffer<float>& out, int
             std::memcpy(dst + firstPart, src, sizeof(float) * secondPart);
     }
 }
+
+float CircularAudioBuffer::computeLastVpp()
+{
+    float min = FLT_MAX, max = -FLT_MIN;
+
+    const int numSamples = storedSamples;
+    const int channel = 0; // usamos canal 0 para calcular el Vpp
+    const float* readPtr = buffer.getReadPointer(channel);
+
+    for (int i = 0; i < numSamples; ++i)
+    {
+        int index = (writePos - numSamples + i + capacity) % capacity;
+        float v = readPtr[index];
+        if (v < min) min = v;
+        if (v > max) max = v;
+    }
+
+    return max - min;
+}

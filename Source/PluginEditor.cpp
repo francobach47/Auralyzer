@@ -49,6 +49,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 
     serialPortLabel.attachToComponent(&serialPortSelector, true);
     addAndMakeVisible(serialPortSelector);
+    serialPortSelector.setLookAndFeel(&mainLF);
 
     serialPortSelector.onChange = [this]()
         {
@@ -138,20 +139,31 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     verticalGroup.addAndMakeVisible(verticalScaleKnob);
     addAndMakeVisible(verticalGroup);
 
-    calibrationButton.setButtonText("Calibration");
-    calibrationButton.setClickingTogglesState(true);
-    calibrationButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::transparentBlack);
-    calibrationButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
-    calibrationButton.setLookAndFeel(ButtonLookAndFeel::get());
-    addAndMakeVisible(calibrationButton);
-    calibrationButton.setClickingTogglesState(true);
-    calibrationButton.onClick = [this]()
+    probesCalibrationButton.setButtonText("Probes");
+    probesCalibrationButton.setClickingTogglesState(true);
+    probesCalibrationButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::transparentBlack);
+    probesCalibrationButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
+    probesCalibrationButton.setLookAndFeel(ButtonLookAndFeel::get());
+    addAndMakeVisible(probesCalibrationButton);
+    probesCalibrationButton.setClickingTogglesState(true);
+    probesCalibrationButton.onClick = [this]()
         {
-            bool isOn = calibrationButton.getToggleState();
+            bool isOn = probesCalibrationButton.getToggleState();
             audioProcessor.getSerialDevice().setCalibrationMode(isOn ? 1 : 0);
         };
 
-    addAndMakeVisible(calibrationButton);
+    levelCalibrationButton.setButtonText("Calibration");
+    levelCalibrationButton.setClickingTogglesState(true);
+    levelCalibrationButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::transparentBlack);
+    levelCalibrationButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
+    levelCalibrationButton.setLookAndFeel(ButtonLookAndFeel::get());
+    addAndMakeVisible(levelCalibrationButton);
+    levelCalibrationButton.setClickingTogglesState(true);
+    levelCalibrationButton.onClick = [this]() {
+        isLevelCalibrating = levelCalibrationButton.getToggleState();
+        if (isLevelCalibrating)
+            audioProcessor.startLevelCalibration();
+        };
 
     setLookAndFeel(&mainLF);
     
@@ -201,6 +213,7 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
     audioProcessor.apvts.removeParameterListener(rangeParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(modeParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(plotModeParamID.getParamID(), this);
+    serialPortSelector.setLookAndFeel(nullptr);
 
 #ifdef JUCE_OPENGL
     openGLContext.detach();
@@ -265,8 +278,11 @@ void OscilloscopeAudioProcessorEditor::resized()
     //Position the COM Port List
     serialPortSelector.setBounds(150, 453, 200, 24);
     
-    //Calibration
-    calibrationButton.setBounds(400, 453, 100, 30);
+    //ProbesCalibration
+    probesCalibrationButton.setBounds(400, 453, 100, 30);
+    
+    //LevelCalibration
+    levelCalibrationButton.setBounds(550, 453, 100, 30); // Elegí la posición
 
 }
 

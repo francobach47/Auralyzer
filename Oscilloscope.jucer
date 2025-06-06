@@ -40,6 +40,10 @@
         <FILE id="SUW8EQ" name="FFT.h" compile="0" resource="0" file="Source/DSP/FFT.h"/>
         <FILE id="Sg9OMU" name="Parameters.cpp" compile="1" resource="0" file="Source/DSP/Parameters.cpp"/>
         <FILE id="KSziEl" name="Parameters.h" compile="0" resource="0" file="Source/DSP/Parameters.h"/>
+        <FILE id="Ujn6cK" name="SignalAnalysis.cpp" compile="1" resource="0"
+              file="Source/DSP/SignalAnalysis.cpp"/>
+        <FILE id="PxYRwz" name="SignalAnalysis.h" compile="0" resource="0"
+              file="Source/DSP/SignalAnalysis.h"/>
         <FILE id="eYGiK5" name="Trigger.cpp" compile="1" resource="0" file="Source/DSP/Trigger.cpp"/>
         <FILE id="ufNRGB" name="Trigger.h" compile="0" resource="0" file="Source/DSP/Trigger.h"/>
       </GROUP>

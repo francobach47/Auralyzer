@@ -71,6 +71,11 @@ public:
     //Circular Buffer para representacion temporal
     CircularAudioBuffer& getCircularBuffer() { return circularBuffer; }
 
+    //CalibrationLevel
+    void startLevelCalibration();
+    float getCalibrationFactor() const;
+    float getCorrectedVoltage(float vppMedido) const;
+
 private:
     juce::AudioBuffer<float> audioTimeBuffer;
     CircularAudioBuffer circularBuffer;
@@ -79,6 +84,11 @@ private:
 
     SerialDevice serialDevice;
     bool lastFrequencyModeState = false;
+
+    bool isCalibratingLevel = false;
+    float calibrationFactor = 1.0f;
+    int calibrationRange = 2; // por defecto calibrado en el rango 1 V – 10 V
+
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessor)

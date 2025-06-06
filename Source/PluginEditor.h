@@ -31,8 +31,12 @@ private:
 
     TimeVisualizer timeVisualizer;
     FrequencyVisualizer frequencyVisualizer;
-    juce::TextButton calibrationButton{ "Calibration" };
+    juce::TextButton probesCalibrationButton{ "Probes" };
     bool isCalibrating = false;
+
+    juce::TextButton levelCalibrationButton{ "Calibrator" };
+    bool isLevelCalibrating = false;
+
 
     juce::GroupComponent verticalGroup, horizontalGroup;
     juce::GroupComponent optionsGroup;

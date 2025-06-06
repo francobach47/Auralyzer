@@ -6,7 +6,7 @@
 #include "LookAndFeel.h"
 
 class TimeVisualizer : public juce::Component,
-                       public juce::Timer
+    public juce::Timer
 {
 public:
     TimeVisualizer(OscilloscopeAudioProcessor& processor);
@@ -15,25 +15,23 @@ public:
     void paint(juce::Graphics&) override;
     void timerCallback() override;
 
-    // Visualization parameters
     void setVerticalGain(float gain) { verticalGain = gain; }
     void setVerticalOffset(float offset) { verticalOffset = offset; }
     void setHorizontalScale(float scale) { horizontalScale = scale; }
     void setHorizontalOffset(float offset) { horizontalOffset = offset; }
-    void setVerticalOffsetInDivisions(float divisions);  // nueva función
+    void setVerticalOffsetInDivisions(float divisions);
 
-   void updateTriggerParameters(float level, float offset, bool filterEnabled);
-   float currentTriggerLevel = 0.0f;   // -1 … +1
+    void updateTriggerParameters(float level, float offset, bool filterEnabled);
+    float currentTriggerLevel = 0.0f;
 
-   //DC Mode
-   void setModeDC(bool enabled);
+    void setModeDC(bool enabled);
+    void drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds);
 
-   //gridPlot
-   void drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds);
-   
-   //Para visualizar en tiempo real el valor de tension
-   float lastVpp = -1.0f;
-   int frameCounter = 0;
+    float lastVpp = -1.0f;
+    int frameCounter = 0;
+
+    friend class OscilloscopeAudioProcessorEditor;
+    float calibrationFactor = 12.0f; // valor inicial
 
 private:
     OscilloscopeAudioProcessor& processor;
@@ -41,7 +39,6 @@ private:
 
     float verticalGain = 1.0f;
     float verticalOffset = 0.0f;
-
     float horizontalScale = 1.0f;
     float horizontalOffset = 0.0f;
     static constexpr int numVerticalDivisions = 8;
@@ -50,4 +47,3 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimeVisualizer)
 };
-

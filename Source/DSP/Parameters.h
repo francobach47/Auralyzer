@@ -25,6 +25,9 @@ inline const std::vector<std::pair<juce::String, float>> horizontalScaleOptions 
 	{ "20 ms",  0.02f }, { "10 ms",  0.01f }, { "5 ms",   0.005f }, { "2 ms",   0.002f },
 	{ "1 ms",   0.001f }, { "0.5 ms", 0.0005f }, { "0.2 ms", 0.0002f }, { "0.1 ms", 0.0001f }
 };
+inline const std::vector<float> rangeCompensationFactors = {
+	0.01f, 0.1f, 1.0f, 10.0f
+};
 
 
 class Parameters
