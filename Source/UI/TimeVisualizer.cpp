@@ -38,9 +38,15 @@ void TimeVisualizer::timerCallback()
 
 void TimeVisualizer::updateTriggerParameters(float level, float offset, bool filterEnabled)
 {
-    currentTriggerLevel = juce::jlimit(-1.0f, 1.0f, level);
-    trigger.setParameters(level, offset, filterEnabled);
+    // Ingresás el level en divisiones (como setea el pote)
+    const float voltsPerDiv = processor.params.getVerticalScaleInVolts();
+    const float volts = level * voltsPerDiv; // lo pasás a voltios reales
+    const float uncalibrated = volts / processor.getCalibrationFactor(); // lo llevás al dominio de la señal sin calibrar (entre -1 y 1)
+
+    currentTriggerLevel = uncalibrated; // esto se usa para dibujar el triángulo
+    trigger.setParameters(uncalibrated, offset, filterEnabled); // esto para detectar el flanco en el dominio de señal
 }
+
 
 void TimeVisualizer::drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds)
 {
