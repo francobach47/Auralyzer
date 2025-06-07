@@ -18,9 +18,9 @@ public:
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
 
-   #ifndef JucePlugin_PreferredChannelConfigurations
+#ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
-   #endif
+#endif
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
@@ -67,14 +67,19 @@ public:
     Parameters params;
 
     float getTriggerLevel() const { return params.getTriggerLevel(); }
-   
+
     //Circular Buffer para representacion temporal
     CircularAudioBuffer& getCircularBuffer() { return circularBuffer; }
 
     //CalibrationLevel
     void startLevelCalibration();
     float getCalibrationFactor() const;
+    void setCalibrationFactorAC(float factor) { calibrationFactorAC = factor; }
+    void setCalibrationFactorDC(float factor) { calibrationFactorDC = factor; }
+
     float getCorrectedVoltage(float vppMedido) const;
+
+    void setSineEnabled(bool enabled);
 
 private:
     juce::AudioBuffer<float> audioTimeBuffer;
@@ -86,9 +91,18 @@ private:
     bool lastFrequencyModeState = false;
 
     bool isCalibratingLevel = false;
-    float calibrationFactor = 1.0f;
+    float calibrationFactorAC = 1.0f;
+    int   calibrationRangeAC = 2;
+
+    float calibrationFactorDC = 1.0f;
+    int   calibrationRangeDC = 2;
+
     int calibrationRange = 2; // por defecto calibrado en el rango 1 V – 10 V
 
+    // Generador de seno para calibración
+    double phase = 0.0;
+    double phaseIncrement = 0.0;
+    bool sineEnabled = false;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessor)

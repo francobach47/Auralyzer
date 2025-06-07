@@ -175,12 +175,12 @@ void TimeVisualizer::paint(juce::Graphics& g)
     float minY = std::numeric_limits<float>::max();
     float maxY = std::numeric_limits<float>::lowest();
 
+    float minVal = std::numeric_limits<float>::max();
+    float maxVal = std::numeric_limits<float>::lowest();
+
     // ========== DIBUJO DE LA ONDA ==========
     if (modeDC)
     {
-        float minVal = std::numeric_limits<float>::max();
-        float maxVal = std::numeric_limits<float>::lowest();
-
         for (int c = 0; c < numChannels; ++c)
         {
             const float* data = buffer.getReadPointer(c);
@@ -273,7 +273,7 @@ void TimeVisualizer::paint(juce::Graphics& g)
     const int currentRange = processor.params.rangeValue;
     const int currentIndex = processor.params.verticalScaleIndex;
 
-    juce::String labelLeft, labelRMS, labelVpp, labelFreq, labelTHD;
+    juce::String labelLeft, labelDC, labelRMS, labelVpp, labelFreq, labelTHD;
 
     if (currentRange >= 0 && currentRange < verticalScaleByRange.size()
         && currentIndex >= 0 && currentIndex < verticalScaleByRange[currentRange].size())
@@ -281,16 +281,28 @@ void TimeVisualizer::paint(juce::Graphics& g)
         labelLeft = verticalScaleByRange[currentRange][currentIndex].first;
     }
 
-    if (calibratedRMS < 1.0f)
-        labelRMS = "RMS: " + juce::String(calibratedRMS * 1000.0f, 2) + " mV";
+    if (modeDC)
+    {
+        // Mostrar valor continuo equivalente
+        if (calibratedVpp < 1.0f)
+            labelVpp = "DC: " + juce::String(calibratedVpp * 1000.0f, 2) + " mV";
+        else
+            labelVpp = "DC: " + juce::String(calibratedVpp, 2) + " V";
+    }
     else
-        labelRMS = "RMS: " + juce::String(calibratedRMS, 2) + " V";
+    {
+        // Mostrar medidas alterna (Vpp, RMS)
+        if (calibratedRMS < 1.0f)
+            labelRMS = "RMS: " + juce::String(calibratedRMS * 1000.0f, 2) + " mV";
+        else
+            labelRMS = "RMS: " + juce::String(calibratedRMS, 2) + " V";
 
-    if (calibratedVpp < 1.0f)
-        labelVpp = "Vpp: " + juce::String(calibratedVpp * 1000.0f, 2) + " mV";
-    else
-        labelVpp = "Vpp: " + juce::String(calibratedVpp, 2) + " V";
-
+        if (calibratedVpp < 1.0f)
+            labelVpp = "Vpp: " + juce::String(calibratedVpp * 1000.0f, 2) + " mV";
+        else
+            labelVpp = "Vpp: " + juce::String(calibratedVpp, 2) + " V";
+    }
+    
     if (frequencyHz > 0.0f)
     {
         if (frequencyHz >= 1000.0f)
@@ -304,11 +316,19 @@ void TimeVisualizer::paint(juce::Graphics& g)
     g.setFont(14.0f);
     g.setColour(juce::Colours::orange.withAlpha(0.8f));
     g.drawText(labelLeft, 8, getHeight() - 24, 100, 20, juce::Justification::left);
-    g.drawText(labelTHD, getWidth() - 110, getHeight() - 42, 100, 20, juce::Justification::right);
-    g.drawText(labelRMS, getWidth() - 110, getHeight() - 78, 100, 20, juce::Justification::right);
-    g.drawText(labelVpp, getWidth() - 110, getHeight() - 60, 100, 20, juce::Justification::right);
-    if (!labelFreq.isEmpty())
-        g.drawText(labelFreq, getWidth() - 110, getHeight() - 24, 100, 20, juce::Justification::right);
+
+    if (modeDC)
+    {
+        g.drawText(labelVpp, getWidth() - 110, getHeight() - 24, 100, 20, juce::Justification::right);
+    }
+    else
+    {
+        g.drawText(labelTHD, getWidth() - 110, getHeight() - 42, 100, 20, juce::Justification::right);
+        g.drawText(labelRMS, getWidth() - 110, getHeight() - 78, 100, 20, juce::Justification::right);
+        g.drawText(labelVpp, getWidth() - 110, getHeight() - 60, 100, 20, juce::Justification::right);
+        if (!labelFreq.isEmpty())
+            g.drawText(labelFreq, getWidth() - 110, getHeight() - 24, 100, 20, juce::Justification::right);
+    }
 
     float sPerDiv = processor.params.getHorizontalScaleInSeconds();
     juce::String labelTime;

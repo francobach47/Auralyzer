@@ -69,5 +69,7 @@ private:
 
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
 
+    juce::TextButton sineButton;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OscilloscopeAudioProcessorEditor)
 };

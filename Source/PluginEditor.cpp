@@ -152,7 +152,8 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
             audioProcessor.getSerialDevice().setCalibrationMode(isOn ? 1 : 0);
         };
 
-    levelCalibrationButton.setButtonText("Calibration");
+    bool isDC = audioProcessor.params.modeValue == 1;
+    levelCalibrationButton.setButtonText(isDC ? "Calibrate DC" : "Calibrate AC");
     levelCalibrationButton.setClickingTogglesState(true);
     levelCalibrationButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::transparentBlack);
     levelCalibrationButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
@@ -163,6 +164,18 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
         isLevelCalibrating = levelCalibrationButton.getToggleState();
         if (isLevelCalibrating)
             audioProcessor.startLevelCalibration();
+        };
+
+    sineButton.setButtonText("Sine");
+    sineButton.setClickingTogglesState(true);
+    sineButton.setColour(juce::ToggleButton::tickColourId, juce::Colours::transparentBlack);
+    sineButton.setColour(juce::ToggleButton::textColourId, juce::Colours::white);
+    sineButton.setLookAndFeel(ButtonLookAndFeel::get());
+    addAndMakeVisible(sineButton);
+
+    sineButton.onClick = [this]()
+        {
+            audioProcessor.setSineEnabled(sineButton.getToggleState());
         };
 
     setLookAndFeel(&mainLF);
@@ -282,7 +295,11 @@ void OscilloscopeAudioProcessorEditor::resized()
     probesCalibrationButton.setBounds(400, 453, 100, 30);
     
     //LevelCalibration
-    levelCalibrationButton.setBounds(550, 453, 100, 30); // Elegí la posición
+    levelCalibrationButton.setBounds(550, 453, 100, 30); 
+
+    //Tone Generator
+    sineButton.setBounds(levelCalibrationButton.getRight() + 10, levelCalibrationButton.getY(), 70, 30);
+
 
 }
 
@@ -296,12 +313,14 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
     }
 
-    // Esto debe ejecutarse SIEMPRE
     if (parameterID == modeParamID.getParamID())
     {
-        bool isDC = std::round(newValue) == 1; // 0=AC, 1=DC
+        bool isDC = std::round(newValue) == 1;
         DBG("→ modo cambiado: esModoDC = " << (isDC ? "true" : "false"));
         timeVisualizer.setModeDC(isDC);
+
+        // Actualizar label del botón de calibración
+        levelCalibrationButton.setButtonText(isDC ? "Calibrate DC" : "Calibrate AC");
     }
 
     else if (parameterID == rangeParamID.getParamID())
@@ -309,7 +328,7 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         int newRange = static_cast<int>(newValue);
         const auto& options = verticalScaleByRange[newRange];
 
-        // Actualizar las etiquetas del pote si querés (visual)
+        // Actualizar las etiquetas del pote
         for (int i = 0; i < 4; ++i)
             verticalScaleKnob.slider.setTextValueSuffix(options[i].first);
 

@@ -6,9 +6,9 @@
 OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
      : AudioProcessor (BusesProperties()
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), false)
+                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                        ),
-    params(apvts) //serialDevice() --- ESTO SE BORRA
+    params(apvts) 
 {
     //serialDevice.init(kSerialPortName); ----- ESTO SE BORRA
 }
@@ -83,12 +83,17 @@ void OscilloscopeAudioProcessor::changeProgramName (int index, const juce::Strin
 //==============================================================================
 void OscilloscopeAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    const int bufferSeconds = 10; // capacidad total (10 s por ejemplo)
+    const int bufferSeconds = 10; // capacidad total (10 s)
     const int bufferSize = static_cast<int>(sampleRate * bufferSeconds);
     circularBuffer.prepare(getTotalNumInputChannels(), bufferSize);
 
 
     frequencyAnalyzer.setUpFrequencyAnalyzer(int(sampleRate), sampleRate);
+
+    // Inicializamos el incremento de fase para 1 kHz
+    phase = 0.0;
+    phaseIncrement = juce::MathConstants<double>::twoPi * 1000.0 / sampleRate;
+
 }
 
 void OscilloscopeAudioProcessor::releaseResources()
@@ -97,9 +102,13 @@ void OscilloscopeAudioProcessor::releaseResources()
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool OscilloscopeAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool OscilloscopeAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
-    return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::disabled();
+    const auto& mainIn = layouts.getChannelSet(true, 0); // Input
+    const auto& mainOut = layouts.getChannelSet(false, 0); // Output
+
+    return mainIn == juce::AudioChannelSet::stereo()
+        && mainOut == juce::AudioChannelSet::stereo();
 }
 #endif
 
@@ -125,6 +134,34 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     else {
         circularBuffer.pushBlock(buffer);
     }
+
+    if (sineEnabled)
+    {
+        auto numSamples = buffer.getNumSamples();
+        auto numChannels = buffer.getNumChannels();
+
+        float amplitude = (params.modeValue == 1) ? 0.3267f : 0.164f; // 800 mVpp DC, 400 mVpp AC 
+
+        for (int channel = 0; channel < numChannels; ++channel)
+        {
+            float* channelData = buffer.getWritePointer(channel);
+
+            for (int i = 0; i < numSamples; ++i)
+            {
+                float sample = std::sin(phase) * amplitude;
+                channelData[i] = sample;
+                phase += phaseIncrement;
+
+                if (phase >= juce::MathConstants<double>::twoPi)
+                    phase -= juce::MathConstants<double>::twoPi;
+            }
+        }
+    }
+    else
+    {
+        buffer.clear(); //  Si el tono no está activo, se muetea la salida
+    }
+
 }
 
 //==============================================================================
@@ -139,19 +176,19 @@ juce::AudioProcessorEditor* OscilloscopeAudioProcessor::createEditor()
 }
 
 //==============================================================================
-void OscilloscopeAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void OscilloscopeAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     juce::ValueTree state = apvts.copyState();
 
-    // Guardamos el calibrationFactor como propiedad
-    state.setProperty("calibrationFactor", calibrationFactor, nullptr);
+    // Guardamos los factores de calibración y sus rangos como propiedades
+    state.setProperty("calibrationFactorAC", calibrationFactorAC, nullptr);
+    state.setProperty("calibrationFactorDC", calibrationFactorDC, nullptr);
 
     std::unique_ptr<juce::XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
 }
 
-
-void OscilloscopeAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void OscilloscopeAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
     std::unique_ptr<juce::XmlElement> xml(getXmlFromBinary(data, sizeInBytes));
 
@@ -159,8 +196,11 @@ void OscilloscopeAudioProcessor::setStateInformation (const void* data, int size
     {
         juce::ValueTree state = juce::ValueTree::fromXml(*xml);
 
-        if (state.hasProperty("calibrationFactor"))
-            calibrationFactor = static_cast<float>(state["calibrationFactor"]);
+        if (state.hasProperty("calibrationFactorAC"))
+            calibrationFactorAC = static_cast<float>(state["calibrationFactorAC"]);
+
+        if (state.hasProperty("calibrationFactorDC"))
+            calibrationFactorDC = static_cast<float>(state["calibrationFactorDC"]);
 
         apvts.replaceState(state);
     }
@@ -176,40 +216,70 @@ bool OscilloscopeAudioProcessor::checkForNewAnalyserData()
     return frequencyAnalyzer.checkForNewData();
 }
 
-//==============================================================================
-// This creates new instances of the plugin..
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
-{
-    return new OscilloscopeAudioProcessor();
-}
-
 void OscilloscopeAudioProcessor::startLevelCalibration()
 {
-    float salidaHardware = 0.4f;
-    float entradaReal = 1.0f;
+    juce::AudioBuffer<float> buffer;
+    circularBuffer.getMostRecentWindow(buffer, 1024);
 
-    float measuredVpp = circularBuffer.computeLastVpp();
+    float minVal = std::numeric_limits<float>::max();
+    float maxVal = std::numeric_limits<float>::lowest();
 
-    if (measuredVpp > 0.0f)
+    for (int c = 0; c < buffer.getNumChannels(); ++c)
     {
-        calibrationFactor = (entradaReal / salidaHardware) * (salidaHardware / measuredVpp);
-        calibrationRange = 2;  // Forzamos calibración para el rango 1 V – 10 V
-        DBG("Nuevo calibrationFactor: " << calibrationFactor);
+        const float* data = buffer.getReadPointer(c);
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+        {
+            float v = data[i];
+            minVal = std::min(minVal, v);
+            maxVal = std::max(maxVal, v);
+        }
     }
+
+    float measuredVpp = maxVal - minVal;
+    float expectedVpp = (params.modeValue == 1) ? 1.0f : 3.3f; //el primero es DC el segundo AC
+    float newFactor = expectedVpp / measuredVpp;
+
+    if (params.modeValue == 1)
+        calibrationFactorDC = newFactor;
+    else
+        calibrationFactorAC = newFactor;
+
+    // Guardar el rango usado en calibración
+    calibrationRange = params.rangeValue;
 }
 
 
 float OscilloscopeAudioProcessor::getCalibrationFactor() const
 {
     float factorActual = rangeCompensationFactors[params.rangeValue];
-    float factorCalibrado = rangeCompensationFactors[calibrationRange];
-    float factorRelativo = factorActual / factorCalibrado;
-    return calibrationFactor * factorRelativo;
-}
 
+    if (params.modeValue == 0) // AC
+    {
+        float factorCalibrado = rangeCompensationFactors[calibrationRangeAC];
+        float factorRelativo = factorActual / factorCalibrado;
+        return calibrationFactorAC * factorRelativo;
+    }
+    else // DC
+    {
+        float factorCalibrado = rangeCompensationFactors[calibrationRangeDC];
+        float factorRelativo = factorActual / factorCalibrado;
+        return calibrationFactorDC * factorRelativo;
+    }
+}
 
 float OscilloscopeAudioProcessor::getCorrectedVoltage(float value) const
 {
     return value * getCalibrationFactor();
 }
 
+void OscilloscopeAudioProcessor::setSineEnabled(bool enabled)
+{
+    sineEnabled = enabled;
+}
+
+//==============================================================================
+// This creates new instances of the plugin..
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+    return new OscilloscopeAudioProcessor();
+}
