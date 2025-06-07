@@ -140,7 +140,7 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         auto numSamples = buffer.getNumSamples();
         auto numChannels = buffer.getNumChannels();
 
-        float amplitude = (params.modeValue == 1) ? 0.3267f : 0.164f; // 800 mVpp DC, 400 mVpp AC 
+        float amplitude = (params.modeValue == 1) ? 0.164f : 0.08251f; // 800 mVpp DC, 400 mVpp AC balanceado
 
         for (int channel = 0; channel < numChannels; ++channel)
         {

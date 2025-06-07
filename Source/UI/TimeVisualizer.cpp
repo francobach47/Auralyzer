@@ -30,7 +30,8 @@ void TimeVisualizer::setVerticalOffsetInDivisions(float offsetDivs)
 void TimeVisualizer::timerCallback()
 {
     float triggerLevel = processor.getTriggerLevel();
-    updateTriggerParameters(triggerLevel, 0.0f, false);
+    bool useFilter = processor.params.movingAverageParam->get();
+    updateTriggerParameters(triggerLevel, 0.0f, useFilter);
 
     if (isVisible())
         repaint();

@@ -56,6 +56,7 @@ private:
     juce::TextButton plotModeButton;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> plotModeAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> modeAttachment, rangeAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> movingAverageAttachment;
 
     bool isFrequencyMode;
     bool pluginIsInControl = true;   // por defecto controla el plugin

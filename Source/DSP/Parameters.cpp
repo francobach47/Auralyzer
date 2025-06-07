@@ -92,7 +92,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 	layout.add(std::make_unique<juce::AudioParameterBool>(
 		movingAverageParamID,
 		"Moving Average",
-		true
+		false
 	));
 
 	return layout;

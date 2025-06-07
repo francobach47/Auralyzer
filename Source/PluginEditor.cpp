@@ -192,6 +192,12 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     movingAverageButton.setLookAndFeel(ButtonLookAndFeel::get());
     triggerGroup.addAndMakeVisible(movingAverageButton);
     addAndMakeVisible(triggerGroup);
+    movingAverageAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
+        audioProcessor.apvts, movingAverageParamID.getParamID(), movingAverageButton
+    );
+    movingAverageButton.setToggleState(false, juce::sendNotificationSync);
+    audioProcessor.apvts.getParameter(movingAverageParamID.getParamID())->setValueNotifyingHost(0.0f);
+
 
     // Forzar valores iniciales para visualizacion
     float hScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(horizontalScaleParamID.getParamID()));
