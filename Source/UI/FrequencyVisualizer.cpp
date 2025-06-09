@@ -18,6 +18,8 @@ FrequencyVisualizer::~FrequencyVisualizer()
 
 void FrequencyVisualizer::paint (juce::Graphics& g)
 {
+    const bool bypassed = processor.apvts.getRawParameterValue(bypassParamID.getParamID())->load();
+
     juce::MessageManagerLock mmLock;
     if (!mmLock.lockWasGained()) return;
 
@@ -71,10 +73,12 @@ void FrequencyVisualizer::paint (juce::Graphics& g)
 
     g.reduceClipRegion(plotFrame);
 
-    processor.createAnalyserPlot(analyzerPath, plotFrame, 20.0f);
-    g.setColour(Colors::PlotSection::frequencyResponse);
-    //g.drawFittedText("Output", plotFrame.reduced(8, 28), juce::Justification::topRight, 1);
-    g.strokePath(analyzerPath, juce::PathStrokeType(2.0f));
+    if (!bypassed)
+    {
+        processor.createAnalyserPlot(analyzerPath, plotFrame, 20.0f);
+        g.setColour(Colors::PlotSection::frequencyResponse);
+        g.strokePath(analyzerPath, juce::PathStrokeType(2.0f));
+    }
 }
 
 void FrequencyVisualizer::resized()

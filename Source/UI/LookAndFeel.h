@@ -10,7 +10,7 @@ namespace Colors
 	namespace Knob
 	{
 		const juce::Colour trackBackground{ 205, 200, 195 };
-		const juce::Colour trackActive{ 60, 179, 113 };
+		const juce::Colour trackActive{ 73, 125, 0 };
 		const juce::Colour outline{ 255, 250, 245 };
 		const juce::Colour gradientTop{ 250, 245, 240 };
 		const juce::Colour gradientBottom{ 240, 235, 230 };
@@ -39,12 +39,12 @@ namespace Colors
 
 	namespace PlotSection
 	{
-		const juce::Colour frequencyResponse { 60, 179, 113 };
-		const juce::Colour timeResponse{ 60, 179, 113 };
-		const juce::Colour background{ 90, 90, 90};
+		const juce::Colour frequencyResponse { 124, 207, 0 };
+		const juce::Colour timeResponse{ 124, 207, 0 };
+		const juce::Colour background{ 66, 66, 66 };
 		const juce::Colour outline{ 220, 216, 211 };
-		const juce::Colour triggerMarker{ 255, 255, 255 }; // naranja
-		const juce::Colour referenceArrow{ 0xFFFFD500 };   // amarillo (RGB 255,213,0)
+		const juce::Colour triggerMarker{ 255, 255, 255 }; 
+		const juce::Colour dcResponse{ 124, 207, 0 };
 	}
 }
 
@@ -94,6 +94,15 @@ public:
 	MainLookAndFeel();
 
 	juce::Font getLabelFont(juce::Label&) override;
+
+	void drawComboBox(juce::Graphics& g, int width, int height,
+		bool isButtonDown, int buttonX, int buttonY,
+		int buttonW, int buttonH, juce::ComboBox& box) override;
+
+	void drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area,
+		bool isSeparator, bool isActive, bool isHighlighted, bool isTicked, bool hasSubMenu,
+		const juce::String& text, const juce::String& shortcutKeyText,
+		const juce::Drawable* icon, const juce::Colour* textColour) override;
 
 private:
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainLookAndFeel)

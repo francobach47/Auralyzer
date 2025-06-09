@@ -81,6 +81,12 @@ public:
 
     void setSineEnabled(bool enabled);
 
+    // Bypass
+    bool isBypassed() const {
+        return apvts.getRawParameterValue(bypassParamID.getParamID())->load() > 0.5f;
+    };
+
+
 private:
     juce::AudioBuffer<float> audioTimeBuffer;
     CircularAudioBuffer circularBuffer;
