@@ -185,6 +185,42 @@ void TimeVisualizer::paint(juce::Graphics& g)
     float minVal = std::numeric_limits<float>::max();
     float maxVal = std::numeric_limits<float>::lowest();
 
+    // ========== DIBUJAR CAPTURAS ANTERIORES ==========
+
+    for (size_t i = 0; i < snapshots.size(); ++i)
+    {
+        const auto& snap = snapshots[i];
+
+        // Dibuja la curva
+        g.setColour(snap.colour);
+        g.strokePath(snap.path, juce::PathStrokeType(1.5f));
+
+        // Arma el texto con los valores medidos
+        juce::String label = "M" + juce::String(i + 1) + ": ";
+
+        if (snap.isDC)
+        {
+            label += "V = " + juce::String(snap.vpp, 2) + " V (DC)";
+        }
+        else
+        {
+            label += "Vpp = " + juce::String(snap.vpp, 2) + " V, ";
+            label += "Vrms = " + juce::String(snap.vrms, 2) + " V, ";
+            if (snap.frequency >= 1000.0f)
+                label += "Freq: " + juce::String(snap.frequency / 1000.0f, 2) + " kHz, ";
+            else
+                label += "Freq: " + juce::String(snap.frequency, 1) + " Hz, ";
+            label += "THD = " + juce::String(snap.thd, 2) + " %";
+        }
+
+        // Dibuja el texto arriba a la izquierda
+        int labelX = 10;
+        int labelY = 10 + static_cast<int>(i) * 18;
+
+        g.setFont(12.0f);
+        g.drawText(label, labelX, labelY, getWidth() - 20, 16, juce::Justification::left);
+    }
+
     // ========== DIBUJO DE LA ONDA ==========
     const bool bypass = processor.apvts.getRawParameterValue(bypassParamID.getParamID())->load() > 0.5f;
 
@@ -286,62 +322,20 @@ void TimeVisualizer::paint(juce::Graphics& g)
         const int currentRange = processor.params.rangeValue;
         const int currentIndex = processor.params.verticalScaleIndex;
 
-        juce::String labelLeft, labelDC, labelRMS, labelVpp, labelFreq, labelTHD;
-
+        juce::String labelLeft;
         if (currentRange >= 0 && currentRange < verticalScaleByRange.size()
             && currentIndex >= 0 && currentIndex < verticalScaleByRange[currentRange].size())
         {
             labelLeft = verticalScaleByRange[currentRange][currentIndex].first;
         }
 
-        if (modeDC)
-        {
-            if (calibratedVpp < 1.0f)
-                labelVpp = "DC: " + juce::String(calibratedVpp * 1000.0f, 2) + " mV";
-            else
-                labelVpp = "DC: " + juce::String(calibratedVpp, 2) + " V";
-        }
-        else
-        {
-            if (calibratedRMS < 1.0f)
-                labelRMS = "RMS: " + juce::String(calibratedRMS * 1000.0f, 2) + " mV";
-            else
-                labelRMS = "RMS: " + juce::String(calibratedRMS, 2) + " V";
-
-            if (calibratedVpp < 1.0f)
-                labelVpp = "Vpp: " + juce::String(calibratedVpp * 1000.0f, 2) + " mV";
-            else
-                labelVpp = "Vpp: " + juce::String(calibratedVpp, 2) + " V";
-        }
-
-        if (frequencyHz > 0.0f)
-        {
-            if (frequencyHz >= 1000.0f)
-                labelFreq = "Freq: " + juce::String(frequencyHz / 1000.0f, 2) + " kHz";
-            else
-                labelFreq = "Freq: " + juce::String(frequencyHz, 1) + " Hz";
-        }
-
-        labelTHD = "THD: " + juce::String(thdRatio * 100.0f, 3) + " %";
-
         g.setFont(14.0f);
         g.setColour(juce::Colours::orange.withAlpha(1.0f));
+
+        // Etiqueta V/div a la izquierda inferior
         g.drawText(labelLeft, 8, getHeight() - 24, 100, 20, juce::Justification::left);
 
-        if (modeDC)
-        {
-            g.drawText(labelVpp, getWidth() - 110, getHeight() - 24, 100, 20, juce::Justification::right);
-        }
-        else
-        {
-            g.drawText(labelTHD, getWidth() - 110, getHeight() - 42, 100, 20, juce::Justification::right);
-            g.drawText(labelRMS, getWidth() - 110, getHeight() - 78, 100, 20, juce::Justification::right);
-            g.drawText(labelVpp, getWidth() - 110, getHeight() - 60, 100, 20, juce::Justification::right);
-            if (!labelFreq.isEmpty())
-                g.drawText(labelFreq, getWidth() - 110, getHeight() - 24, 100, 20, juce::Justification::right);
-        }
-
-
+        // Etiqueta tiempo s/div al centro inferior
         float sPerDiv = processor.params.getHorizontalScaleInSeconds();
         juce::String labelTime;
         if (sPerDiv >= 1.0f)
@@ -352,6 +346,168 @@ void TimeVisualizer::paint(juce::Graphics& g)
             labelTime = juce::String(sPerDiv * 1e6f, 0) + " µs/div";
 
         g.drawText(labelTime, 100, getHeight() - 24, 100, 20, juce::Justification::left);
+
+        // Etiquetas combinadas a la derecha inferior
+        juce::String labelCombined;
+        if (modeDC)
+        {
+            if (calibratedVpp < 1.0f)
+                labelCombined = "DC: " + juce::String(calibratedVpp * 1000.0f, 2) + " mV";
+            else
+                labelCombined = "DC: " + juce::String(calibratedVpp, 2) + " V";
+        }
+        else
+        {
+            labelCombined = "Vpp: " + juce::String(calibratedVpp, 2) + " V    ";
+            labelCombined += "Vrms: " + juce::String(calibratedRMS, 2) + " V    ";
+            if (frequencyHz >= 1000.0f)
+                labelCombined += "Freq: " + juce::String(frequencyHz / 1000.0f, 2) + " kHz    ";
+            else
+                labelCombined += "Freq: " + juce::String(frequencyHz, 1) + " Hz    ";
+
+            labelCombined += "THD: " + juce::String(thdRatio * 100.0f, 3) + " %";
+        }
+
+        g.drawText(labelCombined, getWidth() - 580, getHeight() - 24, 570, 20, juce::Justification::right);
     }
 }
 
+void TimeVisualizer::captureCurrentPath()
+{
+    const float sampleRate = (float)processor.getSampleRate();
+    const float secondsPerDiv = processor.params.getHorizontalScaleInSeconds();
+    const float totalTime = secondsPerDiv * 10.0f;
+    int displaySamples = static_cast<int>(totalTime * sampleRate);
+
+    juce::AudioBuffer<float> tempBuffer;
+    processor.getCircularBuffer().getMostRecentWindow(tempBuffer, displaySamples + 2048);
+    if (tempBuffer.getNumSamples() < 16) return;
+
+    const float voltsPerDiv = processor.params.getVerticalScaleInVolts();
+    const float pixelsPerDiv = getHeight() / 8.0f;
+    const float pixelsPerVolt = (pixelsPerDiv / voltsPerDiv) * processor.getCalibrationFactor();
+    const float centerY = getHeight() / 2.0f;
+
+    const int numSamples = tempBuffer.getNumSamples();
+    const int numChannels = tempBuffer.getNumChannels();
+    const float timePerSample = 1.0f / sampleRate;
+    const float pixelsPerSecond = getWidth() / totalTime;
+    int offsetSamples = static_cast<int>(-horizontalOffset * secondsPerDiv * sampleRate);
+
+    float minY = std::numeric_limits<float>::max();
+    float maxY = std::numeric_limits<float>::lowest();
+
+    juce::Path newPath;
+    for (int i = 0; i < displaySamples; ++i)
+    {
+        int sampleIndex = trigger.findTriggerPoint(tempBuffer, 0) + offsetSamples + i;
+        while (sampleIndex >= numSamples) sampleIndex -= numSamples;
+        while (sampleIndex < 0) sampleIndex += numSamples;
+
+        float sum = 0.0f;
+        for (int c = 0; c < numChannels; ++c)
+            sum += tempBuffer.getSample(c, sampleIndex);
+
+        float value = sum / numChannels;
+        float t = i * timePerSample;
+        float x = t * pixelsPerSecond;
+        float y = centerY - value * pixelsPerVolt - verticalOffset;
+
+        minY = std::min(minY, y);
+        maxY = std::max(maxY, y);
+
+        if (i == 0) newPath.startNewSubPath(x, y);
+        else        newPath.lineTo(x, y);
+    }
+
+    Snapshot snap;
+    snap.colour = juce::Colour::fromHSV(juce::Random::getSystemRandom().nextFloat(), 0.9f, 0.9f, 1.0f);
+    snap.isDC = modeDC;
+
+    if (modeDC)
+    {
+        Snapshot snap;
+        snap.colour = juce::Colour::fromHSV(juce::Random::getSystemRandom().nextFloat(), 0.9f, 0.9f, 1.0f);
+        snap.isDC = true;
+        snap.vpp = lastVpp;
+
+        float minVal = std::numeric_limits<float>::max();
+        float maxVal = std::numeric_limits<float>::lowest();
+
+        for (int c = 0; c < numChannels; ++c)
+        {
+            const float* data = tempBuffer.getReadPointer(c);
+            for (int i = 0; i < tempBuffer.getNumSamples(); ++i)
+            {
+                minVal = std::min(minVal, data[i]);
+                maxVal = std::max(maxVal, data[i]);
+            }
+        }
+
+        const float pixelsPerVolt = (pixelsPerDiv / voltsPerDiv) * processor.getCalibrationFactor();
+        const float centerY = getHeight() / 2.0f;
+
+        float y = centerY - (maxVal - minVal) * pixelsPerVolt - verticalOffset;
+
+        juce::Path dcPath;
+        dcPath.startNewSubPath(0.0f, y);
+        dcPath.lineTo((float)getWidth(), y);
+        snap.path = dcPath;
+
+        snapshots.push_back(snap);
+        while (snapshots.size() > maxSnapshots)
+            snapshots.erase(snapshots.begin());
+
+        repaint();
+        return;
+    }
+
+    else
+    {
+        // Modo AC 
+        float minY = std::numeric_limits<float>::max();
+        float maxY = std::numeric_limits<float>::lowest();
+        juce::Path newPath;
+
+        for (int i = 0; i < displaySamples; ++i)
+        {
+            int sampleIndex = trigger.findTriggerPoint(tempBuffer, 0) + offsetSamples + i;
+            while (sampleIndex >= numSamples) sampleIndex -= numSamples;
+            while (sampleIndex < 0) sampleIndex += numSamples;
+
+            float sum = 0.0f;
+            for (int c = 0; c < numChannels; ++c)
+                sum += tempBuffer.getSample(c, sampleIndex);
+
+            float value = sum / numChannels;
+            float t = i * timePerSample;
+            float x = t * pixelsPerSecond;
+            float y = centerY - value * pixelsPerVolt - verticalOffset;
+
+            minY = std::min(minY, y);
+            maxY = std::max(maxY, y);
+
+            if (i == 0) newPath.startNewSubPath(x, y);
+            else        newPath.lineTo(x, y);
+        }
+
+        snap.path = newPath;
+        snap.vpp = SignalAnalysis::computeVpp(minY, maxY, pixelsPerDiv, voltsPerDiv);
+        snap.vrms = SignalAnalysis::computeRMS(tempBuffer, processor.getCalibrationFactor());
+        snap.frequency = SignalAnalysis::computeFrequency(tempBuffer, sampleRate);
+        snap.thd = SignalAnalysis::computeTHD(tempBuffer, sampleRate) * 100.0f;
+    }
+
+
+    snapshots.push_back(snap);
+    while (snapshots.size() > maxSnapshots)
+        snapshots.erase(snapshots.begin());
+
+    repaint();
+}
+
+void TimeVisualizer::clearSnapshots()
+{
+    snapshots.clear();
+    repaint();
+}

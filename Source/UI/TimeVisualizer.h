@@ -33,6 +33,24 @@ public:
     friend class OscilloscopeAudioProcessorEditor;
     float calibrationFactor = 12.0f; // valor inicial
 
+    void captureCurrentPath();
+    void clearSnapshots();
+    
+    struct Snapshot
+    {
+        juce::Path path;
+        juce::Colour colour;
+        float vpp = 0.0f;
+        float vrms = 0.0f;
+        float frequency = 0.0f;
+        float thd = 0.0f;
+        bool isDC = false; 
+    };
+
+    std::vector<Snapshot> snapshots;
+    static constexpr int maxSnapshots = 10;
+
+
 private:
     OscilloscopeAudioProcessor& processor;
     Trigger trigger;

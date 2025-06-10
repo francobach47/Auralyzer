@@ -194,6 +194,20 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
         audioProcessor.apvts, bypassParamID.getParamID(), bypassButton
     );
 
+    // Para los screenshots
+    snapshotButton.setLookAndFeel(ButtonLookAndFeel::get());
+    addAndMakeVisible(snapshotButton);
+    snapshotButton.onClick = [this] { timeVisualizer.captureCurrentPath(); };
+    clearSnapshotsButton.setLookAndFeel(ButtonLookAndFeel::get());
+    addAndMakeVisible(clearSnapshotsButton);
+    clearSnapshotsButton.onClick = [this] { timeVisualizer.clearSnapshots(); };
+   
+    screenShotGroup.setText("ScreenShot");
+    screenShotGroup.setTextLabelPosition(juce::Justification::centredTop);
+    screenShotGroup.addAndMakeVisible(snapshotButton);
+    screenShotGroup.addAndMakeVisible(clearSnapshotsButton);
+    addAndMakeVisible(screenShotGroup);
+
     setLookAndFeel(&mainLF);
     
     setSize(1200, 490);
@@ -250,12 +264,15 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
     audioProcessor.apvts.removeParameterListener(horizontalScaleParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(horizontalPositionParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(triggerLevelParamID.getParamID(), this);
+    snapshotButton.setLookAndFeel(nullptr);
+    clearSnapshotsButton.setLookAndFeel(nullptr);
 
-    setLookAndFeel(nullptr);
     audioProcessor.apvts.removeParameterListener(rangeParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(modeParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(plotModeParamID.getParamID(), this);
     serialPortSelector.setLookAndFeel(nullptr);
+    
+    setLookAndFeel(nullptr);
 
 #ifdef JUCE_OPENGL
     openGLContext.detach();
@@ -285,7 +302,7 @@ void OscilloscopeAudioProcessorEditor::resized()
     int plotSectionHeight = 420;
     int verhorSectionHeight = 260;
     int verhorSectionWidth = 110;
-    int optionsHeight = 150;
+    int optionsHeight = 165;
     int space = 10;
     int plotBoxesSpace = 50;
 
@@ -322,21 +339,32 @@ void OscilloscopeAudioProcessorEditor::resized()
     int calibX = triggerGroup.getX();
     int calibY = optionsGroup.getY();
     int calibWidth = triggerGroup.getWidth();
-    int calibHeight = optionsHeight;
+    int calibHeight = optionsHeight/2 + 1.5*space;
 
     calibrationGroup.setBounds(calibX, calibY, calibWidth, calibHeight);
 
     int btnW = 40;
     int btnH = 30;
-    int btnY = 30;
+    int btnY = 20;
     int btnSpacing = 5;
 
     probesCalibrationButton.setBounds(12, btnY, btnW, btnH);
     sineButton.setBounds(probesCalibrationButton.getRight() + btnSpacing, btnY, btnW, btnH);
-    levelCalibrationButton.setBounds(12, probesCalibrationButton.getBottom() + 8*btnSpacing, probesCalibrationButton.getWidth() + btnSpacing + sineButton.getWidth(), btnH);
+    levelCalibrationButton.setBounds(12, probesCalibrationButton.getBottom() + btnSpacing, probesCalibrationButton.getWidth() + btnSpacing + sineButton.getWidth(), btnH);
 
     // Position Bypass
     bypassButton.setBounds(getWidth() - sineButton.getX(), serialPortSelector.getY() - 2.5, 24, 24);
+
+    // Position Screenshot group and buttons inside
+    int screenshotX = triggerGroup.getX();
+    int screenshotY = optionsGroup.getY() + calibHeight;
+    int screenshotW = triggerGroup.getWidth();
+    int screenshotH = optionsHeight / 2 - 1.5 * space;
+
+    screenShotGroup.setBounds(screenshotX, screenshotY, screenshotW, screenshotH);
+
+    snapshotButton.setBounds(12, 18, levelCalibrationButton.getWidth(), 20);
+    clearSnapshotsButton.setBounds(12, snapshotButton.getBottom() + space/4, levelCalibrationButton.getWidth(), 20);
 
 }
 

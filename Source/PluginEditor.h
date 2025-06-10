@@ -41,6 +41,7 @@ private:
     juce::GroupComponent plotGroup;
     juce::GroupComponent triggerGroup;
     juce::GroupComponent calibrationGroup; 
+    juce::GroupComponent screenShotGroup;
 
     RotaryKnob horizontalPositionKnob{ "Position", audioProcessor.apvts, horizontalPositionParamID, true };
     RotaryKnob horizontalScaleKnob{ "Scale", audioProcessor.apvts, horizontalScaleParamID, false };
@@ -72,6 +73,9 @@ private:
 
     juce::ImageButton bypassButton;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> bypassAttachment;
+
+    juce::TextButton snapshotButton{ "Print" };
+    juce::TextButton clearSnapshotsButton{ "Clear" };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OscilloscopeAudioProcessorEditor)
 };
