@@ -10,15 +10,14 @@
 #include "UI/RotaryKnob.h"
 #include "UI/LookAndFeel.h"
 
-class OscilloscopeAudioProcessorEditor  : public juce::AudioProcessorEditor,
-                                          public juce::AudioProcessorValueTreeState::Listener,
-                                          private juce::Timer     
-{       
+class OscilloscopeAudioProcessorEditor : public juce::AudioProcessorEditor,
+    public juce::AudioProcessorValueTreeState::Listener,
+    private juce::Timer
+{
 public:
     OscilloscopeAudioProcessorEditor(OscilloscopeAudioProcessor&);
     ~OscilloscopeAudioProcessorEditor() override;
 
-    //==============================================================================
     void paint(juce::Graphics&) override;
     void resized() override;
 
@@ -31,13 +30,18 @@ private:
 
     TimeVisualizer timeVisualizer;
     FrequencyVisualizer frequencyVisualizer;
-    juce::TextButton calibrationButton{ "Calibration" };
+    juce::TextButton probesCalibrationButton{ "Probes" };
     bool isCalibrating = false;
+
+    juce::TextButton levelCalibrationButton{ "Calibrator" };
+    bool isLevelCalibrating = false;
 
     juce::GroupComponent verticalGroup, horizontalGroup;
     juce::GroupComponent optionsGroup;
     juce::GroupComponent plotGroup;
     juce::GroupComponent triggerGroup;
+    juce::GroupComponent calibrationGroup; 
+    juce::GroupComponent screenShotGroup;
 
     RotaryKnob horizontalPositionKnob{ "Position", audioProcessor.apvts, horizontalPositionParamID, true };
     RotaryKnob horizontalScaleKnob{ "Scale", audioProcessor.apvts, horizontalScaleParamID, false };
@@ -52,18 +56,26 @@ private:
     juce::TextButton plotModeButton;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> plotModeAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> modeAttachment, rangeAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> movingAverageAttachment;
 
     bool isFrequencyMode;
-    bool pluginIsInControl = true;   // por defecto controla el plugin
+    bool pluginIsInControl = true;
 
-    void timerCallback() override;      
+    void timerCallback() override;
     juce::ComboBox serialPortSelector;
     juce::Label serialPortLabel;
-
 
     juce::TextButton movingAverageButton;
 
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
+
+    juce::TextButton sineButton;
+
+    juce::ImageButton bypassButton;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> bypassAttachment;
+
+    juce::TextButton snapshotButton{ "Print" };
+    juce::TextButton clearSnapshotsButton{ "Clear" };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OscilloscopeAudioProcessorEditor)
 };

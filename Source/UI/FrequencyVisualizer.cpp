@@ -3,7 +3,7 @@
 #include "LookAndFeel.h"
 
 static float maxDB = 24.0f;
-static float minDB = -40.0f;
+static float minDB = -80.0f;
 
 FrequencyVisualizer::FrequencyVisualizer(OscilloscopeAudioProcessor& p)
     : processor(p)
@@ -18,6 +18,8 @@ FrequencyVisualizer::~FrequencyVisualizer()
 
 void FrequencyVisualizer::paint (juce::Graphics& g)
 {
+    const bool bypassed = processor.apvts.getRawParameterValue(bypassParamID.getParamID())->load();
+
     juce::MessageManagerLock mmLock;
     if (!mmLock.lockWasGained()) return;
 
@@ -45,36 +47,82 @@ void FrequencyVisualizer::paint (juce::Graphics& g)
 	g.setColour(juce::Colours::silver);
 	g.drawRoundedRectangle(plotFrame.toFloat(), 5, 2);
 
-    for (int i = 0; i < 10; ++i)
-    {
-        g.setColour(juce::Colours::silver.withAlpha(0.3f));
-        auto x = plotFrame.getX() + plotFrame.getWidth() * i * 0.1f;
-        if (i > 0)
-            g.drawVerticalLine(juce::roundToInt(x), float(plotFrame.getY()), float(plotFrame.getBottom()));
+    // ===============================
+    // GRILLA DE FRECUENCIA (EJE X)
+    // ===============================
+    std::vector<float> logFrequencies = {
+        31.5f, 63.0f, 125.0f, 250.0f,
+        500.0f, 1000.0f, 2000.0f,
+        4000.0f, 8000.0f, 16000.0f
+    };
 
-        g.setColour(juce::Colours::silver);
-        auto freq = getFrequencyForPosition(i * 0.1f);
-        g.drawFittedText((freq < 1000) ? juce::String(freq) + " Hz"
-            : juce::String(freq / 1000, 1) + " kHz",
-            juce::roundToInt(x + 3), plotFrame.getBottom() - 18, 50, 15, juce::Justification::left, 1);
+    for (auto freq : logFrequencies)
+    {
+        float normX = getPositionForFrequency(freq);
+        float x = plotFrame.getX() + normX * plotFrame.getWidth();
+
+        // Línea vertical tenue
+        g.setColour(juce::Colours::silver.withAlpha(0.1f));
+        g.drawVerticalLine(juce::roundToInt(x), float(plotFrame.getY()), float(plotFrame.getBottom()));
+
+        // Etiqueta
+        g.setColour(juce::Colours::silver.withAlpha(0.8f));
+        juce::String label = (freq >= 1000.0f)
+            ? juce::String(freq / 1000.0f, 1) + " kHz"
+            : juce::String((int)freq) + " Hz";
+
+        g.drawFittedText(label, juce::roundToInt(x + 3), plotFrame.getBottom() - 18, 50, 15, juce::Justification::left, 1);
     }
 
-    g.setColour(juce::Colours::silver.withAlpha(0.3f));
-    g.drawHorizontalLine(juce::roundToInt(plotFrame.getY() + 0.25 * plotFrame.getHeight()), float(plotFrame.getX()), float(plotFrame.getRight()));
-    g.drawHorizontalLine(juce::roundToInt(plotFrame.getY() + 0.75 * plotFrame.getHeight()), float(plotFrame.getX()), float(plotFrame.getRight()));
+    // ===============================
+    // GRILLA DE NIVEL (EJE Y en dB)
+    // ===============================
+    const float dBStep = 8.0f;
+    const int numSteps = static_cast<int>((maxDB - minDB) / dBStep);
 
-    g.setColour(juce::Colours::silver);
-    g.drawFittedText(juce::String(maxDB) + " dB", plotFrame.getX() + 3, plotFrame.getY() + 2, 50, 14, juce::Justification::left, 1);
-    g.drawFittedText(juce::String(maxDB / 2) + " dB", plotFrame.getX() + 3, juce::roundToInt(plotFrame.getY() + 2 + 0.25 * plotFrame.getHeight()), 50, 14, juce::Justification::left, 1);
-    g.drawFittedText(" 0 dB", plotFrame.getX() + 3, juce::roundToInt(plotFrame.getY() + 2 + 0.5 * plotFrame.getHeight()), 50, 14, juce::Justification::left, 1);
-    g.drawFittedText(juce::String(-maxDB / 2) + " dB", plotFrame.getX() + 3, juce::roundToInt(plotFrame.getY() + 2 + 0.75 * plotFrame.getHeight()), 50, 14, juce::Justification::left, 1);
+    for (int i = 0; i <= numSteps; ++i)
+    {
+        float dBValue = maxDB - i * dBStep;
+        float dBZoomPadding = 0.05f; // 5% arriba y abajo
+        float normY = dBZoomPadding + (1.0f - 2.0f * dBZoomPadding) * ((maxDB - dBValue) / (maxDB - minDB));
+        float y = plotFrame.getY() + normY * plotFrame.getHeight();
 
-    g.reduceClipRegion(plotFrame);
+        // Línea horizontal tenue
+        g.setColour(juce::Colours::silver.withAlpha(0.1f));
+        g.drawHorizontalLine(juce::roundToInt(y), float(plotFrame.getX()), float(plotFrame.getRight()));
 
-    processor.createAnalyserPlot(analyzerPath, plotFrame, 20.0f);
-    g.setColour(Colors::PlotSection::frequencyResponse);
-    //g.drawFittedText("Output", plotFrame.reduced(8, 28), juce::Justification::topRight, 1);
-    g.strokePath(analyzerPath, juce::PathStrokeType(2.0f));
+        // Etiqueta
+        g.setColour(juce::Colours::silver.withAlpha(0.8f));
+        g.drawFittedText(juce::String((int)dBValue) + " dB", plotFrame.getX() + 3, juce::roundToInt(y - 7), 50, 14, juce::Justification::left, 1);
+    }
+
+    if (!bypassed)
+    {
+        processor.createAnalyserPlot(analyzerPath, plotFrame, minDB, maxDB);
+        g.setColour(Colors::PlotSection::frequencyResponse);
+        g.strokePath(analyzerPath, juce::PathStrokeType(2.0f));
+       
+        auto harmonics = processor.getHarmonicLabels();
+
+        for (const auto& [freq, dB] : harmonics)
+        {
+            float normX = getPositionForFrequency(freq);
+            float x = plotFrame.getX() + normX * plotFrame.getWidth();
+            float normY = juce::jmap(dB, minDB, maxDB, 1.0f, 0.0f);
+            float y = plotFrame.getY() + normY * plotFrame.getHeight();
+
+            juce::String label;
+            if (freq >= 1000.0f)
+                label = juce::String(freq / 1000.0f, 1) + "k\n" + juce::String(dB, 1) + " dB";
+            else
+                label = juce::String((int)freq) + "\n" + juce::String(dB, 1) + " dB";
+
+            g.setColour(juce::Colours::yellow);
+            g.setFont(11.0f);
+            g.drawFittedText(label, juce::roundToInt(x) - 20, juce::roundToInt(y) - 25, 40, 25, juce::Justification::centred, 2);
+        }
+
+    }
 }
 
 void FrequencyVisualizer::resized()
@@ -92,5 +140,15 @@ void FrequencyVisualizer::timerCallback()
 
 float FrequencyVisualizer::getFrequencyForPosition(float pos)
 {
-    return 20.0f * std::pow(2.0f, pos * 10.0f);
+    return 20.0f * std::pow(20000.0f / 20.0f, pos); // escala log
+}
+
+float FrequencyVisualizer::getPositionForFrequency(float freq)
+{
+    const float minFreq = 20.0f;
+    const float maxFreq = 20000.0f;
+
+    // "Zoom out" horizontal 0.05 a 0.95 del ancho
+    float norm = std::log(freq / minFreq) / std::log(maxFreq / minFreq);
+    return 0.05f + 0.90f * norm; // 0.90 de ancho total, centrado
 }

@@ -14,11 +14,9 @@ public:
 		movingAverageEnabled = useFilter;
 	}
 	int findTriggerPoint(const juce::AudioBuffer<float>& buffer, int channel);
-	void movingAverageFilter(const float* input, float* output);
+	void movingAverageFilter(const float* input, float* output, int numSamples);
 
 	float getLevel() const { return triggerLevel; }
-	//float getOffset() const { return triggerOffset; }
-	//bool isFilterEnabled() const { return movingAverageEnabled; }
 
 private:
 	juce::AudioBuffer<float> filteredBuffer;

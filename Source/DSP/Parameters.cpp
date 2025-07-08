@@ -19,6 +19,7 @@ Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
 	castParameter(apvts, plotModeParamID, plotModeParam);
 	castParameter(apvts, triggerLevelParamID, triggerLevelParam);
 	castParameter(apvts, movingAverageParamID, movingAverageParam);
+	castParameter(apvts, bypassParamID, bypassParam);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterLayout()
@@ -46,7 +47,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 	layout.add(std::make_unique<juce::AudioParameterFloat>(
 		verticalPositionParamID,
 		"Ver Position",
-		juce::NormalisableRange<float> {-5.0f, 5.0f, 0.01f },
+		juce::NormalisableRange<float> {-4.0f, 4.0f, 0.01f },
 		0.0f
 	));
 
@@ -85,13 +86,19 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 	layout.add(std::make_unique<juce::AudioParameterFloat>(
 		triggerLevelParamID,
 		"Trigger Level",
-		juce::NormalisableRange<float>{ -1.0f, 1.0f, 0.01f },
+		juce::NormalisableRange<float>{ -4.0f, 4.0f, 0.01f },
 		0.0f
 	));
 
 	layout.add(std::make_unique<juce::AudioParameterBool>(
 		movingAverageParamID,
 		"Moving Average",
+		false
+	));
+
+	layout.add(std::make_unique<juce::AudioParameterBool>(
+		bypassParamID,
+		"Bypass",
 		true
 	));
 
