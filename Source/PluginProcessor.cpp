@@ -183,6 +183,8 @@ void OscilloscopeAudioProcessor::getStateInformation(juce::MemoryBlock& destData
     // Guardamos los factores de calibración y sus rangos como propiedades
     state.setProperty("calibrationFactorAC", calibrationFactorAC, nullptr);
     state.setProperty("calibrationFactorDC", calibrationFactorDC, nullptr);
+    state.setProperty("calibrationRangeAC", calibrationRangeAC, nullptr);
+    state.setProperty("calibrationRangeDC", calibrationRangeDC, nullptr);
 
     std::unique_ptr<juce::XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
@@ -201,14 +203,20 @@ void OscilloscopeAudioProcessor::setStateInformation(const void* data, int sizeI
 
         if (state.hasProperty("calibrationFactorDC"))
             calibrationFactorDC = static_cast<float>(state["calibrationFactorDC"]);
+       
+        if (state.hasProperty("calibrationRangeAC"))
+            calibrationRangeAC = static_cast<int>(state["calibrationRangeAC"]);
+
+        if (state.hasProperty("calibrationRangeDC"))
+            calibrationRangeDC = static_cast<int>(state["calibrationRangeDC"]);
 
         apvts.replaceState(state);
     }
 }
 
-void OscilloscopeAudioProcessor::createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float minFreq)
+void OscilloscopeAudioProcessor::createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float dBMin, float dBMax)
 {
-    frequencyAnalyzer.createPath(p, bounds.toFloat(), minFreq);
+    frequencyAnalyzer.createPath(p, bounds.toFloat(), 20.0f, dBMin, dBMax);
 }
 
 bool OscilloscopeAudioProcessor::checkForNewAnalyserData()
@@ -275,6 +283,11 @@ float OscilloscopeAudioProcessor::getCorrectedVoltage(float value) const
 void OscilloscopeAudioProcessor::setSineEnabled(bool enabled)
 {
     sineEnabled = enabled;
+}
+
+std::vector<std::pair<float, float>> OscilloscopeAudioProcessor::getHarmonicLabels() const
+{
+    return frequencyAnalyzer.getHarmonicsInDB(6, -80.0f);
 }
 
 //==============================================================================
