@@ -41,31 +41,45 @@ void FFT::setUpFrequencyAnalyzer(int audioFifoSize, float sampleRateToUse)
 
 void FFT::run()
 {
+    const int fftSize = fft.getSize();
+
     while (!threadShouldExit())
     {
-        if (abstractFifo.getNumReady() >= fft.getSize())
+        if (abstractFifo.getNumReady() >= fftSize)
         {
             fftBuffer.clear();
 
             int start1, block1, start2, block2;
-            abstractFifo.prepareToRead(fft.getSize(), start1, block1, start2, block2);
-            if (block1 > 0) fftBuffer.copyFrom(0, 0, audioFifo.getReadPointer(0, start1), block1);
-            if (block2 > 0) fftBuffer.copyFrom(0, block1, audioFifo.getReadPointer(0, start2), block2);
+            abstractFifo.prepareToRead(fftSize, start1, block1, start2, block2);
+
+            if (block1 > 0)
+                fftBuffer.copyFrom(0, 0, audioFifo.getReadPointer(0, start1), block1);
+
+            if (block2 > 0)
+                fftBuffer.copyFrom(0, block1, audioFifo.getReadPointer(0, start2), block2);
+
             abstractFifo.finishedRead((block1 + block2) / 2);
 
-            windowing.multiplyWithWindowingTable(fftBuffer.getWritePointer(0), size_t(fft.getSize()));
+            // Aplicar ventana de Hann normalizada
+            windowing.multiplyWithWindowingTable(fftBuffer.getWritePointer(0), fftSize);
+
+            // Transformada rápida de Fourier: solo magnitudes
             fft.performFrequencyOnlyForwardTransform(fftBuffer.getWritePointer(0));
 
+
+            // Averaging thread-safe
             juce::ScopedLock lockedForWriting(pathCreationLock);
             averager.addFrom(0, 0, averager.getReadPointer(averagerPtr), averager.getNumSamples(), -1.0f);
             averager.copyFrom(averagerPtr, 0, fftBuffer.getReadPointer(0), averager.getNumSamples(), 1.0f / (averager.getNumSamples() * (averager.getNumChannels() - 1)));
             averager.addFrom(0, 0, averager.getReadPointer(averagerPtr), averager.getNumSamples());
-            if (++averagerPtr == averager.getNumChannels()) averagerPtr = 1;
+
+            if (++averagerPtr == averager.getNumChannels())
+                averagerPtr = 1;
 
             newDataAvailable = true;
         }
 
-        if (abstractFifo.getNumReady() < fft.getSize())
+        if (abstractFifo.getNumReady() < fftSize)
             waitForData.wait(100);
     }
 }
@@ -77,18 +91,25 @@ bool FFT::checkForNewData()
     return available;
 }
 
-void FFT::createPath(juce::Path& p, const juce::Rectangle<float> bounds, float minFreq = 20.0f)
+void FFT::createPath(juce::Path& p, const juce::Rectangle<float> bounds, float minFreq, float dBMin, float dBMax)
 {
     p.clear();
     p.preallocateSpace(8 + averager.getNumSamples() * 3);
 
     juce::ScopedLock lockedForReading(pathCreationLock);
     const auto* fftData = averager.getReadPointer(0);
-    const auto  factor = bounds.getWidth() / 10.0f;
+    const auto factor = bounds.getWidth() / 10.0f;
 
-    p.startNewSubPath(bounds.getX() + factor * indexToX(0, minFreq), binToY(fftData[0], bounds));
-    for (int i = 0; i < averager.getNumSamples(); ++i)
-        p.lineTo(bounds.getX() + factor * indexToX(float(i), minFreq), binToY(fftData[i], bounds));
+    // Primer punto del path
+    p.startNewSubPath(bounds.getX() + factor * indexToX(0.0f, minFreq),
+        binToY(fftData[0], bounds, dBMin, dBMax));
+
+    for (int i = 1; i < averager.getNumSamples(); ++i)
+    {
+        float x = bounds.getX() + factor * indexToX(static_cast<float>(i), minFreq);
+        float y = binToY(fftData[i], bounds, dBMin, dBMax);
+        p.lineTo(x, y);
+    }
 }
 
 float FFT::indexToX(float index, float minFreq) const
@@ -97,9 +118,50 @@ float FFT::indexToX(float index, float minFreq) const
     return (freq > 0.01f) ? std::log(freq / minFreq) / std::log(2.0f) : 0.0f;
 }
 
-float FFT::binToY(float bin, const juce::Rectangle<float> bounds) const
+float FFT::binToY(float bin, const juce::Rectangle<float> bounds, float dBMin, float dBMax) const
 {
-    const float infinity = -80.0f;
-    return juce::jmap(juce::Decibels::gainToDecibels(bin, infinity),
-        infinity, 0.0f, bounds.getBottom(), bounds.getY());
+    const float valDB = juce::Decibels::gainToDecibels(bin, dBMin);
+    return juce::jmap(valDB, dBMin, dBMax, bounds.getBottom(), bounds.getY());
+}
+
+std::vector<std::pair<float, float>> FFT::getHarmonicsInDB(int maxHarmonics, float minDB) const
+{
+    juce::ScopedLock lock(pathCreationLock);
+
+    std::vector<std::pair<float, float>> result;
+
+    const float* magnitudes = averager.getReadPointer(0);
+    int fftSize = fft.getSize();
+    int numBins = averager.getNumSamples();
+    float binHz = sampleRate / fftSize;
+
+    // Encontrar la fundamental: bin con mayor magnitud
+    int fundamentalBin = 0;
+    float maxMag = 0.0f;
+
+    for (int i = 1; i < numBins; ++i)
+    {
+        if (magnitudes[i] > maxMag)
+        {
+            maxMag = magnitudes[i];
+            fundamentalBin = i;
+        }
+    }
+
+    if (maxMag <= 0.0f)
+        return result;
+
+    // Agregar los armónicos exactos (k * fundamentalBin)
+    for (int k = 1; k <= maxHarmonics; ++k)
+    {
+        int bin = k * fundamentalBin;
+        if (bin >= numBins) break;
+
+        float freq = bin * binHz;
+        float gain = magnitudes[bin];
+        float dB = juce::Decibels::gainToDecibels(gain, minDB);
+        result.push_back({ freq, dB });
+    }
+
+    return result;
 }

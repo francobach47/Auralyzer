@@ -140,7 +140,7 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         auto numSamples = buffer.getNumSamples();
         auto numChannels = buffer.getNumChannels();
 
-        float amplitude = (params.modeValue == 1) ? 0.164f : 0.08251f; // 800 mVpp DC, 400 mVpp AC balanceado
+        float amplitude = (params.modeValue == 1) ? 2*0.412f : 0.4205f; // 800 mVpp DC, 400 mVpp AC balanceado
 
         for (int channel = 0; channel < numChannels; ++channel)
         {
@@ -183,6 +183,8 @@ void OscilloscopeAudioProcessor::getStateInformation(juce::MemoryBlock& destData
     // Guardamos los factores de calibración y sus rangos como propiedades
     state.setProperty("calibrationFactorAC", calibrationFactorAC, nullptr);
     state.setProperty("calibrationFactorDC", calibrationFactorDC, nullptr);
+    state.setProperty("calibrationRangeAC", calibrationRangeAC, nullptr);
+    state.setProperty("calibrationRangeDC", calibrationRangeDC, nullptr);
 
     std::unique_ptr<juce::XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
@@ -201,14 +203,20 @@ void OscilloscopeAudioProcessor::setStateInformation(const void* data, int sizeI
 
         if (state.hasProperty("calibrationFactorDC"))
             calibrationFactorDC = static_cast<float>(state["calibrationFactorDC"]);
+       
+        if (state.hasProperty("calibrationRangeAC"))
+            calibrationRangeAC = static_cast<int>(state["calibrationRangeAC"]);
+
+        if (state.hasProperty("calibrationRangeDC"))
+            calibrationRangeDC = static_cast<int>(state["calibrationRangeDC"]);
 
         apvts.replaceState(state);
     }
 }
 
-void OscilloscopeAudioProcessor::createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float minFreq)
+void OscilloscopeAudioProcessor::createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float dBMin, float dBMax)
 {
-    frequencyAnalyzer.createPath(p, bounds.toFloat(), minFreq);
+    frequencyAnalyzer.createPath(p, bounds.toFloat(), 20.0f, dBMin, dBMax);
 }
 
 bool OscilloscopeAudioProcessor::checkForNewAnalyserData()
@@ -236,7 +244,7 @@ void OscilloscopeAudioProcessor::startLevelCalibration()
     }
 
     float measuredVpp = maxVal - minVal;
-    float expectedVpp = (params.modeValue == 1) ? 1.0f : 3.3f; //el primero es DC el segundo AC
+    float expectedVpp = (params.modeValue == 1) ? 1.0f : 1.0f; //el primero es DC el segundo AC
     float newFactor = expectedVpp / measuredVpp;
 
     if (params.modeValue == 1)
@@ -275,6 +283,11 @@ float OscilloscopeAudioProcessor::getCorrectedVoltage(float value) const
 void OscilloscopeAudioProcessor::setSineEnabled(bool enabled)
 {
     sineEnabled = enabled;
+}
+
+std::vector<std::pair<float, float>> OscilloscopeAudioProcessor::getHarmonicLabels() const
+{
+    return frequencyAnalyzer.getHarmonicsInDB(6, -80.0f);
 }
 
 //==============================================================================

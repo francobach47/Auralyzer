@@ -71,4 +71,5 @@ private:
 	juce::AudioParameterFloat*  verticalPositionParam;
 	juce::AudioParameterChoice* verticalScaleParam;
 	juce::AudioParameterChoice* modeParam;
+	juce::AudioParameterBool* bypassParam;
 };

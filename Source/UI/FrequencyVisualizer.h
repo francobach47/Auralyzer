@@ -17,7 +17,8 @@ public:
 
 private:
     float getFrequencyForPosition(float pos);
-    
+    float getPositionForFrequency(float freq);
+
     OscilloscopeAudioProcessor& processor;
 
     juce::Rectangle<int> plotFrame;

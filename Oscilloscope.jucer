@@ -4,6 +4,7 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" pluginVST3Category="Fx">
   <MAINGROUP id="zXWZOS" name="Oscilloscope">
     <GROUP id="{0E3EC17F-5116-7268-C364-3EFB29BA1A42}" name="Assets">
+      <FILE id="MbM1Jb" name="Bypass.png" compile="0" resource="1" file="Assets/Bypass.png"/>
       <FILE id="RQa0Fx" name="Lato-Medium.ttf" compile="0" resource="1" file="Assets/Lato-Medium.ttf"/>
       <FILE id="ueSbFq" name="logo.png" compile="0" resource="1" file="Assets/logo.png"/>
     </GROUP>

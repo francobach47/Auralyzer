@@ -43,6 +43,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     bool initialDC = audioProcessor.params.modeValue == 1;
     timeVisualizer.setModeDC(initialDC);
 
+    optionsGroup.setText("Controls");
     optionsGroup.addAndMakeVisible(rangeKnob);
     optionsGroup.addAndMakeVisible(modeKnob);
     addAndMakeVisible(optionsGroup);
@@ -131,15 +132,20 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     horizontalGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
     horizontalGroup.addAndMakeVisible(horizontalPositionKnob);
     horizontalGroup.addAndMakeVisible(horizontalScaleKnob);
+    horizontalScaleKnob.slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    horizontalPositionKnob.slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     addAndMakeVisible(horizontalGroup);
 
     verticalGroup.setText("Vertical");
     verticalGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
     verticalGroup.addAndMakeVisible(verticalPositionKnob);
     verticalGroup.addAndMakeVisible(verticalScaleKnob);
+    verticalScaleKnob.slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    verticalPositionKnob.slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     addAndMakeVisible(verticalGroup);
 
-    probesCalibrationButton.setButtonText("Probes");
+    probesCalibrationButton.setName("Probes");
+    probesCalibrationButton.setButtonText("");
     probesCalibrationButton.setClickingTogglesState(true);
     probesCalibrationButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::transparentBlack);
     probesCalibrationButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
@@ -165,8 +171,9 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
         if (isLevelCalibrating)
             audioProcessor.startLevelCalibration();
         };
-
-    sineButton.setButtonText("Sine");
+    
+    sineButton.setName("Sine");
+    sineButton.setButtonText("");
     sineButton.setClickingTogglesState(true);
     sineButton.setColour(juce::ToggleButton::tickColourId, juce::Colours::transparentBlack);
     sineButton.setColour(juce::ToggleButton::textColourId, juce::Colours::white);
@@ -178,6 +185,29 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
             audioProcessor.setSineEnabled(sineButton.getToggleState());
         };
 
+    auto bypassImg = juce::ImageCache::getFromMemory(BinaryData::Bypass_png, BinaryData::Bypass_pngSize);
+    bypassButton.setImages(true, true, true, bypassImg, 1.0f, {}, bypassImg, 0.7f, {}, bypassImg, 0.4f, {});
+    bypassButton.setClickingTogglesState(true);
+    addAndMakeVisible(bypassButton);
+
+    bypassAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
+        audioProcessor.apvts, bypassParamID.getParamID(), bypassButton
+    );
+
+    // Para los screenshots
+    snapshotButton.setLookAndFeel(ButtonLookAndFeel::get());
+    addAndMakeVisible(snapshotButton);
+    snapshotButton.onClick = [this] { timeVisualizer.captureCurrentPath(); };
+    clearSnapshotsButton.setLookAndFeel(ButtonLookAndFeel::get());
+    addAndMakeVisible(clearSnapshotsButton);
+    clearSnapshotsButton.onClick = [this] { timeVisualizer.clearSnapshots(); };
+   
+    screenShotGroup.setText("ScreenShot");
+    screenShotGroup.setTextLabelPosition(juce::Justification::centredTop);
+    screenShotGroup.addAndMakeVisible(snapshotButton);
+    screenShotGroup.addAndMakeVisible(clearSnapshotsButton);
+    addAndMakeVisible(screenShotGroup);
+
     setLookAndFeel(&mainLF);
     
     setSize(1200, 490);
@@ -185,6 +215,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     triggerGroup.setText("Trigger");
     triggerGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
     triggerGroup.addAndMakeVisible(triggerLevelKnob);
+    triggerLevelKnob.slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     movingAverageButton.setButtonText("Moving Average");
     movingAverageButton.changeWidthToFitText();
     movingAverageButton.setClickingTogglesState(true);
@@ -198,6 +229,12 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     movingAverageButton.setToggleState(false, juce::sendNotificationSync);
     audioProcessor.apvts.getParameter(movingAverageParamID.getParamID())->setValueNotifyingHost(0.0f);
 
+    calibrationGroup.setText("Calibration");
+    calibrationGroup.setTextLabelPosition(juce::Justification::horizontallyCentred);
+    calibrationGroup.addAndMakeVisible(probesCalibrationButton);
+    calibrationGroup.addAndMakeVisible(sineButton);
+    calibrationGroup.addAndMakeVisible(levelCalibrationButton);
+    addAndMakeVisible(calibrationGroup);
 
     // Forzar valores iniciales para visualizacion
     float hScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(horizontalScaleParamID.getParamID()));
@@ -212,7 +249,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
 
     setLookAndFeel(&mainLF);
 
-    setSize(1325, 500);
+    setSize(1225, 520);
 
 #ifdef JUCE_OPENGL
     openGLContext.attachTo(*getTopLevelComponent());
@@ -227,12 +264,15 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
     audioProcessor.apvts.removeParameterListener(horizontalScaleParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(horizontalPositionParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(triggerLevelParamID.getParamID(), this);
+    snapshotButton.setLookAndFeel(nullptr);
+    clearSnapshotsButton.setLookAndFeel(nullptr);
 
-    setLookAndFeel(nullptr);
     audioProcessor.apvts.removeParameterListener(rangeParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(modeParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(plotModeParamID.getParamID(), this);
     serialPortSelector.setLookAndFeel(nullptr);
+    
+    setLookAndFeel(nullptr);
 
 #ifdef JUCE_OPENGL
     openGLContext.detach();
@@ -245,11 +285,10 @@ void OscilloscopeAudioProcessorEditor::paint(juce::Graphics& g)
     g.fillAll(Colors::background);
 
     auto image_logo = juce::ImageCache::getFromMemory(BinaryData::logo_png, BinaryData::logo_pngSize);
-    int destX = 1165;
-    int destY = 445;
     int destWidth = image_logo.getWidth();
     int destHeight = image_logo.getHeight();
-
+    int destX = getWidth() - destWidth - 25;
+    int destY = getHeight() - 52;
     g.drawImage(image_logo,
         destX, destY, destWidth, destHeight,
         0, 0, image_logo.getWidth(), image_logo.getHeight());
@@ -257,27 +296,26 @@ void OscilloscopeAudioProcessorEditor::paint(juce::Graphics& g)
 
 void OscilloscopeAudioProcessorEditor::resized()
 {
-    int y = 20;
+    int y = 45;
     int height = 100;
-    int plotSectionWidth = 900;
+    int plotSectionWidth = 800;
     int plotSectionHeight = 420;
     int verhorSectionHeight = 260;
     int verhorSectionWidth = 110;
-    int optionsHeight = 150;
+    int optionsHeight = 165;
     int space = 10;
     int plotBoxesSpace = 50;
 
     // Position the groups
     plotGroup.setBounds(25, y, plotSectionWidth, plotSectionHeight);
-    optionsGroup.setBounds(plotSectionWidth + plotBoxesSpace, y, (verhorSectionWidth * 3) + space * 2, optionsHeight);
-    horizontalGroup.setBounds(plotSectionWidth + plotBoxesSpace, y + optionsHeight + space, verhorSectionWidth, verhorSectionHeight);
-    verticalGroup.setBounds(horizontalGroup.getRight() + space, y + optionsHeight + space, verhorSectionWidth, verhorSectionHeight);
-    triggerGroup.setBounds(verticalGroup.getRight() + space, y + optionsHeight + space, verhorSectionWidth, verhorSectionHeight);
+    optionsGroup.setBounds(plotSectionWidth + plotBoxesSpace, y - 8, (verhorSectionWidth * 2) + space * 1, optionsHeight);
+    horizontalGroup.setBounds(plotSectionWidth + plotBoxesSpace, plotGroup.getBottom() - verhorSectionHeight, verhorSectionWidth, verhorSectionHeight);
+    verticalGroup.setBounds(horizontalGroup.getRight() + space, horizontalGroup.getY(), verhorSectionWidth, verhorSectionHeight);
+    triggerGroup.setBounds(verticalGroup.getRight() + space, horizontalGroup.getY(), verhorSectionWidth, verhorSectionHeight);
 
     // Position the knobs inside the groups
-    // TO DO: Terminar de acomodar las perillas de rango y modo
-    rangeKnob.setTopLeftPosition(height - 20, y);
-    modeKnob.setTopLeftPosition((height * 2 + space) - 20, y);
+    rangeKnob.setTopLeftPosition(20, y - 25);
+    modeKnob.setTopLeftPosition(verticalPositionKnob.getRight() - 2*space + verticalPositionKnob.getWidth(), y - 25);
 
     horizontalPositionKnob.setTopLeftPosition(20, 20);
     horizontalScaleKnob.setTopLeftPosition(horizontalPositionKnob.getX(), horizontalPositionKnob.getBottom() + 10);
@@ -285,27 +323,48 @@ void OscilloscopeAudioProcessorEditor::resized()
     verticalScaleKnob.setTopLeftPosition(verticalPositionKnob.getX(), verticalPositionKnob.getBottom() + 10);
     
     triggerLevelKnob.setTopLeftPosition(20, 20);
-    movingAverageButton.setTopLeftPosition(20, 140);
+    movingAverageButton.setTopLeftPosition(20, triggerLevelKnob.getBottom() + 4.5*space);
 
-    // Position the button
-    plotModeButton.setTopLeftPosition(25, 450);
+    // Position the button Time/Frecuency
+    plotModeButton.setTopLeftPosition(25, getHeight() - 42);
 
     // Position the time visualizer
     frequencyVisualizer.setBounds(plotGroup.getLocalBounds());
     timeVisualizer.setBounds(plotGroup.getLocalBounds());
 
     //Position the COM Port List
-    serialPortSelector.setBounds(150, 453, 200, 24);
-    
-    //ProbesCalibration
-    probesCalibrationButton.setBounds(400, 453, 100, 30);
-    
-    //LevelCalibration
-    levelCalibrationButton.setBounds(550, 453, 100, 30); 
+    serialPortSelector.setBounds(25, 12, 180, 24);
 
-    //Tone Generator
-    sineButton.setBounds(levelCalibrationButton.getRight() + 10, levelCalibrationButton.getY(), 70, 30);
+    // Position the Calibration group layout
+    int calibX = triggerGroup.getX();
+    int calibY = optionsGroup.getY();
+    int calibWidth = triggerGroup.getWidth();
+    int calibHeight = optionsHeight/2 + 1.5*space;
 
+    calibrationGroup.setBounds(calibX, calibY, calibWidth, calibHeight);
+
+    int btnW = 40;
+    int btnH = 30;
+    int btnY = 20;
+    int btnSpacing = 5;
+
+    probesCalibrationButton.setBounds(12, btnY, btnW, btnH);
+    sineButton.setBounds(probesCalibrationButton.getRight() + btnSpacing, btnY, btnW, btnH);
+    levelCalibrationButton.setBounds(12, probesCalibrationButton.getBottom() + btnSpacing, probesCalibrationButton.getWidth() + btnSpacing + sineButton.getWidth(), btnH);
+
+    // Position Bypass
+    bypassButton.setBounds(getWidth() - sineButton.getX(), serialPortSelector.getY() - 2.5, 24, 24);
+
+    // Position Screenshot group and buttons inside
+    int screenshotX = triggerGroup.getX();
+    int screenshotY = optionsGroup.getY() + calibHeight;
+    int screenshotW = triggerGroup.getWidth();
+    int screenshotH = optionsHeight / 2 - 1.5 * space;
+
+    screenShotGroup.setBounds(screenshotX, screenshotY, screenshotW, screenshotH);
+
+    snapshotButton.setBounds(12, 18, levelCalibrationButton.getWidth(), 20);
+    clearSnapshotsButton.setBounds(12, snapshotButton.getBottom() + space/4, levelCalibrationButton.getWidth(), 20);
 
 }
 
@@ -335,8 +394,8 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         const auto& options = verticalScaleByRange[newRange];
 
         // Actualizar las etiquetas del pote
-        for (int i = 0; i < 4; ++i)
-            verticalScaleKnob.slider.setTextValueSuffix(options[i].first);
+        //for (int i = 0; i < 4; ++i)
+        //    verticalScaleKnob.slider.setTextValueSuffix(options[i].first);
 
         // Forzar valor default (ej: tercera opción del rango actual)
         if (auto* param = audioProcessor.apvts.getParameter(verticalScaleParamID.getParamID()))

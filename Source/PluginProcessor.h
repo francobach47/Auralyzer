@@ -48,7 +48,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     // Frequency Visualizer
-    void createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float minFreq);
+    void createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float dBMin, float dBMax);
     bool checkForNewAnalyserData();
 
     // Timer Visualizer
@@ -80,6 +80,13 @@ public:
     float getCorrectedVoltage(float vppMedido) const;
 
     void setSineEnabled(bool enabled);
+
+    // Bypass
+    bool isBypassed() const {
+        return apvts.getRawParameterValue(bypassParamID.getParamID())->load() > 0.5f;
+    };
+
+    std::vector<std::pair<float, float>> getHarmonicLabels() const;
 
 private:
     juce::AudioBuffer<float> audioTimeBuffer;

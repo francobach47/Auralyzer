@@ -58,7 +58,7 @@ float SignalAnalysis::computeFrequency(const juce::AudioBuffer<float>& buffer, f
     return -1.0f;
 }
 
-float SignalAnalysis::computeTHD(const juce::AudioBuffer<float>& buffer, float sampleRate, int fftOrder, int maxHarmonics)
+float SignalAnalysis::computeTHD(const juce::AudioBuffer<float>& buffer, float sampleRate, int fftOrder, int /*unused*/)
 {
     const int fftSize = 1 << fftOrder;
     if (buffer.getNumSamples() < fftSize) return 0.0f;
@@ -68,9 +68,9 @@ float SignalAnalysis::computeTHD(const juce::AudioBuffer<float>& buffer, float s
 
     const float* data = buffer.getReadPointer(0);
     for (int i = 0; i < fftSize; ++i)
-        fftData[2 * i] = data[i];
+        fftData[2 * i] = data[i];  // canal 0, parte real
 
-    juce::dsp::WindowingFunction<float> window(fftSize, juce::dsp::WindowingFunction<float>::hann);
+    juce::dsp::WindowingFunction<float> window(fftSize, juce::dsp::WindowingFunction<float>::hann, true);
     window.multiplyWithWindowingTable(fftData.data(), fftSize);
 
     fft.performRealOnlyForwardTransform(fftData.data());
@@ -85,19 +85,29 @@ float SignalAnalysis::computeTHD(const juce::AudioBuffer<float>& buffer, float s
 
     magnitudes[0] = 0.0f; // ignorar DC
 
-    // buscar fundamental
+    // Buscar la fundamental (bin con mayor magnitud)
     auto it = std::max_element(magnitudes.begin(), magnitudes.end());
     int fundamentalBin = std::distance(magnitudes.begin(), it);
     float fundamental = *it;
     if (fundamental == 0.0f) return 0.0f;
 
+    float threshold = fundamental * std::pow(10.0f, -60.0f / 20.0f); // -60 dB
+
     float sumHarmonicsSq = 0.0f;
-    for (int k = 2; k <= maxHarmonics; ++k)
+    for (int k = 2;; ++k)
     {
         int bin = k * fundamentalBin;
-        if (bin < magnitudes.size())
-            sumHarmonicsSq += magnitudes[bin] * magnitudes[bin];
+        if (bin >= magnitudes.size()) break;
+
+        float mag = magnitudes[bin];
+        if (mag < threshold && k > 5) break;
+        DBG("Harmonic k = " << k << ", bin = " << bin << ", magnitude = " << mag << (mag < threshold ? " < threshold" : ""));
+
+        sumHarmonicsSq += mag * mag;
     }
+
+    DBG("Fundamental bin: " << fundamentalBin << ", magnitude: " << fundamental);
+    DBG("Threshold (-60 dB): " << threshold);
 
     return std::sqrt(sumHarmonicsSq) / fundamental;
 }
