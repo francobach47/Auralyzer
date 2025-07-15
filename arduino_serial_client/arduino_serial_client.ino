@@ -1,4 +1,5 @@
 #include <HardwareSerial.h>
+#include <Arduino.h>
 
 // ---------- Pines de entrada/salida -----------------------------
 const int LED_PIN      = 2;    // LED interno de la placa
@@ -9,20 +10,26 @@ const int PIN_MODO     = 27;   // Salida para modo: HIGH = AC, LOW = DC
 const int PIN_R0       = 32;   // Salidas AC
 const int PIN_R1       = 33;
 const int PIN_R2       = 25;
-const int PIN_R3       = 26;
+const int PIN_R3       = 13;
 
 const int PIN_BIN0     = 12;   // Salidas DC (bits invertidos)
 const int PIN_BIN1     = 14;
 
-// Entradas para replicar desde llaves analógicas
 const int IN_MODO      = 5;
-const int IN_BIN0_i    = 4;
-const int IN_BIN1_i    = 0;
+const int IN_BIN0_i    = 0;
+const int IN_BIN1_i    = 4;
 
-// Estado previo
-bool    lastControlState = true;   // HIGH=plugin controla
-uint8_t lastModo         = 255;
-uint8_t lastRango        = 255;
+const int PIN_CUADRADA = 26;
+const int PWM_CHANNEL  = 4;
+const int PWM_FREQ     = 1000;
+const int PWM_RES      = 12;
+const int PWM_DUTY     = 2048;
+
+bool lastControlState = true;
+uint8_t lastModo      = 255;
+uint8_t lastRango     = 255;
+
+bool modoCalibracion = false;
 
 // ---------- Protocolo serial ------------------------------------
 enum ParseState {
@@ -44,6 +51,7 @@ enum Command {
   setRange,
   syncKnobs,
   controlModeStatus,
+  calibrationMode,
   endOfList
 };
 
@@ -58,12 +66,10 @@ uint8_t gCommandDataCount = 0;
 
 // ---------- Helpers de activación ------------------------------
 void activarModo(uint8_t m) {
-  // m==0 → AC (HIGH), m==1 → DC (LOW)
   digitalWrite(PIN_MODO, m == 0 ? HIGH : LOW);
 }
 
 void activarRango(uint8_t idx) {
-  // Limpio todas las salidas
   digitalWrite(PIN_R0, LOW);
   digitalWrite(PIN_R1, LOW);
   digitalWrite(PIN_R2, LOW);
@@ -71,7 +77,6 @@ void activarRango(uint8_t idx) {
   digitalWrite(PIN_BIN0, LOW);
   digitalWrite(PIN_BIN1, LOW);
 
-  // Selección AC
   switch (idx) {
     case 0: digitalWrite(PIN_R0, HIGH); break;
     case 1: digitalWrite(PIN_R1, HIGH); break;
@@ -79,7 +84,6 @@ void activarRango(uint8_t idx) {
     case 3: digitalWrite(PIN_R3, HIGH); break;
   }
 
-  // Bits DC invertidos
   uint8_t inv = 3 - idx;
   digitalWrite(PIN_BIN1, (inv & 0b10) >> 1);
   digitalWrite(PIN_BIN0, (inv & 0b01));
@@ -117,18 +121,24 @@ void handleSetRange(uint8_t* d, int sz) {
 
 void processCommand(uint8_t c, uint8_t* d, int sz) {
   switch (c) {
-    case setMode:  handleSetMode (d, sz); break;
+    case setMode:  handleSetMode(d, sz); break;
     case setRange: handleSetRange(d, sz); break;
+    case calibrationMode:
+      if (sz == 1) {
+        modoCalibracion = (d[0] == 1);
+        ledcWrite(PWM_CHANNEL, modoCalibracion ? PWM_DUTY : 0);
+      }
+      break;
     default: break;
   }
 }
 
 void parseInputData(const uint8_t* data, int dataSize) {
   auto resetParser = [] {
-    gCommand          = Command::none;
-    gCommandDataSize  = 0;
+    gCommand = Command::none;
+    gCommandDataSize = 0;
     gCommandDataCount = 0;
-    parseState        = waitingForStartByte1;
+    parseState = waitingForStartByte1;
   };
 
   for (int i = 0; i < dataSize; ++i) {
@@ -137,19 +147,16 @@ void parseInputData(const uint8_t* data, int dataSize) {
       case waitingForStartByte1:
         if (b == kStartByte1) parseState = waitingForStartByte2;
         break;
-
       case waitingForStartByte2:
         if (b == kStartByte2) parseState = waitingForCommand;
         else resetParser();
         break;
-
       case waitingForCommand:
         if (b < endOfList) {
           gCommand = b;
           parseState = waitingForCommandDataSize;
         } else resetParser();
         break;
-
       case waitingForCommandDataSize:
         if (b <= kMaxCommandDataBytes) {
           gCommandDataSize = b;
@@ -157,7 +164,6 @@ void parseInputData(const uint8_t* data, int dataSize) {
           parseState = waitingForCommandData;
         } else resetParser();
         break;
-
       case waitingForCommandData:
         gCommandData[gCommandDataCount++] = b;
         if (gCommandDataCount == gCommandDataSize) {
@@ -165,31 +171,27 @@ void parseInputData(const uint8_t* data, int dataSize) {
           resetParser();
         }
         break;
-
-      default:
-        resetParser();
-        break;
+      default: resetParser(); break;
     }
   }
 }
 
 // ---------- Lectura de llaves analógicas -----------------------
 uint8_t leerModo() {
-  return digitalRead(IN_MODO) ? 0 : 1; // HIGH=AC(0), LOW=DC(1)
+  return digitalRead(IN_MODO) ? 0 : 1;
 }
 
 uint8_t leerRango() {
   uint8_t inv = (digitalRead(IN_BIN1_i) << 1) | digitalRead(IN_BIN0_i);
-  return 3 - inv; // bits invertidos → rango 0–3
+  return 3 - inv;
 }
 
 // ---------- Setup / Loop ----------------------------------------
 void setup() {
   Serial.begin(115200);
 
-  // Configuro pines
   pinMode(LED_PIN, OUTPUT);
-  pinMode(CTRL_PIN, INPUT_PULLUP);  // activa pull-up interna
+  pinMode(CTRL_PIN, INPUT_PULLUP);
 
   pinMode(PIN_MODO, OUTPUT);
   pinMode(PIN_R0, OUTPUT);
@@ -199,11 +201,15 @@ void setup() {
   pinMode(PIN_BIN0, OUTPUT);
   pinMode(PIN_BIN1, OUTPUT);
 
-  pinMode(IN_MODO,  INPUT_PULLUP);
+  pinMode(IN_MODO, INPUT_PULLUP);
   pinMode(IN_BIN0_i, INPUT_PULLUP);
   pinMode(IN_BIN1_i, INPUT_PULLUP);
 
-  // Iniciales
+  pinMode(PIN_CUADRADA, OUTPUT);
+  ledcSetup(PWM_CHANNEL, PWM_FREQ, PWM_RES);
+  ledcAttachPin(PIN_CUADRADA, PWM_CHANNEL);
+  ledcWrite(PWM_CHANNEL, 0);
+
   digitalWrite(LED_PIN, LOW);
   activarModo(0);
   activarRango(0);
@@ -212,32 +218,32 @@ void setup() {
 }
 
 void loop() {
-  // 1) ¿Cambió quién controla?
-  bool pluginControls = digitalRead(CTRL_PIN); // HIGH=plugin controla
+  bool pluginControls = digitalRead(CTRL_PIN);
   if (pluginControls != lastControlState) {
-    lastControlState = pluginControls;
-    // invertimos el LED: ON si llaves controlan, OFF si plugin controla
-    digitalWrite(LED_PIN, pluginControls ? LOW : HIGH);
-    sendControlMode(pluginControls);
+      lastControlState = pluginControls;
+      digitalWrite(LED_PIN, pluginControls ? LOW : HIGH);
+      sendControlMode(pluginControls);
+
+      if (!pluginControls) {  // Si acaba de cambiar a modo llaves
+          uint8_t modoActual = leerModo();
+          uint8_t rangoActual = leerRango();
+          sendSyncKnobs(modoActual, rangoActual);
+      }
   }
 
-  // 2) Si las llaves controlan (CTRL_PIN == LOW), envío sus valores
-  if (!pluginControls) {
-    uint8_t modoActual  = leerModo();
+  if (!modoCalibracion && !pluginControls) {
+    uint8_t modoActual = leerModo();
     uint8_t rangoActual = leerRango();
     if (modoActual != lastModo || rangoActual != lastRango) {
-      lastModo  = modoActual;
+      lastModo = modoActual;
       lastRango = rangoActual;
       sendSyncKnobs(modoActual, rangoActual);
     }
   }
 
-  // 3) Procesar comandos entrantes del plugin
   if (Serial.available() > 0) {
     int n = min(Serial.available(), kMaxPayloadSize);
     Serial.readBytes(gSerialDataBuffer, n);
     parseInputData(gSerialDataBuffer, n);
   }
-
-  delay(10);
 }
