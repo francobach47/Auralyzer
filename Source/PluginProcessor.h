@@ -1,18 +1,12 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include <JuceHeader.h>
+#include "DSP/Parameters.h"
+#include "DSP/FFT.h"
+#include "Serial/SerialDevice.h"
+#include "DSP/Trigger.h"
+#include "DSP/CircularAudioBuffer.h"
 
-//==============================================================================
-/**
-*/
 class OscilloscopeAudioProcessor  : public juce::AudioProcessor
 {
 public:
@@ -24,9 +18,9 @@ public:
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
 
-   #ifndef JucePlugin_PreferredChannelConfigurations
+#ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
-   #endif
+#endif
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
@@ -53,7 +47,70 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    // Frequency Visualizer
+    void createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float dBMin, float dBMax);
+    bool checkForNewAnalyserData();
+
+    // Timer Visualizer
+    juce::AudioBuffer<float>& getAudioBuffer() { return audioTimeBuffer; }
+    int getNumInputChannels() const { return audioTimeBuffer.getNumChannels(); }
+
+    // APVTS
+    juce::AudioProcessorValueTreeState apvts{
+        *this, nullptr, "Parameters", Parameters::createParameterLayout()
+    };
+
+    // Serial Communication
+    SerialDevice& getSerialDevice() { return serialDevice; }
+    const SerialDevice& getSerialDevice() const { return serialDevice; }
+
+    Parameters params;
+
+    float getTriggerLevel() const { return params.getTriggerLevel(); }
+
+    //Circular Buffer 
+    CircularAudioBuffer& getCircularBuffer() { return circularBuffer; }
+
+    //CalibrationLevel
+    void startLevelCalibration();
+    float getCalibrationFactor() const;
+    void setCalibrationFactorAC(float factor) { calibrationFactorAC = factor; }
+    void setCalibrationFactorDC(float factor) { calibrationFactorDC = factor; }
+
+    float getCorrectedVoltage(float vppMedido) const;
+
+    void setSineEnabled(bool enabled);
+
+    // Bypass
+    bool isBypassed() const {
+        return apvts.getRawParameterValue(bypassParamID.getParamID())->load() > 0.5f;
+    };
+
+    std::vector<std::pair<float, float>> getHarmonicLabels() const;
+
 private:
+    juce::AudioBuffer<float> audioTimeBuffer;
+    CircularAudioBuffer circularBuffer;
+
+    FFT frequencyAnalyzer;
+
+    SerialDevice serialDevice;
+    bool lastFrequencyModeState = false;
+
+    bool isCalibratingLevel = false;
+    float calibrationFactorAC = 1.0f;
+    int   calibrationRangeAC = 2;
+
+    float calibrationFactorDC = 1.0f;
+    int   calibrationRangeDC = 2;
+
+    int calibrationRange = 2; // by default range = 1 V – 10 V
+
+    // Sine generator for calibration
+    double phase = 0.0;
+    double phaseIncrement = 0.0;
+    bool sineEnabled = false;
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessor)
 };

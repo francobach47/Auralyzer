@@ -4,9 +4,7 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" pluginVST3Category="Fx">
   <MAINGROUP id="zXWZOS" name="Oscilloscope">
     <GROUP id="{0E3EC17F-5116-7268-C364-3EFB29BA1A42}" name="Assets">
-      <FILE id="MbM1Jb" name="Bypass.png" compile="0" resource="1" file="Assets/Bypass.png"/>
       <FILE id="RQa0Fx" name="Lato-Medium.ttf" compile="0" resource="1" file="Assets/Lato-Medium.ttf"/>
-      <FILE id="ueSbFq" name="logo.png" compile="0" resource="1" file="Assets/logo.png"/>
     </GROUP>
     <GROUP id="{08E07DE2-9525-588F-4737-5655EBEAD69F}" name="Source">
       <GROUP id="{EE4C89BC-6CA3-1A52-3F48-B138E2F07349}" name="Serial">
@@ -33,20 +31,10 @@
               file="Source/UI/TimeVisualizer.h"/>
       </GROUP>
       <GROUP id="{6647A5F1-9E97-4DF6-3439-BFC6A4AB94D2}" name="DSP">
-        <FILE id="ZQ7lCU" name="CircularAudioBuffer.cpp" compile="1" resource="0"
-              file="Source/DSP/CircularAudioBuffer.cpp"/>
-        <FILE id="HNkOpe" name="CircularAudioBuffer.h" compile="0" resource="0"
-              file="Source/DSP/CircularAudioBuffer.h"/>
         <FILE id="rCDph8" name="FFT.cpp" compile="1" resource="0" file="Source/DSP/FFT.cpp"/>
         <FILE id="SUW8EQ" name="FFT.h" compile="0" resource="0" file="Source/DSP/FFT.h"/>
         <FILE id="Sg9OMU" name="Parameters.cpp" compile="1" resource="0" file="Source/DSP/Parameters.cpp"/>
         <FILE id="KSziEl" name="Parameters.h" compile="0" resource="0" file="Source/DSP/Parameters.h"/>
-        <FILE id="Ujn6cK" name="SignalAnalysis.cpp" compile="1" resource="0"
-              file="Source/DSP/SignalAnalysis.cpp"/>
-        <FILE id="PxYRwz" name="SignalAnalysis.h" compile="0" resource="0"
-              file="Source/DSP/SignalAnalysis.h"/>
-        <FILE id="eYGiK5" name="Trigger.cpp" compile="1" resource="0" file="Source/DSP/Trigger.cpp"/>
-        <FILE id="ufNRGB" name="Trigger.h" compile="0" resource="0" file="Source/DSP/Trigger.h"/>
       </GROUP>
       <FILE id="PTIuGg" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
@@ -78,7 +66,7 @@
   <EXPORTFORMATS>
     <VS2022 targetFolder="Builds/VisualStudio2022">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="Oscilloscope" enablePluginBinaryCopyStep="1"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Oscilloscope"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="Oscilloscope"/>
       </CONFIGURATIONS>
       <MODULEPATHS>

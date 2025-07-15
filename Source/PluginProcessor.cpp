@@ -1,31 +1,21 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
 //==============================================================================
 OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
-#ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
-                       )
-#endif
+                       ),
+    params(apvts) 
 {
+
 }
 
 OscilloscopeAudioProcessor::~OscilloscopeAudioProcessor()
 {
+    frequencyAnalyzer.stopThread(1000);
 }
 
 //==============================================================================
@@ -68,8 +58,8 @@ double OscilloscopeAudioProcessor::getTailLengthSeconds() const
 
 int OscilloscopeAudioProcessor::getNumPrograms()
 {
-    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-                // so this should be at least 1, even if you're not really implementing programs.
+    return 1;   
+               
 }
 
 int OscilloscopeAudioProcessor::getCurrentProgram()
@@ -91,77 +81,93 @@ void OscilloscopeAudioProcessor::changeProgramName (int index, const juce::Strin
 }
 
 //==============================================================================
-void OscilloscopeAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void OscilloscopeAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    const int bufferSeconds = 10; // full capacity (10 s)
+    const int bufferSize = static_cast<int>(sampleRate * bufferSeconds);
+    circularBuffer.prepare(getTotalNumInputChannels(), bufferSize);
+
+
+    frequencyAnalyzer.setUpFrequencyAnalyzer(int(sampleRate), sampleRate);
+
+    // phase increment to 1 kHz
+    phase = 0.0;
+    phaseIncrement = juce::MathConstants<double>::twoPi * 1000.0 / sampleRate;
+
 }
 
 void OscilloscopeAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
+    frequencyAnalyzer.stopThread(1000);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool OscilloscopeAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool OscilloscopeAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
-  #if JucePlugin_IsMidiEffect
-    juce::ignoreUnused (layouts);
-    return true;
-  #else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    // Some plugin hosts, such as certain GarageBand versions, will only
-    // load plugins that support stereo bus layouts.
-    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
-        return false;
+    const auto& mainIn = layouts.getChannelSet(true, 0); // Input
+    const auto& mainOut = layouts.getChannelSet(false, 0); // Output
 
-    // This checks if the input layout matches the output layout
-   #if ! JucePlugin_IsSynth
-    if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
-        return false;
-   #endif
-
-    return true;
-  #endif
+    return mainIn == juce::AudioChannelSet::stereo()
+        && mainOut == juce::AudioChannelSet::stereo();
 }
 #endif
 
-void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
+                              [[maybe_unused]] juce::MidiBuffer& midiMessages)
 {
+    params.update();
+
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
+    juce::ignoreUnused(midiMessages);
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+    static bool lastFrequencyMode = false;
+    bool currentFrequencyMode = apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
+    auto numOutputChannels = getTotalNumOutputChannels();
+    auto numInputChannels = getTotalNumInputChannels();
 
-        // ..do something to the data...
+    bool isFrequencyMode = apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
+        
+    if (isFrequencyMode) {
+        frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);
     }
+    else {
+        circularBuffer.pushBlock(buffer);
+    }
+
+    if (sineEnabled)
+    {
+        auto numSamples = buffer.getNumSamples();
+        auto numChannels = buffer.getNumChannels();
+
+        float amplitude = (params.modeValue == 1) ? 2*0.412f : 0.4205f; // 800 mVpp DC, 400 mVpp AC balanced
+
+        for (int channel = 0; channel < numChannels; ++channel)
+        {
+            float* channelData = buffer.getWritePointer(channel);
+
+            for (int i = 0; i < numSamples; ++i)
+            {
+                float sample = std::sin(phase) * amplitude;
+                channelData[i] = sample;
+                phase += phaseIncrement;
+
+                if (phase >= juce::MathConstants<double>::twoPi)
+                    phase -= juce::MathConstants<double>::twoPi;
+            }
+        }
+    }
+    else
+    {
+        buffer.clear(); 
+    }
+
 }
 
 //==============================================================================
 bool OscilloscopeAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    return true;
 }
 
 juce::AudioProcessorEditor* OscilloscopeAudioProcessor::createEditor()
@@ -170,17 +176,118 @@ juce::AudioProcessorEditor* OscilloscopeAudioProcessor::createEditor()
 }
 
 //==============================================================================
-void OscilloscopeAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void OscilloscopeAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    juce::ValueTree state = apvts.copyState();
+
+    // Calibration factors and their ranges are saved as properties
+    state.setProperty("calibrationFactorAC", calibrationFactorAC, nullptr);
+    state.setProperty("calibrationFactorDC", calibrationFactorDC, nullptr);
+    state.setProperty("calibrationRangeAC", calibrationRangeAC, nullptr);
+    state.setProperty("calibrationRangeDC", calibrationRangeDC, nullptr);
+
+    std::unique_ptr<juce::XmlElement> xml(state.createXml());
+    copyXmlToBinary(*xml, destData);
 }
 
-void OscilloscopeAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void OscilloscopeAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    std::unique_ptr<juce::XmlElement> xml(getXmlFromBinary(data, sizeInBytes));
+
+    if (xml != nullptr && xml->hasTagName(apvts.state.getType()))
+    {
+        juce::ValueTree state = juce::ValueTree::fromXml(*xml);
+
+        if (state.hasProperty("calibrationFactorAC"))
+            calibrationFactorAC = static_cast<float>(state["calibrationFactorAC"]);
+
+        if (state.hasProperty("calibrationFactorDC"))
+            calibrationFactorDC = static_cast<float>(state["calibrationFactorDC"]);
+       
+        if (state.hasProperty("calibrationRangeAC"))
+            calibrationRangeAC = static_cast<int>(state["calibrationRangeAC"]);
+
+        if (state.hasProperty("calibrationRangeDC"))
+            calibrationRangeDC = static_cast<int>(state["calibrationRangeDC"]);
+
+        apvts.replaceState(state);
+    }
+}
+
+void OscilloscopeAudioProcessor::createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float dBMin, float dBMax)
+{
+    frequencyAnalyzer.createPath(p, bounds.toFloat(), 20.0f, dBMin, dBMax);
+}
+
+bool OscilloscopeAudioProcessor::checkForNewAnalyserData()
+{
+    return frequencyAnalyzer.checkForNewData();
+}
+
+void OscilloscopeAudioProcessor::startLevelCalibration()
+{
+    juce::AudioBuffer<float> buffer;
+    circularBuffer.getMostRecentWindow(buffer, 1024);
+
+    float minVal = std::numeric_limits<float>::max();
+    float maxVal = std::numeric_limits<float>::lowest();
+
+    for (int c = 0; c < buffer.getNumChannels(); ++c)
+    {
+        const float* data = buffer.getReadPointer(c);
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+        {
+            float v = data[i];
+            minVal = std::min(minVal, v);
+            maxVal = std::max(maxVal, v);
+        }
+    }
+
+    float measuredVpp = maxVal - minVal;
+    float expectedVpp = (params.modeValue == 1) ? 1.0f : 1.0f; // first DC, second AC
+    float newFactor = expectedVpp / measuredVpp;
+
+    if (params.modeValue == 1)
+        calibrationFactorDC = newFactor;
+    else
+        calibrationFactorAC = newFactor;
+
+    // Save the range used in calibration
+    calibrationRange = params.rangeValue;
+}
+
+
+float OscilloscopeAudioProcessor::getCalibrationFactor() const
+{
+    float factorActual = rangeCompensationFactors[params.rangeValue];
+
+    if (params.modeValue == 0) // AC
+    {
+        float factorCalibrado = rangeCompensationFactors[calibrationRangeAC];
+        float factorRelativo = factorActual / factorCalibrado;
+        return calibrationFactorAC * factorRelativo;
+    }
+    else // DC
+    {
+        float factorCalibrado = rangeCompensationFactors[calibrationRangeDC];
+        float factorRelativo = factorActual / factorCalibrado;
+        return calibrationFactorDC * factorRelativo;
+    }
+}
+
+float OscilloscopeAudioProcessor::getCorrectedVoltage(float value) const
+{
+    return value * getCalibrationFactor();
+}
+
+void OscilloscopeAudioProcessor::setSineEnabled(bool enabled)
+{
+    sineEnabled = enabled;
+}
+
+std::vector<std::pair<float, float>> OscilloscopeAudioProcessor::getHarmonicLabels() const
+{
+    return frequencyAnalyzer.getHarmonicsInDB(6, -80.0f);
 }
 
 //==============================================================================
