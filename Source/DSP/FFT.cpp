@@ -60,10 +60,10 @@ void FFT::run()
 
             abstractFifo.finishedRead((block1 + block2) / 2);
 
-            // Aplicar ventana de Hann normalizada
+            // Normilized Hann windw
             windowing.multiplyWithWindowingTable(fftBuffer.getWritePointer(0), fftSize);
 
-            // Transformada rápida de Fourier: solo magnitudes
+            // FFT magnitudes
             fft.performFrequencyOnlyForwardTransform(fftBuffer.getWritePointer(0));
 
 
@@ -100,7 +100,6 @@ void FFT::createPath(juce::Path& p, const juce::Rectangle<float> bounds, float m
     const auto* fftData = averager.getReadPointer(0);
     const auto factor = bounds.getWidth() / 10.0f;
 
-    // Primer punto del path
     p.startNewSubPath(bounds.getX() + factor * indexToX(0.0f, minFreq),
         binToY(fftData[0], bounds, dBMin, dBMax));
 
@@ -135,7 +134,7 @@ std::vector<std::pair<float, float>> FFT::getHarmonicsInDB(int maxHarmonics, flo
     int numBins = averager.getNumSamples();
     float binHz = sampleRate / fftSize;
 
-    // Encontrar la fundamental: bin con mayor magnitud
+    // Find the fundamental: bin with the largest magnitude
     int fundamentalBin = 0;
     float maxMag = 0.0f;
 
@@ -151,7 +150,7 @@ std::vector<std::pair<float, float>> FFT::getHarmonicsInDB(int maxHarmonics, flo
     if (maxMag <= 0.0f)
         return result;
 
-    // Agregar los armónicos exactos (k * fundamentalBin)
+    // Add the exact harmonics (k * fundamentalBin)
     for (int k = 1; k <= maxHarmonics; ++k)
     {
         int bin = k * fundamentalBin;

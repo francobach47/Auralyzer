@@ -39,7 +39,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     frequencyVisualizer.setVisible(isFrequencyMode);
     addAndMakeVisible(plotGroup);
 
-    // Inicializar modo DC si corresponde
+    // Initialize DC mode
     bool initialDC = audioProcessor.params.modeValue == 1;
     timeVisualizer.setModeDC(initialDC);
 
@@ -56,28 +56,39 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
         {
             auto selectedText = serialPortSelector.getText();
             if (selectedText.contains("("))
-                selectedText = selectedText.upToFirstOccurrenceOf("(", false, false).trim();  // obtener solo COMx
+                selectedText = selectedText.upToFirstOccurrenceOf("(", false, false).trim();  // get only COMx
 
             if (!selectedText.isEmpty())
             {
                 juce::Logger::writeToLog("[SerialCombo] Seleccionado: " + selectedText);
 
                 auto& device = audioProcessor.getSerialDevice();
-                startTimer(100);              // 100 ms para darle tiempo a mandar la data a la ESP
+                startTimer(20);              // 20 ms to give it time to send the data to the ESP
 
                 device.close();
-                device.init(selectedText);  //  esto asigna serialPortName dentro de SerialDevice
+                device.init(selectedText);  // assign serialPortName into SerialDevice 
                 
-                // Callback de controlModeStatus (GIOP23)
                 device.onControlStatusReceived = [this](bool pluginControls)
                     {
                         juce::MessageManager::callAsync([this, pluginControls]
                             {
                                 bloquearControles(pluginControls);
+
+                                if (pluginControls)  
+                                {
+                                    auto* modeParam = audioProcessor.apvts.getRawParameterValue(modeParamID.getParamID());
+                                    auto* rangeParam = audioProcessor.apvts.getRawParameterValue(rangeParamID.getParamID());
+
+                                    if (modeParam && rangeParam)
+                                    {
+                                        audioProcessor.getSerialDevice().setMode(modeParam->load() < 0.5f ? 0 : 1);
+                                        audioProcessor.getSerialDevice().setRange(static_cast<uint8_t>(juce::roundToInt(rangeParam->load())));
+                                    }
+                                }
                             });
                     };
 
-                // Callback de syncKnobs
+
                 device.onSyncKnobsReceived = [this](uint8_t modo, uint8_t rango)
                     {
                         if (!pluginIsInControl)
@@ -89,7 +100,6 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
                         }
                     };
 
-                // Abrimos el puerto              
                 device.open();
             }
         };
@@ -107,7 +117,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
         {
             juce::MessageManager::callAsync([this, portList]() {
                 auto selectedText = serialPortSelector.getText();
-                serialPortSelector.clear(true);  // limpiar
+                serialPortSelector.clear(true);  
 
                 for (int i = 0; i < portList.size(); ++i)
                 {
@@ -116,7 +126,6 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
                     serialPortSelector.addItem(path + " (" + desc + ")", i + 1);
                 }
 
-                // restaurar selección anterior si sigue existiendo
                 for (int i = 0; i < serialPortSelector.getNumItems(); ++i)
                 {
                     if (serialPortSelector.getItemText(i).startsWith(selectedText))
@@ -194,7 +203,6 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
         audioProcessor.apvts, bypassParamID.getParamID(), bypassButton
     );
 
-    // Para los screenshots
     snapshotButton.setLookAndFeel(ButtonLookAndFeel::get());
     addAndMakeVisible(snapshotButton);
     snapshotButton.onClick = [this] { timeVisualizer.captureCurrentPath(); };
@@ -236,7 +244,6 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     calibrationGroup.addAndMakeVisible(levelCalibrationButton);
     addAndMakeVisible(calibrationGroup);
 
-    // Forzar valores iniciales para visualizacion
     float hScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(horizontalScaleParamID.getParamID()));
     float hOffset = *audioProcessor.apvts.getRawParameterValue(horizontalPositionParamID.getParamID());
     float vScale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(verticalScaleParamID.getParamID()));
@@ -384,7 +391,6 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         DBG("→ modo cambiado: esModoDC = " << (isDC ? "true" : "false"));
         timeVisualizer.setModeDC(isDC);
 
-        // Actualizar label del botón de calibración
         levelCalibrationButton.setButtonText(isDC ? "Calibrate DC" : "Calibrate AC");
     }
 
@@ -393,15 +399,10 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         int newRange = static_cast<int>(newValue);
         const auto& options = verticalScaleByRange[newRange];
 
-        // Actualizar las etiquetas del pote
-        //for (int i = 0; i < 4; ++i)
-        //    verticalScaleKnob.slider.setTextValueSuffix(options[i].first);
-
-        // Forzar valor default (ej: tercera opción del rango actual)
         if (auto* param = audioProcessor.apvts.getParameter(verticalScaleParamID.getParamID()))
         {
             param->beginChangeGesture();
-            param->setValueNotifyingHost(param->convertTo0to1(0)); // índice 2 del rango
+            param->setValueNotifyingHost(param->convertTo0to1(0)); 
             param->endChangeGesture();
         }
     }
@@ -412,7 +413,7 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         int currentRange = audioProcessor.params.rangeValue;
         float scaleV = verticalScaleByRange[currentRange][index].second;
 
-        timeVisualizer.setVerticalGain(1.0f / scaleV); // o scaleV si lo usás directamente
+        timeVisualizer.setVerticalGain(1.0f / scaleV); 
     }
 
     if (parameterID == verticalPositionParamID.getParamID())
@@ -434,7 +435,6 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
 
     DBG("parameterChanged: " << parameterID << " = " << newValue);
 
-    //SOLO ESTO depende del control por el plugin
     if (!pluginIsInControl)
         return;
 
@@ -468,9 +468,9 @@ void OscilloscopeAudioProcessorEditor::timerCallback()
 void OscilloscopeAudioProcessorEditor::actualizarKnobsDesdeESP(uint8_t modo, uint8_t rango)
 {
     pluginIsInControl = false;
-    bloquearControles(false); // deja los knobs bloqueados visualmente
+    bloquearControles(false); // leave the knobs visually blocked
 
-    // MODO
+    // MODE
     if (auto* modeParam = audioProcessor.apvts.getParameter(modeParamID.getParamID()))
     {
         modeParam->beginChangeGesture();
@@ -478,7 +478,7 @@ void OscilloscopeAudioProcessorEditor::actualizarKnobsDesdeESP(uint8_t modo, uin
         modeParam->endChangeGesture();
     }
 
-    // RANGO
+    // RANGE
     if (auto* rangeParam = audioProcessor.apvts.getParameter(rangeParamID.getParamID()))
     {
         rangeParam->beginChangeGesture();
@@ -491,10 +491,8 @@ void OscilloscopeAudioProcessorEditor::bloquearControles(bool pluginControls)
 {
     pluginIsInControl = pluginControls;
 
-    // Solo se habilitan si el plugin está en control
     modeKnob.setEnabled(pluginIsInControl);
     rangeKnob.setEnabled(pluginIsInControl);
 
-    // LED testigo inverso
     audioProcessor.getSerialDevice().setLightColor(pluginIsInControl ? 0x0000 : 0xFFFF);
 }

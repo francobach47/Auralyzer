@@ -39,13 +39,12 @@ void TimeVisualizer::timerCallback()
 
 void TimeVisualizer::updateTriggerParameters(float level, float offset, bool filterEnabled)
 {
-    // Ingresás el level en divisiones (como setea el pote)
     const float voltsPerDiv = processor.params.getVerticalScaleInVolts();
-    const float volts = level * voltsPerDiv; // lo pasás a voltios reales
-    const float uncalibrated = volts / processor.getCalibrationFactor(); // lo llevás al dominio de la señal sin calibrar (entre -1 y 1)
+    const float volts = level * voltsPerDiv; 
+    const float uncalibrated = volts / processor.getCalibrationFactor(); 
 
-    currentTriggerLevel = uncalibrated; // esto se usa para dibujar el triángulo
-    trigger.setParameters(uncalibrated, offset, filterEnabled); // esto para detectar el flanco en el dominio de señal
+    currentTriggerLevel = uncalibrated; // This is for the trigger mark
+    trigger.setParameters(uncalibrated, offset, filterEnabled); // This is to detect the edge in the signal domain
 }
 
 
@@ -68,7 +67,7 @@ void TimeVisualizer::drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds)
     const juce::Colour minorTickColour = juce::Colours::white.withAlpha(0.3f);
     const juce::Colour strongTickColour = juce::Colours::white.withAlpha(0.7f);
 
-    //  Dibujar ticks para la grilla
+    //  Ticks grid
     g.setColour(minorTickColour);
     for (int i = 0; i <= numVDivs; ++i)
     {
@@ -98,7 +97,7 @@ void TimeVisualizer::drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds)
         }
     }
 
-    // Lineas de cuadricula
+    // Lines in grid
     g.setColour(gridColour);
     for (int i = 0; i <= numHDivs; ++i)
     {
@@ -112,7 +111,7 @@ void TimeVisualizer::drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds)
         g.drawLine(bounds.getX(), y, bounds.getRight(), y, 1.0f);
     }
 
-    //  Ticks fuertes: centro y bordes
+    // Strong ticks: center and edges
     g.setColour(strongTickColour);
     for (int i = 0; i <= numVDivs; ++i)
     {
@@ -121,10 +120,10 @@ void TimeVisualizer::drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds)
         {
             float y = yBase + (j * vStep) / (ticksPerDivision - 1);
 
-            // centro vertical
+            // vertical center
             g.drawLine(centerX - tickLength / 2.0f, y, centerX + tickLength / 2.0f, y, 1.0f);
 
-            // bordes Y
+            // edges Y
             g.drawLine(bounds.getX(), y, bounds.getX() + tickLength, y, 1.0f);
             g.drawLine(bounds.getRight() - tickLength, y, bounds.getRight(), y, 1.0f);
         }
@@ -137,10 +136,10 @@ void TimeVisualizer::drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds)
         {
             float x = xBase + (j * hStep) / (ticksPerDivision - 1);
 
-            // centro horizontal
+            // horizontal center
             g.drawLine(x, centerY - tickLength / 2.0f, x, centerY + tickLength / 2.0f, 1.0f);
 
-            // bordes X
+            // edges X
             g.drawLine(x, bounds.getY(), x, bounds.getY() + tickLength, 1.0f);
             g.drawLine(x, bounds.getBottom() - tickLength, x, bounds.getBottom(), 1.0f);
         }
@@ -185,17 +184,17 @@ void TimeVisualizer::paint(juce::Graphics& g)
     float minVal = std::numeric_limits<float>::max();
     float maxVal = std::numeric_limits<float>::lowest();
 
-    // ========== DIBUJAR CAPTURAS ANTERIORES ==========
+    // ========== DRAW PREVIOUS SHOTS ========== //
 
     for (size_t i = 0; i < snapshots.size(); ++i)
     {
         const auto& snap = snapshots[i];
 
-        // Dibuja la curva
+        // Draw the curve
         g.setColour(snap.colour);
         g.strokePath(snap.path, juce::PathStrokeType(1.5f));
 
-        // Arma el texto con los valores medidos
+        // Build the text with the measured values
         juce::String label = "M" + juce::String(i + 1) + ": ";
 
         if (snap.isDC)
@@ -213,7 +212,7 @@ void TimeVisualizer::paint(juce::Graphics& g)
             label += "THD = " + juce::String(snap.thd, 2) + " %";
         }
 
-        // Dibuja el texto arriba a la izquierda
+        // Draw the text at the top left
         int labelX = 10;
         int labelY = 10 + static_cast<int>(i) * 18;
 
@@ -221,7 +220,7 @@ void TimeVisualizer::paint(juce::Graphics& g)
         g.drawText(label, labelX, labelY, getWidth() - 20, 16, juce::Justification::left);
     }
 
-    // ========== DIBUJO DE LA ONDA ==========
+    // ========== WAVE DRAWING ========== //
     const bool bypass = processor.apvts.getRawParameterValue(bypassParamID.getParamID())->load() > 0.5f;
 
     if (!bypass)
@@ -276,7 +275,7 @@ void TimeVisualizer::paint(juce::Graphics& g)
             g.setColour(Colors::PlotSection::timeResponse);
             g.strokePath(path, juce::PathStrokeType(2.0f));
 
-            // ========== FLECHAS (marcadores visuales) ==========
+            // ========== ARROWS (visual markers) ========== //
             const float markerSize = 8.0f;
             const float pad = 6.0f;
 
@@ -309,7 +308,7 @@ void TimeVisualizer::paint(juce::Graphics& g)
         }
     }
 
-    // ========== MEDICIONES ==========
+    // ========== MEASUREMENTS ========== //
     if (!bypass)
     {
         float calibratedVpp = SignalAnalysis::computeVpp(minY, maxY, pixelsPerDiv, voltsPerDiv);
@@ -332,10 +331,10 @@ void TimeVisualizer::paint(juce::Graphics& g)
         g.setFont(14.0f);
         g.setColour(juce::Colours::orange.withAlpha(1.0f));
 
-        // Etiqueta V/div a la izquierda inferior
+        // V/div tag at bottom left
         g.drawText(labelLeft, 8, getHeight() - 24, 100, 20, juce::Justification::left);
 
-        // Etiqueta tiempo s/div al centro inferior
+        // Label time s/div to bottom center
         float sPerDiv = processor.params.getHorizontalScaleInSeconds();
         juce::String labelTime;
         if (sPerDiv >= 1.0f)
@@ -347,7 +346,7 @@ void TimeVisualizer::paint(juce::Graphics& g)
 
         g.drawText(labelTime, 100, getHeight() - 24, 100, 20, juce::Justification::left);
 
-        // Etiquetas combinadas a la derecha inferior
+        // Merged tags at bottom right
         juce::String labelCombined;
         if (modeDC)
         {
@@ -464,7 +463,7 @@ void TimeVisualizer::captureCurrentPath()
 
     else
     {
-        // Modo AC 
+        // AC Mode 
         float minY = std::numeric_limits<float>::max();
         float maxY = std::numeric_limits<float>::lowest();
         juce::Path newPath;

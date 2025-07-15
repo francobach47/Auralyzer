@@ -68,7 +68,7 @@ public:
 
     float getTriggerLevel() const { return params.getTriggerLevel(); }
 
-    //Circular Buffer para representacion temporal
+    //Circular Buffer 
     CircularAudioBuffer& getCircularBuffer() { return circularBuffer; }
 
     //CalibrationLevel
@@ -104,9 +104,9 @@ private:
     float calibrationFactorDC = 1.0f;
     int   calibrationRangeDC = 2;
 
-    int calibrationRange = 2; // por defecto calibrado en el rango 1 V – 10 V
+    int calibrationRange = 2; // by default range = 1 V – 10 V
 
-    // Generador de seno para calibración
+    // Sine generator for calibration
     double phase = 0.0;
     double phaseIncrement = 0.0;
     bool sineEnabled = false;

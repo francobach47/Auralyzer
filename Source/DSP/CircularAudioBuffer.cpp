@@ -52,7 +52,7 @@ float CircularAudioBuffer::computeLastVpp()
     float min = FLT_MAX, max = -FLT_MIN;
 
     const int numSamples = storedSamples;
-    const int channel = 0; // usamos canal 0 para calcular el Vpp
+    const int channel = 0; // channel 0 to calculate the Vpp
     const float* readPtr = buffer.getReadPointer(channel);
 
     for (int i = 0; i < numSamples; ++i)

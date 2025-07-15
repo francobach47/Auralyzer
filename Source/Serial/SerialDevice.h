@@ -15,16 +15,12 @@ public:
 	void setLightColor(uint16_t color);
 	void setCalibrationMode(uint8_t mode);
 
-	// NUEVOS prototipos
 	void setMode(uint8_t mode);   
 	void setRange(uint8_t idx);
 
 	juce::String getCurrentPortName() const { return serialPortName; }
-	//void resetPort();  // cerrar puerto y borrar el nombre
 
-	// NOTE: included but not used in this example. shows how to monitor for serial port device list changes
 	SerialPortListMonitor serialPortListMonitor;
-	// Callbacks que la ESP32 puede disparar
 	std::function<void(uint8_t modo, uint8_t rango)> onSyncKnobsReceived;
 	std::function<void(bool pluginShouldControl)> onControlStatusReceived;
 

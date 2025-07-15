@@ -5,7 +5,7 @@ static void castParameter(juce::AudioProcessorValueTreeState& apvts,
 	const juce::ParameterID& id, T& destination)
 {
 	destination = dynamic_cast<T>(apvts.getParameter(id.getParamID()));
-	jassert(destination); // parameter does not exist or wrong type
+	jassert(destination);
 }
 
 Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts)
@@ -51,9 +51,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 		0.0f
 	));
 
-	juce::StringArray scaleChoices = { "A", "B", "C", "D" }; // valores placeholder
+	juce::StringArray scaleChoices = { "A", "B", "C", "D" }; // values placeholder
 	layout.add(std::make_unique<juce::AudioParameterChoice>(
-		verticalScaleParamID, "Ver Scale", scaleChoices, 0)); // default = tercera opción
+		verticalScaleParamID, "Ver Scale", scaleChoices, 0)); // default = third
 
 
 	juce::StringArray rangeOptions = {
@@ -132,7 +132,7 @@ float Parameters::getVerticalScaleInVolts() const
 		verticalScaleIndex >= 0 && verticalScaleIndex < 4)
 		return verticalScaleByRange[rangeValue][verticalScaleIndex].second;
 
-	return 1.0f; // valor seguro por default
+	return 1.0f; 
 }
 
 float Parameters::getHorizontalScaleInSeconds() const

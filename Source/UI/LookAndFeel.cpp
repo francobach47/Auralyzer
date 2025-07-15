@@ -192,15 +192,15 @@ void ButtonLookAndFeel::drawButtonBackground(
 	if (button.isDown())
 		buttonRect.translate(0.0f, 1.0f);
 
-	// Color de fondo según estado
+	// Background color according to state
 	juce::Colour fill = button.getToggleState()
 		? juce::Colour::fromRGB(247, 254, 231)
-		: backgroundColour;                   // Color original si no lo está
+		: backgroundColour;                   // Original color if not already set
 
 	g.setColour(fill);
 	g.fillRoundedRectangle(buttonRect, cornerSize);
 
-	// Contorno del botón
+	// Button outline
 	g.setColour(Colors::Button::outline);
 	g.drawRoundedRectangle(buttonRect, cornerSize, 2.0f);
 
@@ -209,7 +209,7 @@ void ButtonLookAndFeel::drawButtonBackground(
 		juce::Path sinePath;
 		auto bounds = button.getLocalBounds().toFloat().reduced(6.0f);
 
-		float periodWidth = bounds.getWidth() * 0.6f; // sólo el 60% del ancho
+		float periodWidth = bounds.getWidth() * 0.6f; 
 		float xStart = bounds.getCentreX() - periodWidth / 2.0f;
 		float yMid = bounds.getCentreY();
 		float amplitude = bounds.getHeight() * 0.4f;
@@ -298,15 +298,15 @@ void MainLookAndFeel::drawComboBox(juce::Graphics& g, int width, int height,
 	auto bounds = juce::Rectangle<float>(0, 0, (float)width, (float)height).reduced(1.0f);
 	float cornerSize = bounds.getHeight() * 0.25f;
 
-	// Fondo 
+	// Background 
 	g.setColour(juce::Colour::fromRGB(255, 250, 245)); 
 	g.fillRoundedRectangle(bounds, cornerSize);
 
-	// Contorno
+	// Outline
 	g.setColour(Colors::Button::outline);
 	g.drawRoundedRectangle(bounds, cornerSize, 1.5f);
 
-	// Flecha
+	// Arrow
 	g.setColour(juce::Colours::black);
 	juce::Path arrow;
 	float arrowSize = 6.0f;
@@ -332,15 +332,15 @@ void MainLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle
 		return;
 	}
 
-	// Fondo del item
+	// Item background
 	if (isHighlighted)
-		g.setColour(juce::Colour(247, 254, 231)); // fondo seleccionado
+		g.setColour(juce::Colour(247, 254, 231)); 
 	else
-		g.setColour(juce::Colour(25, 46, 3));    // fondo normal
+		g.setColour(juce::Colour(25, 46, 3));   
 
 	g.fillRect(area);
 
-	// Color del texto
+	// Text color
 	juce::Colour textCol = textColour != nullptr ? *textColour
 		: (isHighlighted ? juce::Colours::black : juce::Colours::lightgrey);
 

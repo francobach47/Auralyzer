@@ -68,7 +68,7 @@ float SignalAnalysis::computeTHD(const juce::AudioBuffer<float>& buffer, float s
 
     const float* data = buffer.getReadPointer(0);
     for (int i = 0; i < fftSize; ++i)
-        fftData[2 * i] = data[i];  // canal 0, parte real
+        fftData[2 * i] = data[i];  // channel 0, real part
 
     juce::dsp::WindowingFunction<float> window(fftSize, juce::dsp::WindowingFunction<float>::hann, true);
     window.multiplyWithWindowingTable(fftData.data(), fftSize);
@@ -83,9 +83,9 @@ float SignalAnalysis::computeTHD(const juce::AudioBuffer<float>& buffer, float s
         magnitudes[i] = std::sqrt(re * re + im * im);
     }
 
-    magnitudes[0] = 0.0f; // ignorar DC
+    magnitudes[0] = 0.0f; // ognore DC
 
-    // Buscar la fundamental (bin con mayor magnitud)
+    // Find the fundamental (bin with the largest magnitude)
     auto it = std::max_element(magnitudes.begin(), magnitudes.end());
     int fundamentalBin = std::distance(magnitudes.begin(), it);
     float fundamental = *it;
@@ -101,13 +101,9 @@ float SignalAnalysis::computeTHD(const juce::AudioBuffer<float>& buffer, float s
 
         float mag = magnitudes[bin];
         if (mag < threshold && k > 5) break;
-        DBG("Harmonic k = " << k << ", bin = " << bin << ", magnitude = " << mag << (mag < threshold ? " < threshold" : ""));
 
         sumHarmonicsSq += mag * mag;
     }
-
-    DBG("Fundamental bin: " << fundamentalBin << ", magnitude: " << fundamental);
-    DBG("Threshold (-60 dB): " << threshold);
 
     return std::sqrt(sumHarmonicsSq) / fundamental;
 }

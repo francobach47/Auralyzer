@@ -31,7 +31,7 @@ public:
     int frameCounter = 0;
 
     friend class OscilloscopeAudioProcessorEditor;
-    float calibrationFactor = 12.0f; // valor inicial
+    float calibrationFactor = 12.0f; // initial value
 
     void captureCurrentPath();
     void clearSnapshots();

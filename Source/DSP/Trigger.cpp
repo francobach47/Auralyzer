@@ -35,7 +35,7 @@ int Trigger::findTriggerPoint(const juce::AudioBuffer<float>& buffer, int channe
 
 void Trigger::movingAverageFilter(const float* input, float* output, int numSamples)
 {
-    const int windowSize = 5; // Ventana de 5 muestras (ajustable)
+    const int windowSize = 5; // 5-sample window (adjustable)
     float sum = 0.0f;
 
     for (int i = 0; i < numSamples; ++i)

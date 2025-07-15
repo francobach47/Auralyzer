@@ -14,10 +14,10 @@ const juce::ParameterID bypassParamID{ "bypass", 1 };
 const juce::ParameterID triggerLevelParamID{ "triggerLevel", 1 };
 const juce::ParameterID movingAverageParamID{ "movingAverage", 1 };
 const std::vector<std::vector<std::pair<juce::String, float>>> verticalScaleByRange = {
-	{ {"20 mV/div", 0.02f}, {"10 mV/div", 0.01f}, {"5 mV/div", 0.005f}, {"2 mV/div", 0.002f} },    // Rango 0
-	{ {"200 mV/div", 0.2f}, {"100 mV/div", 0.1f}, {"50 mV/div", 0.05f}, {"20 mV/div", 0.02f} },    // Rango 1
-	{ {"2 V/div", 2.0f}, {"1 V/div", 1.0f}, {"500 mV/div", 0.5f}, {"200 mV/div", 0.2f} },          // Rango 2
-	{ {"20 V/div", 20.0f}, {"10 V/div", 10.0f}, {"5 V/div", 5.0f}, {"2 V/div", 2.0f} }             // Rango 3
+	{ {"20 mV/div", 0.02f}, {"10 mV/div", 0.01f}, {"5 mV/div", 0.005f}, {"2 mV/div", 0.002f} },    // Range 0
+	{ {"200 mV/div", 0.2f}, {"100 mV/div", 0.1f}, {"50 mV/div", 0.05f}, {"20 mV/div", 0.02f} },    // Range 1
+	{ {"2 V/div", 2.0f}, {"1 V/div", 1.0f}, {"500 mV/div", 0.5f}, {"200 mV/div", 0.2f} },          // Range 2
+	{ {"20 V/div", 20.0f}, {"10 V/div", 10.0f}, {"5 V/div", 5.0f}, {"2 V/div", 2.0f} }             // Range 3
 };
 inline const std::vector<std::pair<juce::String, float>> horizontalScaleOptions = {
 	{ "10 s",   10.0f  }, { "5 s",    5.0f  }, { "2 s",    2.0f  }, { "1 s",    1.0f  },

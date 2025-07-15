@@ -10,7 +10,7 @@ OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
                        ),
     params(apvts) 
 {
-    //serialDevice.init(kSerialPortName); ----- ESTO SE BORRA
+
 }
 
 OscilloscopeAudioProcessor::~OscilloscopeAudioProcessor()
@@ -58,8 +58,8 @@ double OscilloscopeAudioProcessor::getTailLengthSeconds() const
 
 int OscilloscopeAudioProcessor::getNumPrograms()
 {
-    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-                // so this should be at least 1, even if you're not really implementing programs.
+    return 1;   
+               
 }
 
 int OscilloscopeAudioProcessor::getCurrentProgram()
@@ -83,14 +83,14 @@ void OscilloscopeAudioProcessor::changeProgramName (int index, const juce::Strin
 //==============================================================================
 void OscilloscopeAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    const int bufferSeconds = 10; // capacidad total (10 s)
+    const int bufferSeconds = 10; // full capacity (10 s)
     const int bufferSize = static_cast<int>(sampleRate * bufferSeconds);
     circularBuffer.prepare(getTotalNumInputChannels(), bufferSize);
 
 
     frequencyAnalyzer.setUpFrequencyAnalyzer(int(sampleRate), sampleRate);
 
-    // Inicializamos el incremento de fase para 1 kHz
+    // phase increment to 1 kHz
     phase = 0.0;
     phaseIncrement = juce::MathConstants<double>::twoPi * 1000.0 / sampleRate;
 
@@ -140,7 +140,7 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         auto numSamples = buffer.getNumSamples();
         auto numChannels = buffer.getNumChannels();
 
-        float amplitude = (params.modeValue == 1) ? 2*0.412f : 0.4205f; // 800 mVpp DC, 400 mVpp AC balanceado
+        float amplitude = (params.modeValue == 1) ? 2*0.412f : 0.4205f; // 800 mVpp DC, 400 mVpp AC balanced
 
         for (int channel = 0; channel < numChannels; ++channel)
         {
@@ -159,7 +159,7 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     }
     else
     {
-        buffer.clear(); //  Si el tono no está activo, se muetea la salida
+        buffer.clear(); 
     }
 
 }
@@ -180,7 +180,7 @@ void OscilloscopeAudioProcessor::getStateInformation(juce::MemoryBlock& destData
 {
     juce::ValueTree state = apvts.copyState();
 
-    // Guardamos los factores de calibración y sus rangos como propiedades
+    // Calibration factors and their ranges are saved as properties
     state.setProperty("calibrationFactorAC", calibrationFactorAC, nullptr);
     state.setProperty("calibrationFactorDC", calibrationFactorDC, nullptr);
     state.setProperty("calibrationRangeAC", calibrationRangeAC, nullptr);
@@ -244,7 +244,7 @@ void OscilloscopeAudioProcessor::startLevelCalibration()
     }
 
     float measuredVpp = maxVal - minVal;
-    float expectedVpp = (params.modeValue == 1) ? 1.0f : 1.0f; //el primero es DC el segundo AC
+    float expectedVpp = (params.modeValue == 1) ? 1.0f : 1.0f; // first DC, second AC
     float newFactor = expectedVpp / measuredVpp;
 
     if (params.modeValue == 1)
@@ -252,7 +252,7 @@ void OscilloscopeAudioProcessor::startLevelCalibration()
     else
         calibrationFactorAC = newFactor;
 
-    // Guardar el rango usado en calibración
+    // Save the range used in calibration
     calibrationRange = params.rangeValue;
 }
 

@@ -19,7 +19,7 @@ const int kStartByte2 = '~';
 enum Command : uint8_t
 {
     none = 0,
-    lightColor = 1, // por las dudas
+    lightColor = 1, // mode indicator
     setMode = 2,
     setRange = 3,
     syncKnobs = 4,
@@ -36,8 +36,6 @@ SerialDevice::SerialDevice()
 	// start the serial thread reading data
 	startThread();
 
-	// NOTE: this timer is used to send commands for testing purposes
-	//startTimer(10);
 }
 
 SerialDevice::~SerialDevice()
@@ -97,7 +95,7 @@ void SerialDevice::setCalibrationMode(uint8_t mode)
     const std::vector<uint8_t> data{
         kStartByte1, kStartByte2,
         Command::calibrationMode, 1,
-        mode                     // 
+        mode                     
     };
     serialPortOutput->write(data.data(), data.size());
 }
@@ -267,8 +265,6 @@ void SerialDevice::run()
                 }
                 else
                 {
-                    // TODO: extract into function or class
-                    // parseIncomingData (incomingData, bytesRead);
                     auto resetParser = [this, &command, &commandDataSize, &commandDataCount]()
                         {
                             command = Command::none;
