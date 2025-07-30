@@ -9,6 +9,12 @@
       <FILE id="ueSbFq" name="logo.png" compile="0" resource="1" file="Assets/logo.png"/>
     </GROUP>
     <GROUP id="{08E07DE2-9525-588F-4737-5655EBEAD69F}" name="Source">
+      <GROUP id="{363D8B2C-9492-6BDB-9D53-6238D9F9B920}" name="Colormaps">
+        <FILE id="Kza0ne" name="mako_data.inl" compile="0" resource="0" file="Source/Colormaps/mako_data.inl"/>
+        <FILE id="T6PuOD" name="rocket_data.inl" compile="0" resource="0" file="Source/Colormaps/rocket_data.inl"/>
+        <FILE id="nrJWIg" name="viridis_data.inl" compile="0" resource="0"
+              file="Source/Colormaps/viridis_data.inl"/>
+      </GROUP>
       <GROUP id="{EE4C89BC-6CA3-1A52-3F48-B138E2F07349}" name="Serial">
         <FILE id="JY6Rpq" name="SerialDevice.cpp" compile="1" resource="0"
               file="Source/Serial/SerialDevice.cpp"/>
@@ -27,6 +33,10 @@
         <FILE id="jQYCtF" name="LookAndFeel.h" compile="0" resource="0" file="Source/UI/LookAndFeel.h"/>
         <FILE id="eLEo14" name="RotaryKnob.cpp" compile="1" resource="0" file="Source/UI/RotaryKnob.cpp"/>
         <FILE id="M4pfZT" name="RotaryKnob.h" compile="0" resource="0" file="Source/UI/RotaryKnob.h"/>
+        <FILE id="jyJaHP" name="SpectrogramVisualizer.cpp" compile="1" resource="0"
+              file="Source/UI/SpectrogramVisualizer.cpp"/>
+        <FILE id="h13yVA" name="SpectrogramVisualizer.h" compile="0" resource="0"
+              file="Source/UI/SpectrogramVisualizer.h"/>
         <FILE id="OHSRC5" name="TimeVisualizer.cpp" compile="1" resource="0"
               file="Source/UI/TimeVisualizer.cpp"/>
         <FILE id="fcCMwu" name="TimeVisualizer.h" compile="0" resource="0"

@@ -7,7 +7,7 @@
 #include "DSP/Trigger.h"
 #include "DSP/CircularAudioBuffer.h"
 
-class OscilloscopeAudioProcessor  : public juce::AudioProcessor
+class OscilloscopeAudioProcessor : public juce::AudioProcessor
 {
 public:
     //==============================================================================
@@ -15,14 +15,14 @@ public:
     ~OscilloscopeAudioProcessor() override;
 
     //==============================================================================
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-    bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
+    bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
 #endif
 
-    void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+    void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
     //==============================================================================
     juce::AudioProcessorEditor* createEditor() override;
@@ -39,13 +39,13 @@ public:
     //==============================================================================
     int getNumPrograms() override;
     int getCurrentProgram() override;
-    void setCurrentProgram (int index) override;
-    const juce::String getProgramName (int index) override;
-    void changeProgramName (int index, const juce::String& newName) override;
+    void setCurrentProgram(int index) override;
+    const juce::String getProgramName(int index) override;
+    void changeProgramName(int index, const juce::String& newName) override;
 
     //==============================================================================
-    void getStateInformation (juce::MemoryBlock& destData) override;
-    void setStateInformation (const void* data, int sizeInBytes) override;
+    void getStateInformation(juce::MemoryBlock& destData) override;
+    void setStateInformation(const void* data, int sizeInBytes) override;
 
     // Frequency Visualizer
     void createAnalyserPlot(juce::Path& p, const juce::Rectangle<int> bounds, float dBMin, float dBMax);
@@ -85,7 +85,7 @@ public:
     bool isBypassed() const {
         return apvts.getRawParameterValue(bypassParamID.getParamID())->load() > 0.5f;
     };
-
+    void pushSpectrogramBuffer(const juce::AudioBuffer<float>& buffer);
     std::vector<std::pair<float, float>> getHarmonicLabels() const;
 
 private:
@@ -112,5 +112,5 @@ private:
     bool sineEnabled = false;
 
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscilloscopeAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OscilloscopeAudioProcessor)
 };

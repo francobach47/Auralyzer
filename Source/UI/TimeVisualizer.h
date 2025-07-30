@@ -50,6 +50,20 @@ public:
     std::vector<Snapshot> snapshots;
     static constexpr int maxSnapshots = 10;
 
+    enum class InterpolationMode
+    {
+        Nearest = 0,
+        Linear = 1,
+        Sinc = 2
+    };
+
+    void setInterpolationMode(InterpolationMode mode) { interpolationMode = mode; }
+  
+    float getInterpolatedSample(const juce::AudioBuffer<float>& buffer, int channel, float index) const;
+    float interpolateLinear(const juce::AudioBuffer<float>& buffer, int channel, float index) const;
+    float interpolateSinc(const juce::AudioBuffer<float>& buffer, int channel, float index, int windowSize = 32) const;
+    float sinc(float x) const;
+    float hammingWindow(int n, int windowSize) const;
 
 private:
     OscilloscopeAudioProcessor& processor;
@@ -62,6 +76,7 @@ private:
     static constexpr int numVerticalDivisions = 8;
 
     bool modeDC = false;
+    InterpolationMode interpolationMode = InterpolationMode::Linear;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimeVisualizer)
 };

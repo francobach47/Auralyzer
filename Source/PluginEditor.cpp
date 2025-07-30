@@ -12,15 +12,25 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     audioProcessor.apvts.addParameterListener(rangeParamID.getParamID(), this);
     audioProcessor.apvts.addParameterListener(modeParamID.getParamID(), this);
     
-    plotModeButton.setButtonText("Time");
-    plotModeButton.setClickingTogglesState(true);
-    plotModeButton.setBounds(0, 0, 100, 30);
+    plotModeButton.setClickingTogglesState(false);
     plotModeButton.setLookAndFeel(ButtonLookAndFeel::get());
     addAndMakeVisible(plotModeButton);
 
-    plotModeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
-        audioProcessor.apvts, plotModeParamID.getParamID(), plotModeButton
-    );
+    // setear estado inicial desde el parámetro
+    int initialIndex = static_cast<int>(audioProcessor.apvts.getRawParameterValue(plotModeParamID.getParamID())->load());
+    plotModeButton.setButtonText(audioProcessor.params.plotModeParam->choices[initialIndex]);
+
+    // onClick: ciclo entre 0 → 1 → 2 → 0
+    plotModeButton.onClick = [this]()
+        {
+            auto* param = audioProcessor.params.plotModeParam;
+            int currentIndex = param->getIndex();
+            int newIndex = (currentIndex + 1) % param->choices.size();
+            param->setValueNotifyingHost(param->convertTo0to1((float)newIndex));
+            plotModeButton.setButtonText(param->choices[newIndex]);
+            updatePlotVisibility(newIndex);
+        };
+
     audioProcessor.apvts.addParameterListener(plotModeParamID.getParamID(), this);
     audioProcessor.apvts.addParameterListener(modeParamID.getParamID(), this);
 
@@ -30,15 +40,15 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     audioProcessor.apvts.addParameterListener(horizontalPositionParamID.getParamID(), this);
     audioProcessor.apvts.addParameterListener(triggerLevelParamID.getParamID(), this);
 
-    isFrequencyMode = audioProcessor.apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
-    plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
-
     plotGroup.addChildComponent(timeVisualizer);
     plotGroup.addChildComponent(frequencyVisualizer);
-    timeVisualizer.setVisible(!isFrequencyMode);
-    frequencyVisualizer.setVisible(isFrequencyMode);
+    plotGroup.addChildComponent(spectrogramVisualizer);
     addAndMakeVisible(plotGroup);
 
+    int modeIndex = static_cast<int>(audioProcessor.apvts.getRawParameterValue(plotModeParamID.getParamID())->load());
+    plotModeButton.setButtonText(audioProcessor.params.plotModeParam->choices[modeIndex]);
+    updatePlotVisibility(modeIndex); // asegura visibilidad correcta
+    
     // Initialize DC mode
     bool initialDC = audioProcessor.params.modeValue == 1;
     timeVisualizer.setModeDC(initialDC);
@@ -253,6 +263,7 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     timeVisualizer.setHorizontalOffset(hOffset);
     timeVisualizer.setVerticalGain(vScale);
     timeVisualizer.setVerticalOffset(vOffset);
+    timeVisualizer.setInterpolationMode(TimeVisualizer::InterpolationMode::Sinc); // o .Linear si querés comparar
 
     setLookAndFeel(&mainLF);
 
@@ -333,11 +344,12 @@ void OscilloscopeAudioProcessorEditor::resized()
     movingAverageButton.setTopLeftPosition(20, triggerLevelKnob.getBottom() + 4.5*space);
 
     // Position the button Time/Frecuency
-    plotModeButton.setTopLeftPosition(25, getHeight() - 42);
+    plotModeButton.setBounds(25, getHeight() - 42, 100, 30);
 
     // Position the time visualizer
     frequencyVisualizer.setBounds(plotGroup.getLocalBounds());
     timeVisualizer.setBounds(plotGroup.getLocalBounds());
+    spectrogramVisualizer.setBounds(plotGroup.getLocalBounds());
 
     //Position the COM Port List
     serialPortSelector.setBounds(25, 12, 180, 24);
@@ -379,10 +391,12 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
 {
     if (parameterID == plotModeParamID.getParamID())
     {
-        bool isFrequencyMode = newValue > 0.5f; // 0=Time, 1=Frequency
-        timeVisualizer.setVisible(!isFrequencyMode);
-        frequencyVisualizer.setVisible(isFrequencyMode);
-        plotModeButton.setButtonText(isFrequencyMode ? "Frequency" : "Time");
+        int modeIndex = static_cast<int>(std::round(newValue));
+        updatePlotVisibility(modeIndex);
+
+        auto* param = audioProcessor.params.plotModeParam;
+        if (param != nullptr)
+            plotModeButton.setButtonText(param->choices[modeIndex]);
     }
 
     if (parameterID == modeParamID.getParamID())
@@ -495,4 +509,12 @@ void OscilloscopeAudioProcessorEditor::bloquearControles(bool pluginControls)
     rangeKnob.setEnabled(pluginIsInControl);
 
     audioProcessor.getSerialDevice().setLightColor(pluginIsInControl ? 0x0000 : 0xFFFF);
+}
+
+
+void OscilloscopeAudioProcessorEditor::updatePlotVisibility(int index)
+{
+    timeVisualizer.setVisible(index == 0);
+    frequencyVisualizer.setVisible(index == 1);
+    spectrogramVisualizer.setVisible(index == 2);
 }

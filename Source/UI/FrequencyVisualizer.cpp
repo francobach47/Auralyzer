@@ -8,7 +8,7 @@ static float minDB = -80.0f;
 FrequencyVisualizer::FrequencyVisualizer(OscilloscopeAudioProcessor& p)
     : processor(p)
 {
-    setOpaque(true);
+    setOpaque(false);
     startTimerHz(60);
 }
 

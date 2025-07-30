@@ -7,6 +7,7 @@
 
 #include "UI/TimeVisualizer.h"
 #include "UI/FrequencyVisualizer.h"
+#include "UI/SpectrogramVisualizer.h"
 #include "UI/RotaryKnob.h"
 #include "UI/LookAndFeel.h"
 
@@ -25,11 +26,14 @@ public:
     void actualizarKnobsDesdeESP(uint8_t modo, uint8_t rango);
     void bloquearControles(bool pluginControls);
 
+    SpectrogramVisualizer& getSpectrogramVisualizer() { return spectrogramVisualizer; }
+
 private:
     OscilloscopeAudioProcessor& audioProcessor;
 
     TimeVisualizer timeVisualizer;
     FrequencyVisualizer frequencyVisualizer;
+    SpectrogramVisualizer spectrogramVisualizer;
     juce::TextButton probesCalibrationButton{ "Probes" };
     bool isCalibrating = false;
 
@@ -58,7 +62,6 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> modeAttachment, rangeAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> movingAverageAttachment;
 
-    bool isFrequencyMode;
     bool pluginIsInControl = true;
 
     void timerCallback() override;
@@ -76,6 +79,8 @@ private:
 
     juce::TextButton snapshotButton{ "Print" };
     juce::TextButton clearSnapshotsButton{ "Clear" };
+
+    void updatePlotVisibility(int index);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OscilloscopeAudioProcessorEditor)
 };

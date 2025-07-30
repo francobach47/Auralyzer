@@ -4,11 +4,11 @@
 
 //==============================================================================
 OscilloscopeAudioProcessor::OscilloscopeAudioProcessor()
-     : AudioProcessor (BusesProperties()
-                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                       ),
-    params(apvts) 
+    : AudioProcessor (BusesProperties()
+       .withInput("Input", juce::AudioChannelSet::stereo(), true)
+        .withOutput("Output", juce::AudioChannelSet::stereo(), true)
+    ),
+    params(apvts)
 {
 
 }
@@ -26,29 +26,29 @@ const juce::String OscilloscopeAudioProcessor::getName() const
 
 bool OscilloscopeAudioProcessor::acceptsMidi() const
 {
-   #if JucePlugin_WantsMidiInput
+#if JucePlugin_WantsMidiInput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool OscilloscopeAudioProcessor::producesMidi() const
 {
-   #if JucePlugin_ProducesMidiOutput
+#if JucePlugin_ProducesMidiOutput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool OscilloscopeAudioProcessor::isMidiEffect() const
 {
-   #if JucePlugin_IsMidiEffect
+#if JucePlugin_IsMidiEffect
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 double OscilloscopeAudioProcessor::getTailLengthSeconds() const
@@ -58,8 +58,8 @@ double OscilloscopeAudioProcessor::getTailLengthSeconds() const
 
 int OscilloscopeAudioProcessor::getNumPrograms()
 {
-    return 1;   
-               
+    return 1;
+
 }
 
 int OscilloscopeAudioProcessor::getCurrentProgram()
@@ -76,7 +76,7 @@ const juce::String OscilloscopeAudioProcessor::getProgramName (int index)
     return {};
 }
 
-void OscilloscopeAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void OscilloscopeAudioProcessor::changeProgramName(int index, const juce::String& newName)
 {
 }
 
@@ -112,46 +112,46 @@ bool OscilloscopeAudioProcessor::isBusesLayoutSupported(const BusesLayout& layou
 }
 #endif
 
-void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
-                              [[maybe_unused]] juce::MidiBuffer& midiMessages)
+void OscilloscopeAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, [[maybe_unused]] juce::MidiBuffer& midiMessages)
 {
     params.update();
 
     juce::ScopedNoDenormals noDenormals;
     juce::ignoreUnused(midiMessages);
 
-    static bool lastFrequencyMode = false;
-    bool currentFrequencyMode = apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
+    const int plotMode = static_cast<int>(apvts.getRawParameterValue(plotModeParamID.getParamID())->load());
 
-    auto numOutputChannels = getTotalNumOutputChannels();
-    auto numInputChannels = getTotalNumInputChannels();
-
-    bool isFrequencyMode = apvts.getRawParameterValue(plotModeParamID.getParamID())->load() > 0.5f;
-        
-    if (isFrequencyMode) {
-        frequencyAnalyzer.addAudioData(buffer, 0, numOutputChannels);
-    }
-    else {
+    // Routing para cada visualizador
+    switch (plotMode)
+    {
+    case 0: // Time domain
         circularBuffer.pushBlock(buffer);
+        break;
+
+    case 1: // Frequency domain
+        frequencyAnalyzer.addAudioData(buffer, 0, getTotalNumOutputChannels());
+        break;
+
+    case 2: // Spectrogram
+        pushSpectrogramBuffer(buffer); // Envia el audio para espectrograma
+        break;
     }
 
+    // Generador de seno
     if (sineEnabled)
     {
-        auto numSamples = buffer.getNumSamples();
-        auto numChannels = buffer.getNumChannels();
-
-        float amplitude = (params.modeValue == 1) ? 2*0.412f : 0.4205f; // 800 mVpp DC, 400 mVpp AC balanced
+        const int numSamples = buffer.getNumSamples();
+        const int numChannels = buffer.getNumChannels();
+        const float amplitude = (params.modeValue == 1) ? 2 * 0.412f : 0.4205f; // 800 mVpp DC, 400 mVpp AC
 
         for (int channel = 0; channel < numChannels; ++channel)
         {
             float* channelData = buffer.getWritePointer(channel);
-
             for (int i = 0; i < numSamples; ++i)
             {
                 float sample = std::sin(phase) * amplitude;
                 channelData[i] = sample;
                 phase += phaseIncrement;
-
                 if (phase >= juce::MathConstants<double>::twoPi)
                     phase -= juce::MathConstants<double>::twoPi;
             }
@@ -159,9 +159,17 @@ void OscilloscopeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     }
     else
     {
-        buffer.clear(); 
+        buffer.clear(); // Bypass total si el seno está apagado
     }
+}
 
+void OscilloscopeAudioProcessor::pushSpectrogramBuffer(const juce::AudioBuffer<float>& buffer)
+{
+    // Verificamos si el editor está activo
+    if (auto* editor = dynamic_cast<OscilloscopeAudioProcessorEditor*>(getActiveEditor()))
+    {
+        editor->getSpectrogramVisualizer().pushBuffer(buffer);
+    }
 }
 
 //==============================================================================
@@ -172,7 +180,7 @@ bool OscilloscopeAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* OscilloscopeAudioProcessor::createEditor()
 {
-    return new OscilloscopeAudioProcessorEditor (*this);
+    return new OscilloscopeAudioProcessorEditor(*this);
 }
 
 //==============================================================================
@@ -203,7 +211,7 @@ void OscilloscopeAudioProcessor::setStateInformation(const void* data, int sizeI
 
         if (state.hasProperty("calibrationFactorDC"))
             calibrationFactorDC = static_cast<float>(state["calibrationFactorDC"]);
-       
+
         if (state.hasProperty("calibrationRangeAC"))
             calibrationRangeAC = static_cast<int>(state["calibrationRangeAC"]);
 

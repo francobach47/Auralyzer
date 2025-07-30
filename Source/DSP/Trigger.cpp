@@ -5,11 +5,12 @@ Trigger::Trigger()
     filteredBuffer.clear();
 }
 
-int Trigger::findTriggerPoint(const juce::AudioBuffer<float>& buffer, int channel)
+float Trigger::findTriggerPoint(const juce::AudioBuffer<float>& buffer, int channel)
 {
     const int numSamples = buffer.getNumSamples();
     const float* input = buffer.getReadPointer(channel);
 
+    // Aplicar filtro si está habilitado
     if (movingAverageEnabled)
     {
         if (filteredBuffer.getNumSamples() != numSamples)
@@ -20,17 +21,23 @@ int Trigger::findTriggerPoint(const juce::AudioBuffer<float>& buffer, int channe
     }
 
     const float* data = movingAverageEnabled ? filteredBuffer.getReadPointer(0) : input;
+
     int triggerStart = juce::jlimit(1, numSamples - 2, static_cast<int>(triggerOffset * numSamples));
 
     for (int i = triggerStart; i < numSamples - 1; ++i)
     {
-        if (data[i - 1] < triggerLevel && data[i] >= triggerLevel)
+        float prev = data[i - 1];
+        float curr = data[i];
+
+        if (prev < triggerLevel && curr >= triggerLevel)
         {
-            return i;
+            float frac = (triggerLevel - prev) / (curr - prev + 1e-12f); // evitar div/0
+            return static_cast<float>(i - 1) + juce::jlimit(0.0f, 1.0f, frac);
         }
     }
 
-    return triggerStart;
+    // Fallback si no se detecta cruce
+    return static_cast<float>(triggerStart);
 }
 
 void Trigger::movingAverageFilter(const float* input, float* output, int numSamples)

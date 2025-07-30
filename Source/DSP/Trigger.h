@@ -13,7 +13,7 @@ public:
 		triggerOffset = juce::jlimit(0.0f, 1.0f, offset);
 		movingAverageEnabled = useFilter;
 	}
-	int findTriggerPoint(const juce::AudioBuffer<float>& buffer, int channel);
+	float findTriggerPoint(const juce::AudioBuffer<float>& buffer, int channel);
 	void movingAverageFilter(const float* input, float* output, int numSamples);
 
 	float getLevel() const { return triggerLevel; }

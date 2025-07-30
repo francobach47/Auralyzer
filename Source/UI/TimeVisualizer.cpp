@@ -5,7 +5,7 @@
 TimeVisualizer::TimeVisualizer(OscilloscopeAudioProcessor& p)
     : processor(p)
 {
-    setOpaque(true);
+    setOpaque(false);
     startTimerHz(30);
 }
 
@@ -148,8 +148,18 @@ void TimeVisualizer::drawGrid(juce::Graphics& g, juce::Rectangle<float> bounds)
 
 void TimeVisualizer::paint(juce::Graphics& g)
 {
-    const float calibrationFactor = processor.getCalibrationFactor();
+    const float cornerRadius = 8.0f;
+    const float borderThickness = 4.0f;
+    auto bounds = getLocalBounds().toFloat();
 
+    g.setColour(Colors::PlotSection::background);
+    g.fillRoundedRectangle(bounds, cornerRadius);
+
+    juce::Path clipPath;
+    clipPath.addRoundedRectangle(bounds, cornerRadius);
+    g.reduceClipRegion(clipPath);
+
+    const float calibrationFactor = processor.getCalibrationFactor();
     const float sampleRate = (float)processor.getSampleRate();
     const float secondsPerDiv = processor.params.getHorizontalScaleInSeconds();
     const float totalTime = secondsPerDiv * 10.0f;
@@ -166,17 +176,13 @@ void TimeVisualizer::paint(juce::Graphics& g)
     const float pixelsPerDiv = getHeight() / 8.0f;
     const float pixelsPerVolt = (pixelsPerDiv / voltsPerDiv) * calibrationFactor;
     const float centerY = getHeight() / 2.0f;
-
     const int numSamples = buffer.getNumSamples();
     const int numChannels = buffer.getNumChannels();
 
-    auto bounds = getLocalBounds().toFloat();
-    g.setColour(Colors::PlotSection::background);
-    g.fillRoundedRectangle(bounds, 8.0f);
-
     drawGrid(g, bounds);
+
     g.setColour(Colors::PlotSection::outline);
-    g.drawRoundedRectangle(bounds, 8.0f, 4.0f);
+    g.drawRoundedRectangle(bounds, cornerRadius, borderThickness);
 
     float minY = std::numeric_limits<float>::max();
     float maxY = std::numeric_limits<float>::lowest();
@@ -245,23 +251,25 @@ void TimeVisualizer::paint(juce::Graphics& g)
         }
         else
         {
-            int triggerSample = trigger.findTriggerPoint(buffer, 0);
+            float triggerSample = trigger.findTriggerPoint(buffer, 0);
             juce::Path path;
             float timePerSample = 1.0f / sampleRate;
             float pixelsPerSecond = getWidth() / totalTime;
-            int offsetSamples = static_cast<int>(-horizontalOffset * secondsPerDiv * sampleRate);
+            float startSampleIndex = triggerSample + (-horizontalOffset * secondsPerDiv * sampleRate);
 
             for (int i = 0; i < displaySamples; ++i)
             {
-                int sampleIndex = triggerSample + offsetSamples + i;
+                float t = i * timePerSample;
+                float sampleIndex = startSampleIndex + t * sampleRate;
+
+                // wrap sampleIndex en caso circular
                 while (sampleIndex >= numSamples) sampleIndex -= numSamples;
                 while (sampleIndex < 0) sampleIndex += numSamples;
 
                 float sum = 0.0f;
                 for (int c = 0; c < numChannels; ++c)
-                    sum += buffer.getSample(c, sampleIndex);
+                    sum += getInterpolatedSample(buffer, c, sampleIndex);
 
-                float t = i * timePerSample;
                 float x = t * pixelsPerSecond;
                 float y = centerY - (sum / numChannels) * pixelsPerVolt - verticalOffset;
 
@@ -270,6 +278,7 @@ void TimeVisualizer::paint(juce::Graphics& g)
 
                 minY = std::min(minY, y);
                 maxY = std::max(maxY, y);
+            
             }
 
             g.setColour(Colors::PlotSection::timeResponse);
@@ -397,18 +406,22 @@ void TimeVisualizer::captureCurrentPath()
     float maxY = std::numeric_limits<float>::lowest();
 
     juce::Path newPath;
+    float triggerSample = trigger.findTriggerPoint(tempBuffer, 0);
+    float startSampleIndex = triggerSample + offsetSamples;
+
     for (int i = 0; i < displaySamples; ++i)
     {
-        int sampleIndex = trigger.findTriggerPoint(tempBuffer, 0) + offsetSamples + i;
+        float t = i * timePerSample;
+        float sampleIndex = startSampleIndex + t * sampleRate;
+
         while (sampleIndex >= numSamples) sampleIndex -= numSamples;
         while (sampleIndex < 0) sampleIndex += numSamples;
 
         float sum = 0.0f;
         for (int c = 0; c < numChannels; ++c)
-            sum += tempBuffer.getSample(c, sampleIndex);
+            sum += getInterpolatedSample(tempBuffer, c, sampleIndex);
 
         float value = sum / numChannels;
-        float t = i * timePerSample;
         float x = t * pixelsPerSecond;
         float y = centerY - value * pixelsPerVolt - verticalOffset;
 
@@ -476,7 +489,7 @@ void TimeVisualizer::captureCurrentPath()
 
             float sum = 0.0f;
             for (int c = 0; c < numChannels; ++c)
-                sum += tempBuffer.getSample(c, sampleIndex);
+                sum += getInterpolatedSample(tempBuffer, c, (float)sampleIndex);
 
             float value = sum / numChannels;
             float t = i * timePerSample;
@@ -509,4 +522,58 @@ void TimeVisualizer::clearSnapshots()
 {
     snapshots.clear();
     repaint();
+}
+
+
+float TimeVisualizer::getInterpolatedSample(const juce::AudioBuffer<float>& buffer, int channel, float index) const
+{
+    switch (interpolationMode)
+    {
+    case InterpolationMode::Linear:  return interpolateLinear(buffer, channel, index);
+    case InterpolationMode::Sinc:    return interpolateSinc(buffer, channel, index);
+    case InterpolationMode::Nearest:
+    default:                         return buffer.getSample(channel, (int)index);
+    }
+}
+
+float TimeVisualizer::interpolateLinear(const juce::AudioBuffer<float>& buffer, int channel, float index) const
+{
+    int i0 = (int)std::floor(index);
+    int i1 = juce::jmin(i0 + 1, buffer.getNumSamples() - 1);
+    float frac = index - (float)i0;
+    return (1.0f - frac) * buffer.getSample(channel, i0) + frac * buffer.getSample(channel, i1);
+}
+
+float TimeVisualizer::interpolateSinc(const juce::AudioBuffer<float>& buffer, int channel, float index, int windowSize) const
+{
+    int center = (int)std::floor(index);
+    float result = 0.0f;
+    float weightSum = 0.0f;
+
+    for (int n = -windowSize; n <= windowSize; ++n)
+    {
+        int sampleIndex = center + n;
+        if (sampleIndex < 0 || sampleIndex >= buffer.getNumSamples())
+            continue;
+
+        float x = index - (float)sampleIndex;
+        float w = sinc(x) * hammingWindow(n, windowSize);
+        result += buffer.getSample(channel, sampleIndex) * w;
+        weightSum += w;
+    }
+
+    return (weightSum != 0.0f) ? result / weightSum : 0.0f;
+}
+
+float TimeVisualizer::sinc(float x) const
+{
+    if (x == 0.0f)
+        return 1.0f;
+    float piX = juce::MathConstants<float>::pi * x;
+    return std::sin(piX) / piX;
+}
+
+float TimeVisualizer::hammingWindow(int n, int windowSize) const
+{
+    return 0.54f + 0.46f * std::cos(juce::MathConstants<float>::pi * n / (float)windowSize);
 }

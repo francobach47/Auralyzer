@@ -74,7 +74,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
 
 	juce::StringArray plotOptions = {
 		"Time",
-		"Frequency"
+		"Frequency",
+		"Spectrogram"
 	};
 	layout.add(std::make_unique<juce::AudioParameterChoice>(
 		plotModeParamID,
