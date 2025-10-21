@@ -31,6 +31,10 @@
               file="Source/UI/FrequencyVisualizer.h"/>
         <FILE id="bQxfLT" name="LookAndFeel.cpp" compile="1" resource="0" file="Source/UI/LookAndFeel.cpp"/>
         <FILE id="jQYCtF" name="LookAndFeel.h" compile="0" resource="0" file="Source/UI/LookAndFeel.h"/>
+        <FILE id="Go6V6G" name="OverviewDisplay.cpp" compile="1" resource="0"
+              file="Source/UI/OverviewDisplay.cpp"/>
+        <FILE id="HQDv6J" name="OverviewDisplay.h" compile="0" resource="0"
+              file="Source/UI/OverviewDisplay.h"/>
         <FILE id="eLEo14" name="RotaryKnob.cpp" compile="1" resource="0" file="Source/UI/RotaryKnob.cpp"/>
         <FILE id="M4pfZT" name="RotaryKnob.h" compile="0" resource="0" file="Source/UI/RotaryKnob.h"/>
         <FILE id="jyJaHP" name="SpectrogramVisualizer.cpp" compile="1" resource="0"

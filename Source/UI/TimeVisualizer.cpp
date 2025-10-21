@@ -389,7 +389,7 @@ void TimeVisualizer::captureCurrentPath()
 
     juce::AudioBuffer<float> tempBuffer;
     processor.getCircularBuffer().getMostRecentWindow(tempBuffer, displaySamples + 2048);
-    if (tempBuffer.getNumSamples() < 16) return;
+    if (tempBuffer.getNumSamples() < 0) return;
 
     const float voltsPerDiv = processor.params.getVerticalScaleInVolts();
     const float pixelsPerDiv = getHeight() / 8.0f;
@@ -414,8 +414,7 @@ void TimeVisualizer::captureCurrentPath()
         float t = i * timePerSample;
         float sampleIndex = startSampleIndex + t * sampleRate;
 
-        while (sampleIndex >= numSamples) sampleIndex -= numSamples;
-        while (sampleIndex < 0) sampleIndex += numSamples;
+        sampleIndex = std::fmod(sampleIndex + numSamples, numSamples);
 
         float sum = 0.0f;
         for (int c = 0; c < numChannels; ++c)
@@ -576,4 +575,24 @@ float TimeVisualizer::sinc(float x) const
 float TimeVisualizer::hammingWindow(int n, int windowSize) const
 {
     return 0.54f + 0.46f * std::cos(juce::MathConstants<float>::pi * n / (float)windowSize);
+}
+
+bool TimeVisualizer::getLastDisplayedWindow(juce::AudioBuffer<float>& outBuffer) const
+{
+    if (lastAlignedBuffer.getNumSamples() > 0)
+    {
+        outBuffer.makeCopyOf(lastAlignedBuffer);
+        return true;
+    }
+    return false;
+}
+
+bool TimeVisualizer::getFullCircularBuffer(juce::AudioBuffer<float>& outBuffer) const
+{
+    // Se obtiene la totalidad del buffer circular
+    int totalSamples = processor.getCircularBuffer().getSize();
+    const_cast<OscilloscopeAudioProcessor&>(processor)
+        .getCircularBuffer().getMostRecentWindow(outBuffer, totalSamples);
+
+    return outBuffer.getNumSamples() > 0;
 }

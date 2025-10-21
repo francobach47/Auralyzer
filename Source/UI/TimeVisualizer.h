@@ -64,6 +64,7 @@ public:
     float interpolateSinc(const juce::AudioBuffer<float>& buffer, int channel, float index, int windowSize = 32) const;
     float sinc(float x) const;
     float hammingWindow(int n, int windowSize) const;
+    bool getLastDisplayedWindow(juce::AudioBuffer<float>& outBuffer) const;
 
 private:
     OscilloscopeAudioProcessor& processor;
@@ -77,6 +78,8 @@ private:
 
     bool modeDC = false;
     InterpolationMode interpolationMode = InterpolationMode::Linear;
+    juce::AudioBuffer<float> lastAlignedBuffer;
+    bool getFullCircularBuffer(juce::AudioBuffer<float>& outBuffer) const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimeVisualizer)
 };

@@ -6,7 +6,7 @@ class SpectrogramVisualizer : public juce::Component,
     private juce::Timer
 {
 public:
-    SpectrogramVisualizer();
+    SpectrogramVisualizer(OscilloscopeAudioProcessor& p);
 
     void pushBuffer(const juce::AudioBuffer<float>& buffer);
     void paint(juce::Graphics&) override;
@@ -23,6 +23,7 @@ protected:
     void mouseWheelMove(const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
 
 private:
+    OscilloscopeAudioProcessor& processor;
     void timerCallback() override;
     void drawNextLineOfSpectrogram();
     void performFFT();
@@ -42,7 +43,7 @@ private:
     std::array<float, fftSize * 2> fftData{};
     juce::Image spectrogramImage;
 
-    double sampleRate = 44100.0;
+    double sampleRate = (float)processor.getSampleRate();
 
     std::deque<std::vector<float>> spectrumQueue;
     juce::CriticalSection spectrumLock;

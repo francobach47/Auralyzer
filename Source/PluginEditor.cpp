@@ -5,7 +5,13 @@ static float maxDB = 24.0f;
 
 //==============================================================================
 OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p), timeVisualizer(p), frequencyVisualizer(p)
+    : AudioProcessorEditor(&p),
+    audioProcessor(p),
+    timeVisualizer(p),
+    frequencyVisualizer(p),
+    spectrogramVisualizer(p),
+    overviewDisplay(p)
+
 {
     tooltipWindow->setMillisecondsBeforeTipAppears(1000);
  
@@ -44,6 +50,9 @@ OscilloscopeAudioProcessorEditor::OscilloscopeAudioProcessorEditor(OscilloscopeA
     plotGroup.addChildComponent(frequencyVisualizer);
     plotGroup.addChildComponent(spectrogramVisualizer);
     addAndMakeVisible(plotGroup);
+
+    overviewDisplay.setLookAndFeel(&mainLF);
+    addAndMakeVisible(overviewDisplay); 
 
     int modeIndex = static_cast<int>(audioProcessor.apvts.getRawParameterValue(plotModeParamID.getParamID())->load());
     plotModeButton.setButtonText(audioProcessor.params.plotModeParam->choices[modeIndex]);
@@ -289,7 +298,8 @@ OscilloscopeAudioProcessorEditor::~OscilloscopeAudioProcessorEditor()
     audioProcessor.apvts.removeParameterListener(modeParamID.getParamID(), this);
     audioProcessor.apvts.removeParameterListener(plotModeParamID.getParamID(), this);
     serialPortSelector.setLookAndFeel(nullptr);
-    
+    overviewDisplay.setLookAndFeel(nullptr); 
+
     setLookAndFeel(nullptr);
 
 #ifdef JUCE_OPENGL
@@ -385,6 +395,8 @@ void OscilloscopeAudioProcessorEditor::resized()
     snapshotButton.setBounds(12, 18, levelCalibrationButton.getWidth(), 20);
     clearSnapshotsButton.setBounds(12, snapshotButton.getBottom() + space/4, levelCalibrationButton.getWidth(), 20);
 
+    overviewDisplay.setBounds(220, 10, 600, 30); 
+
 }
 
 void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& parameterID, float newValue)
@@ -435,10 +447,11 @@ void OscilloscopeAudioProcessorEditor::parameterChanged(const juce::String& para
         timeVisualizer.setVerticalOffsetInDivisions(newValue);
     }
 
-    if (parameterID == horizontalScaleParamID.getParamID())
+    if (parameterID == horizontalScaleParamID.getParamID() || parameterID == horizontalPositionParamID.getParamID())
     {
-        float horizontalGain = std::pow(2.0f, newValue);
-        timeVisualizer.setHorizontalScale(horizontalGain);
+        float scale = std::pow(2.0f, *audioProcessor.apvts.getRawParameterValue(horizontalScaleParamID.getParamID()));
+        float offset = *audioProcessor.apvts.getRawParameterValue(horizontalPositionParamID.getParamID());
+        overviewDisplay.updateViewport(scale, offset);
     }
 
     if (parameterID == horizontalPositionParamID.getParamID())

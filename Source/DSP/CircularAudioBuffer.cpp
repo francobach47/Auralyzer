@@ -52,7 +52,7 @@ float CircularAudioBuffer::computeLastVpp()
     float min = FLT_MAX, max = -FLT_MIN;
 
     const int numSamples = storedSamples;
-    const int channel = 0; // channel 0 to calculate the Vpp
+    const int channel = 0;
     const float* readPtr = buffer.getReadPointer(channel);
 
     for (int i = 0; i < numSamples; ++i)
@@ -64,4 +64,29 @@ float CircularAudioBuffer::computeLastVpp()
     }
 
     return max - min;
+}
+
+void CircularAudioBuffer::copyFullBuffer(juce::AudioBuffer<float>& dest) const
+{
+    int numChannels = buffer.getNumChannels();
+    int bufferSize = buffer.getNumSamples();
+    int totalSamples = storedSamples;
+
+    dest.setSize(numChannels, totalSamples);
+    dest.clear();
+
+    int start = (writePos - totalSamples + capacity) % capacity;
+    int firstPart = juce::jmin(capacity - start, totalSamples);
+    int secondPart = totalSamples - firstPart;
+
+    for (int ch = 0; ch < numChannels; ++ch)
+    {
+        const float* src = buffer.getReadPointer(ch);
+        float* dst = dest.getWritePointer(ch);
+
+        std::memcpy(dst, src + start, sizeof(float) * firstPart);
+
+        if (secondPart > 0)
+            std::memcpy(dst + firstPart, src, sizeof(float) * secondPart);
+    }
 }

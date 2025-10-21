@@ -9,6 +9,7 @@
 #include "UI/FrequencyVisualizer.h"
 #include "UI/SpectrogramVisualizer.h"
 #include "UI/RotaryKnob.h"
+#include "UI/OverviewDisplay.h"
 #include "UI/LookAndFeel.h"
 
 class OscilloscopeAudioProcessorEditor : public juce::AudioProcessorEditor,
@@ -34,6 +35,7 @@ private:
     TimeVisualizer timeVisualizer;
     FrequencyVisualizer frequencyVisualizer;
     SpectrogramVisualizer spectrogramVisualizer;
+    OverviewDisplay overviewDisplay;
     juce::TextButton probesCalibrationButton{ "Probes" };
     bool isCalibrating = false;
 

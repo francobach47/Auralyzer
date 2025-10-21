@@ -1,3 +1,4 @@
+#include "../PluginProcessor.h"
 #include "SpectrogramVisualizer.h"
 #include "../Colormaps/viridis_data.inl"
 #include "../Colormaps/rocket_data.inl"
@@ -6,8 +7,8 @@
 
 constexpr float verticalPaddingFactor = 0.05f;
 
-SpectrogramVisualizer::SpectrogramVisualizer()
-    : forwardFFT(fftOrder), window(fftSize, juce::dsp::WindowingFunction<float>::blackman)
+SpectrogramVisualizer::SpectrogramVisualizer(OscilloscopeAudioProcessor& p)
+    : processor(p), forwardFFT(fftOrder), window(fftSize, juce::dsp::WindowingFunction<float>::blackman)
 {
     spectrogramImage = juce::Image(juce::Image::RGB, 512, 256, true);
     sampleFifo.setSize(1, fftSize * 2);
@@ -93,6 +94,8 @@ void SpectrogramVisualizer::mouseWheelMove(const juce::MouseEvent& event, const 
 
 void SpectrogramVisualizer::paint(juce::Graphics& g)
 {
+    const bool bypass = processor.apvts.getRawParameterValue(bypassParamID.getParamID())->load() > 0.5f;
+
     const float cornerRadius = 8.0f;
     const float borderThickness = 4.0f;
     auto bounds = getLocalBounds().toFloat();
@@ -104,86 +107,89 @@ void SpectrogramVisualizer::paint(juce::Graphics& g)
     clipPath.addRoundedRectangle(bounds, cornerRadius);
     g.reduceClipRegion(clipPath);
 
-    g.drawImage(spectrogramImage, bounds);
-
-    g.setColour(Colors::PlotSection::outline);
-    g.drawRoundedRectangle(bounds, cornerRadius, borderThickness);
-
-    g.setColour(juce::Colours::silver.withAlpha(0.8f));
-    g.setFont(juce::Font(12.0f, juce::Font::bold));
-
-    std::vector<float> freqLabels;
-    const float maxDisplayFreq = static_cast<float>(sampleRate / 2.0);
-    for (float base = 10.0f; base <= maxDisplayFreq; base *= 10.0f)
+    if (!bypass)
     {
-        for (int mult : {1, 2, 5})
+        g.drawImage(spectrogramImage, bounds);
+
+        g.setColour(Colors::PlotSection::outline);
+        g.drawRoundedRectangle(bounds, cornerRadius, borderThickness);
+
+        g.setColour(juce::Colours::silver.withAlpha(0.8f));
+        g.setFont(juce::Font(12.0f, juce::Font::bold));
+
+        std::vector<float> freqLabels;
+        const float maxDisplayFreq = static_cast<float>(sampleRate / 2.0);
+        for (float base = 10.0f; base <= maxDisplayFreq; base *= 10.0f)
         {
-            float f = base * mult;
-            if (f <= maxDisplayFreq)
-                freqLabels.push_back(f);
+            for (int mult : {1, 2, 5})
+            {
+                float f = base * mult;
+                if (f <= maxDisplayFreq)
+                    freqLabels.push_back(f);
+            }
         }
+
+        float lastY = -1000.0f;
+        float minSpacing = 20.0f;
+
+        const float freqRange = freqZoomMax - freqZoomMin;
+        const float paddedMin = freqZoomMin - freqRange * verticalPaddingFactor;
+        const float paddedMax = freqZoomMax + freqRange * verticalPaddingFactor;
+        const float paddedRange = paddedMax - paddedMin;
+
+        for (auto freq : freqLabels)
+        {
+            if (freq < paddedMin || freq > paddedMax)
+                continue;
+
+            float norm = (freq - paddedMin) / paddedRange;
+            float y = bounds.getBottom() - norm * bounds.getHeight();
+
+            if (std::abs(y - lastY) < minSpacing)
+                continue;
+
+            lastY = y;
+
+            juce::String label;
+            if (freq >= 1000.0f)
+                label = juce::String(freq / 1000.0f, 1) + " kHz";
+            else
+                label = juce::String((int)freq) + " Hz";
+
+            g.drawFittedText(label, 4, (int)y - 7, 48, 14, juce::Justification::left, 1);
+        }
+
+        // === PLOTBAR de dB ===
+        const int plotbarWidth = 16;
+        const float plotbarHeight = bounds.getHeight() * 0.4f;
+        auto plotbarTop = bounds.getY() + 20.0f;
+        const float plotbarLeft = bounds.getRight() - plotbarWidth - 8.0f;
+
+        for (int y = 0; y < (int)plotbarHeight; ++y)
+        {
+            float norm = 1.0f - (float)y / (float)plotbarHeight;
+            float dB = juce::jmap(norm, -80.0f, 0.0f);
+            float colorNorm = juce::jlimit(0.0f, 1.0f, juce::jmap(dB, -100.0f, 0.0f, 0.0f, 1.0f));
+            int colorIndex = static_cast<int>(colorNorm * 255.0f);
+            const auto& rgb = mako256[colorIndex];
+            juce::Colour colour = juce::Colour::fromFloatRGBA(rgb[0], rgb[1], rgb[2], 1.0f);
+
+            g.setColour(colour);
+            g.fillRect(juce::Rectangle<float>((float)plotbarLeft, plotbarTop + (float)y, (float)plotbarWidth, 1.0f));
+        }
+
+        // === Etiquetas dB ===
+        g.setFont(juce::Font(11.0f, juce::Font::bold));
+        g.setColour(juce::Colours::silver.withAlpha(0.9f));
+        for (float dBval = 0.0f; dBval >= -80.0f; dBval -= 20.0f)
+        {
+            float norm = juce::jmap(dBval, -80.0f, 0.0f, 0.0f, 1.0f);
+            int y = static_cast<int>(plotbarTop + (1.0f - norm) * plotbarHeight);
+            g.drawFittedText(juce::String((int)dBval) + " dB", plotbarLeft - 42, y - 6, 36, 12, juce::Justification::right, 1);
+        }
+
+        g.drawFittedText("Time", bounds.getCentreX() - 60, bounds.getBottom() - 20, 60, 14, juce::Justification::centred, 1);
     }
-
-    float lastY = -1000.0f;
-    float minSpacing = 20.0f;
-
-    const float freqRange = freqZoomMax - freqZoomMin;
-    const float paddedMin = freqZoomMin - freqRange * verticalPaddingFactor;
-    const float paddedMax = freqZoomMax + freqRange * verticalPaddingFactor;
-    const float paddedRange = paddedMax - paddedMin;
-
-    for (auto freq : freqLabels)
-    {
-        if (freq < paddedMin || freq > paddedMax)
-            continue;
-
-        float norm = (freq - paddedMin) / paddedRange;
-        float y = bounds.getBottom() - norm * bounds.getHeight();
-
-        if (std::abs(y - lastY) < minSpacing)
-            continue;
-
-        lastY = y;
-
-        juce::String label;
-        if (freq >= 1000.0f)
-            label = juce::String(freq / 1000.0f, 1) + " kHz";
-        else
-            label = juce::String((int)freq) + " Hz";
-
-        g.drawFittedText(label, 4, (int)y - 7, 48, 14, juce::Justification::left, 1);
-    }
-
-    // === PLOTBAR de dB ===
-    const int plotbarWidth = 16;
-    const float plotbarHeight = bounds.getHeight() * 0.4f;
-    auto plotbarTop = bounds.getY() + 20.0f; 
-    const float plotbarLeft = bounds.getRight() - plotbarWidth - 8.0f;
-
-    for (int y = 0; y < (int)plotbarHeight; ++y)
-    {
-        float norm = 1.0f - (float)y / (float)plotbarHeight;
-        float dB = juce::jmap(norm, -80.0f, 0.0f);
-        float colorNorm = juce::jlimit(0.0f, 1.0f, juce::jmap(dB, -100.0f, 0.0f, 0.0f, 1.0f));
-        int colorIndex = static_cast<int>(colorNorm * 255.0f);
-        const auto& rgb = mako256[colorIndex];
-        juce::Colour colour = juce::Colour::fromFloatRGBA(rgb[0], rgb[1], rgb[2], 1.0f);
-
-        g.setColour(colour);
-        g.fillRect(juce::Rectangle<float>((float)plotbarLeft, plotbarTop + (float)y, (float)plotbarWidth, 1.0f));
-    }
-
-    // === Etiquetas dB ===
-    g.setFont(juce::Font(11.0f, juce::Font::bold));
-    g.setColour(juce::Colours::silver.withAlpha(0.9f));
-    for (float dBval = 0.0f; dBval >= -80.0f; dBval -= 20.0f)
-    {
-        float norm = juce::jmap(dBval, -80.0f, 0.0f, 0.0f, 1.0f);
-        int y = static_cast<int>(plotbarTop + (1.0f - norm) * plotbarHeight);
-        g.drawFittedText(juce::String((int)dBval) + " dB", plotbarLeft - 42, y - 6, 36, 12, juce::Justification::right, 1);
-    }
-
-    g.drawFittedText("Time", bounds.getCentreX() - 60, bounds.getBottom() - 20, 60, 14, juce::Justification::centred, 1);
 }
 
 void SpectrogramVisualizer::pushBuffer(const juce::AudioBuffer<float>& buffer)
